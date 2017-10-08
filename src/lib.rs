@@ -5,7 +5,7 @@
 extern crate cfg_if;
 extern crate r2d2;
 extern crate url;
-
+extern crate bigdecimal;
 extern crate dao;
 #[cfg(test)]
 #[macro_use]
@@ -33,7 +33,9 @@ pub use dao::Dao;
 pub use dao::Value;
 pub use dao::Rows;
 pub use error::DbError;
-
+pub use dao::{ToDao,FromDao};
+pub use dao::{ToTable};
+pub use dao::{ToColumns};
 
 
 #[cfg(test)]

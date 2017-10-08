@@ -3,6 +3,7 @@ use chrono::NaiveDate;
 use chrono::{DateTime, Utc};
 use std::convert::TryFrom;
 use error::ConvertError;
+use bigdecimal::BigDecimal;
 
 
 /// Generic value storage 32 byte in size
@@ -20,6 +21,7 @@ pub enum Value {
 
     Float(f32),
     Double(f64),
+    BigDecimal(BigDecimal),
 
     Blob(Vec<u8>),
     Char(char),
@@ -44,6 +46,7 @@ impl Value {
             Value::Bigint(_) => "i64",
             Value::Float(_) => "f32",
             Value::Double(_) => "f64",
+            Value::BigDecimal(_) => "BigDecimal",
             Value::Blob(_) => "Vec<u8>",
             Value::Text(_) => "String",
             Value::Char(_) => "char",
@@ -245,7 +248,7 @@ mod tests {
 
     #[test]
     fn data_sizes() {
-        assert_eq!(32, size_of::<Value>());
+        assert_eq!(48, size_of::<Value>());// use to be 32, now 48 due to the addition of BigDecimal type
         assert_eq!(24, size_of::<Vec<u8>>());
         assert_eq!(24, size_of::<String>());
         assert_eq!(12, size_of::<DateTime<Utc>>());

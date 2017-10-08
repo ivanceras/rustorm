@@ -10,10 +10,17 @@ impl EntityManager {
     /// get all the records of this table
     pub fn get_all<T>(&self) -> Result<Vec<T>, DbError>
     where
-        T: ToTable + FromDao,
+        T: ToTable + ToColumns + FromDao,
     {
         let table = T::to_table();
-        let sql = format!("SELECT * FROM {}", table.name());
+        let columns = T::to_columns();
+        let enumerated_columns = columns
+                .iter()
+                .map(|c| c.name.to_owned())
+                .collect::<Vec<_>>()
+                .join(", ");
+        let sql = format!("SELECT {} FROM {}", enumerated_columns, table.name());
+        println!("sql: {}", sql);
         let rows = self.0.execute_sql_with_return(&sql, &[])?;
         let mut entities = vec![];
         for dao in rows.iter() {
@@ -122,7 +129,7 @@ mod test_pg {
 
     #[test]
     fn use_em() {
-        #[derive(Debug, FromDao, ToTable)]
+        #[derive(Debug, FromDao, ToColumns, ToTable)]
         struct Actor {
             actor_id: i32,
             first_name: String,

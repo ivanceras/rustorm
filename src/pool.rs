@@ -102,7 +102,7 @@ mod tests_pg {
 
     #[test]
     fn connect() {
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/rforum";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         pool.ensure(db_url).is_ok();
         let pooled = pool.get_pool(db_url);
@@ -115,7 +115,7 @@ mod tests_pg {
 
     #[test]
     fn connect_no_ensure() {
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/rforum";
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         assert!(pool.get_pool(db_url).is_ok());
     }

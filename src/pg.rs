@@ -13,6 +13,7 @@ use chrono::{DateTime};
 use postgres::types::IsNull;
 use std::error::Error;
 use std::fmt;
+use bigdecimal::BigDecimal;
 
 pub fn init_pool(db_url: &str) -> r2d2::Pool<r2d2_postgres::PostgresConnectionManager>{
     let config = r2d2::Config::default();
@@ -104,6 +105,9 @@ impl<'a> ToSql for PgValue<'a>{
             Value::Uuid(ref v) => v.to_sql(ty, out),
             Value::Date(ref v) => v.to_sql(ty, out),
             Value::Timestamp(ref v) => v.to_sql(ty, out),
+            Value::BigDecimal(ref v) => {
+                panic!("don't know what to do with these yet!");
+            }
             Value::Nil => Ok(IsNull::Yes),
         }
     }
@@ -159,6 +163,14 @@ impl FromSql for OwnedPgValue{
             types::DATE => match_type!(Date),
             types::TIMESTAMPTZ | types::TIMESTAMP => match_type!(Timestamp),
             types::BYTEA => match_type!(Blob),
+            types::NUMERIC => {
+                println!("raw: {:?}", raw);
+                let bd = BigDecimal::parse_bytes(raw, 16);
+                match bd{
+                    Some(bd) => Ok(OwnedPgValue(Value::BigDecimal(bd))),
+                    None => Err(Box::new(PostgresError::ConvertNumericToBigDecimalError)),
+                }
+            }
             _ => panic!("unable to convert from {:?}", ty), 
         }
 
@@ -174,6 +186,7 @@ impl FromSql for OwnedPgValue{
             types::DATE => true,
             types::TIMESTAMPTZ | types::TIMESTAMP => true,
             types::BYTEA => true,
+            types::NUMERIC => true,
             types::UNKNOWN => false,
             _ => panic!("can not accept type {:?}", ty), 
         }
@@ -199,6 +212,7 @@ pub enum PostgresError{
     GenericError(postgres::Error),
     SqlError(postgres::Error, String),
     ConvertStringToCharError(String),
+    ConvertNumericToBigDecimalError,
 }
 
 

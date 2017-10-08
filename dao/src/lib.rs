@@ -7,6 +7,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
+extern crate bigdecimal;
 
 
 pub use value::Value;
