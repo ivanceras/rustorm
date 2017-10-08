@@ -15,10 +15,13 @@ use std::error::Error;
 use std::fmt;
 use bigdecimal::BigDecimal;
 
-pub fn init_pool(db_url: &str) -> r2d2::Pool<r2d2_postgres::PostgresConnectionManager>{
+pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_postgres::PostgresConnectionManager>, DbError>{
     let config = r2d2::Config::default();
     let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None).unwrap();
-    r2d2::Pool::new(config, manager).expect("Unable to create a pool for postgres connection manager")
+    r2d2::Pool::new(config, manager)
+        .map_err(|e| DbError::PlatformError(
+                        PlatformError::PostgresError(
+                            PostgresError::PoolInitializationError(e))))
 
 }
 
@@ -41,7 +44,6 @@ impl Database for PostgresDB{
                         for r in rows.iter(){
                             let mut record:Vec<Value> = vec![];
                             for (i,c) in columns.iter().enumerate(){
-                                let _column_name = c.name();
                                 let value: Option<Result<OwnedPgValue, postgres::Error>> = r.get_opt(i);
                                 match value{
                                     Some(value) => match value{
@@ -209,6 +211,7 @@ impl FromSql for OwnedPgValue{
 
 #[derive(Debug)]
 pub enum PostgresError{
+    PoolInitializationError(r2d2::InitializationError),
     GenericError(postgres::Error),
     SqlError(postgres::Error, String),
     ConvertStringToCharError(String),

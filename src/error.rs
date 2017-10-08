@@ -45,6 +45,7 @@ pub enum PlatformError {
 pub enum DbError {
     PlatformError(PlatformError),
     ConvertError(ConvertError),
+    ConnectError(ConnectError), //agnostic connection error
 }
 
 #[derive(Debug)]
