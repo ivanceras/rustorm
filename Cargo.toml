@@ -1,7 +1,9 @@
 [package]
-name = "orm"
-version = "0.1.0"
-authors = ["lee"]
+name = "rustorm"
+version = "0.10.0"
+authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
+license = "MIT"
+description = "A complete rewrite of rustorm"
 
 [dependencies]
 postgres = {version = "0.15.1",features = ["with-uuid","with-chrono"], optional = true}
@@ -9,8 +11,8 @@ r2d2_postgres = {version = "0.13.0", optional = true}
 postgres-shared = "0.4.0"
 r2d2 = "0.7.4"
 url = "1.5.1"
-dao = {path = "../dao"}
-dao_codegen = {path = "../dao_codegen"}
+dao = {path = "dao"}
+dao_codegen = {path = "dao_codegen"}
 cfg-if = "0.1.2"
 uuid = "0.5.1"
 chrono = "0.4.0"
