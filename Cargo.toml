@@ -24,8 +24,9 @@ oci_rs = {version = "0.5.0", optional = true}
 tiberius = {version = "0.2.2", optional = true}
 
 [features]
+default = ["with-postgres"]
 with-postgres = ["postgres", "r2d2_postgres"]
 with-mysql = ["mysql"]
-with-sqlite = ["rusqlite","r2d2_sqlite"]
+#with-sqlite = ["rusqlite","r2d2_sqlite"]
 with-oracle = ["oci_rs"]
 with-mssql = ["tiberius"]

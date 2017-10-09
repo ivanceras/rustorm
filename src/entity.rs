@@ -1,5 +1,5 @@
 use error::DbError;
-use dao::{FromDao, ToColumns, ToDao, ToTable};
+use dao::{FromDao, ToColumnNames, ToDao, ToTableName};
 use dao::{ToValue, Value};
 use platform::DBPlatform;
 
@@ -10,10 +10,10 @@ impl EntityManager {
     /// get all the records of this table
     pub fn get_all<T>(&self) -> Result<Vec<T>, DbError>
     where
-        T: ToTable + ToColumns + FromDao,
+        T: ToTableName + ToColumnNames + FromDao,
     {
-        let table = T::to_table();
-        let columns = T::to_columns();
+        let table = T::to_table_name();
+        let columns = T::to_column_names();
         let enumerated_columns = columns
                 .iter()
                 .map(|c| c.name.to_owned())
@@ -33,11 +33,11 @@ impl EntityManager {
     /// insert to table the values of this struct
     pub fn insert<T, R>(&self, entities: &[&T]) -> Result<Vec<R>, DbError>
     where
-        T: ToTable + ToColumns + ToDao,
-        R: FromDao + ToColumns,
+        T: ToTableName + ToColumnNames + ToDao,
+        R: FromDao + ToColumnNames,
     {
-        let table = T::to_table();
-        let columns = T::to_columns();
+        let table = T::to_table_name();
+        let columns = T::to_column_names();
         let columns_len = columns.len();
         let mut sql = String::new();
         sql += &format!("INSERT INTO {} ", table.name());
@@ -66,7 +66,7 @@ impl EntityManager {
             })
             .collect::<Vec<_>>()
             .join(", ");
-        let return_columns = R::to_columns();
+        let return_columns = R::to_column_names();
         sql += &format!(
             "RETURNING {}",
             return_columns
@@ -121,7 +121,7 @@ impl EntityManager {
 mod test_pg {
     extern crate dao;
     use super::*;
-    use dao::{FromDao, ToColumns, ToDao, ToTable};
+    use dao::{FromDao, ToColumnNames, ToDao, ToTableName};
     use pool::Pool;
     use chrono::{DateTime, NaiveDate};
     use chrono::offset::Utc;
@@ -129,7 +129,7 @@ mod test_pg {
 
     #[test]
     fn use_em() {
-        #[derive(Debug, FromDao, ToColumns, ToTable)]
+        #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
         struct Actor {
             actor_id: i32,
             first_name: String,
@@ -150,7 +150,7 @@ mod test_pg {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName)]
         struct Sample {
             vnil: Option<String>,
             vbool: bool,
@@ -214,7 +214,7 @@ mod test_pg {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName)]
         struct Sample {
             vnil: Option<String>,
             vbool: Option<bool>,
@@ -274,7 +274,7 @@ mod test_pg {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName)]
         struct Sample {
             vchar: String,
         }
@@ -299,7 +299,7 @@ mod test_pg {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName)]
         struct Sample {
             vchar: char,
         }
@@ -321,7 +321,7 @@ mod test_pg {
 
     #[test]
     fn insert_some_data() {
-        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumns, ToTable)]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName)]
         struct Actor {
             first_name: String,
             last_name: String,
@@ -350,7 +350,7 @@ mod test_pg {
     fn insert_some_data_with_different_retrieve() {
         mod for_insert {
             use super::*;
-            #[derive(Debug, PartialEq, ToDao, ToColumns, ToTable)]
+            #[derive(Debug, PartialEq, ToDao, ToColumnNames, ToTableName)]
             pub struct Actor {
                 pub first_name: String,
                 pub last_name: String,
@@ -359,7 +359,7 @@ mod test_pg {
 
         mod for_retrieve {
             use super::*;
-            #[derive(Debug, FromDao, ToColumns, ToTable)]
+            #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
             pub struct Actor {
                 pub actor_id: i32,
                 pub first_name: String,

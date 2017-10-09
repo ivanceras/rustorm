@@ -1,12 +1,12 @@
 
 #[derive(Debug)]
-pub struct Table {
+pub struct TableName {
     pub name: String,
     pub schema: Option<String>,
     pub alias: Option<String>,
 }
 
-impl Table {
+impl TableName {
     pub fn name(&self) -> String {
         if let Some(ref schema) = self.schema {
             format!("{}.{}", schema, self.name)
@@ -16,7 +16,7 @@ impl Table {
     }
 }
 
-pub trait ToTable {
+pub trait ToTableName {
     /// extract the table name from a struct
-    fn to_table() -> Table;
+    fn to_table_name() -> TableName;
 }

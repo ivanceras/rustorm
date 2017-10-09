@@ -1,4 +1,4 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 #![feature(try_from)]
 #![feature(conservative_impl_trait)]
 #[macro_use]
@@ -40,8 +40,8 @@ pub use dao::Value;
 pub use dao::Rows;
 pub use error::DbError;
 pub use dao::{ToDao,FromDao};
-pub use dao::{ToTable};
-pub use dao::{ToColumns};
+pub use dao::{ToTableName};
+pub use dao::{ToColumnNames};
 
 
 #[cfg(test)]

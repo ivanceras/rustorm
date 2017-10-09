@@ -16,15 +16,15 @@ pub use rows::Rows;
 pub use dao::Dao;
 pub use dao::FromDao;
 pub use dao::ToDao;
-pub use table::Table;
-pub use table::ToTable;
-pub use column::Column;
-pub use column::ToColumns;
+pub use table_name::TableName;
+pub use table_name::ToTableName;
+pub use column_name::ColumnName;
+pub use column_name::ToColumnNames;
 
 
 mod dao;
 mod value;
 mod error;
 mod rows;
-mod table;
-mod column;
+mod table_name;
+mod column_name;
