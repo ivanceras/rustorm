@@ -6,6 +6,10 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
     use pg::PostgresError;
 }}
 
+cfg_if! {if #[cfg(feature = "with-sqlite")]{
+    use sqlite::SqliteError;
+}}
+
 #[derive(Debug)]
 pub enum ConnectError {
     NoSuchPoolConnection,
@@ -39,6 +43,7 @@ pub enum ParseError {
 #[derive(Debug)]
 pub enum PlatformError {
     #[cfg(feature = "with-postgres")] PostgresError(PostgresError),
+    #[cfg(feature = "with-sqlite")] SqliteError(SqliteError),
 }
 
 #[derive(Debug)]

@@ -10,6 +10,9 @@ extern crate dao;
 #[cfg(test)]
 #[macro_use]
 extern crate dao_codegen;
+extern crate chrono;
+extern crate uuid;
+
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate r2d2_postgres;
     extern crate postgres;
@@ -17,8 +20,11 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate postgres_shared;
     mod pg;
 }}
-extern crate chrono;
-extern crate uuid;
+cfg_if! {if #[cfg(feature = "with-sqlite")]{
+    extern crate r2d2_sqlite;
+    extern crate rusqlite;
+    mod sqlite;
+}}
 
 mod pool;
 mod platform;
