@@ -19,7 +19,7 @@ impl EntityManager {
                 .map(|c| c.name.to_owned())
                 .collect::<Vec<_>>()
                 .join(", ");
-        let sql = format!("SELECT {} FROM {}", enumerated_columns, table.name());
+        let sql = format!("SELECT {} FROM {}", enumerated_columns, table.complete_name());
         println!("sql: {}", sql);
         let rows = self.0.execute_sql_with_return(&sql, &[])?;
         let mut entities = vec![];
@@ -40,7 +40,7 @@ impl EntityManager {
         let columns = T::to_column_names();
         let columns_len = columns.len();
         let mut sql = String::new();
-        sql += &format!("INSERT INTO {} ", table.name());
+        sql += &format!("INSERT INTO {} ", table.complete_name());
         sql += &format!(
             "({})\n",
             columns

@@ -1,6 +1,6 @@
 
 
-
+#[derive(Debug, PartialEq)]
 pub struct ColumnName {
     pub name: String,
     pub table: Option<String>,

@@ -42,6 +42,8 @@ pub use error::DbError;
 pub use dao::{ToDao,FromDao};
 pub use dao::{ToTableName};
 pub use dao::{ToColumnNames};
+pub use dao::TableName;
+pub use dao::ColumnName;
 
 
 #[cfg(test)]
