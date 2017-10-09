@@ -26,6 +26,7 @@ pub enum Value {
     Blob(Vec<u8>),
     Char(char),
     Text(String),
+    TextArray(Vec<String>),
 
     Uuid(Uuid),
     Date(NaiveDate),
@@ -49,6 +50,7 @@ impl Value {
             Value::BigDecimal(_) => "BigDecimal",
             Value::Blob(_) => "Vec<u8>",
             Value::Text(_) => "String",
+            Value::TextArray(_) => "Vec<String>",
             Value::Char(_) => "char",
             Value::Uuid(_) => "Uuid",
             Value::Date(_) => "NaiveDate",
@@ -150,6 +152,7 @@ impl_from!(f64, Double);
 impl_from!(Vec<u8>, Blob);
 impl_from!(char, Char);
 impl_from!(String, Text);
+impl_from!(Vec<String>, TextArray);
 impl_from!(&'static str, Text, to_string);
 impl_from!(Uuid, Uuid);
 impl_from!(NaiveDate, Date);
@@ -220,6 +223,7 @@ impl_tryfrom!(i32, "i32", Tinyint, Smallint, Int);
 impl_tryfrom!(i64, "i64", Tinyint, Smallint, Int, Bigint);
 impl_tryfrom!(f32, "f32", Float);
 impl_tryfrom!(f64, "f64", Float, Double);
+impl_tryfrom!(Vec<String>, "Vec<String>", TextArray);
 impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
 impl_tryfrom!(char, "char", Char);
 impl_tryfrom!(Uuid, "Uuid", Uuid);
@@ -236,6 +240,7 @@ impl_tryfrom_option!(f64);
 impl_tryfrom_option!(Vec<u8>);
 impl_tryfrom_option!(char);
 impl_tryfrom_option!(String);
+impl_tryfrom_option!(Vec<String>);
 impl_tryfrom_option!(Uuid);
 impl_tryfrom_option!(NaiveDate);
 impl_tryfrom_option!(DateTime<Utc>);

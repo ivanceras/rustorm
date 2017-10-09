@@ -256,10 +256,6 @@ mod test_pg {
         let sample = sample.unwrap();
         let sample = &sample[0];
 
-        let now = Utc::now();
-        let today = now.date();
-        let naive_today = today.naive_utc();
-
         assert_eq!(None, sample.vnil);
         assert_eq!(None, sample.vbool);
         assert_eq!(None, sample.vsmallint);
