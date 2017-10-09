@@ -17,7 +17,9 @@ use bigdecimal::BigDecimal;
 
 pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_postgres::PostgresConnectionManager>, DbError>{
     let config = r2d2::Config::default();
-    let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None).unwrap();
+    let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)
+        .map_err(|e| DbError::PlatformError(
+                        PlatformError::PostgresError(PostgresError::GenericError(e))))?;
     r2d2::Pool::new(config, manager)
         .map_err(|e| DbError::PlatformError(
                         PlatformError::PostgresError(
