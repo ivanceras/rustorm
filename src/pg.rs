@@ -8,8 +8,6 @@ use dao::Rows;
 use postgres;
 use postgres::types::{self,ToSql,FromSql,Type};
 use error::PlatformError;
-use uuid::Uuid;
-use chrono::{DateTime};
 use postgres::types::IsNull;
 use std::error::Error;
 use std::fmt;
@@ -41,17 +39,24 @@ impl Database for PostgresDB{
                 match rows {
                     Ok(rows) => {
                         let columns = rows.columns();
-                        let column_names:Vec<String> = columns.iter().map(|c| c.name().to_string() ).collect();
+                        let column_names:Vec<String> = columns
+                            .iter()
+                            .map(|c| c.name().to_string() )
+                            .collect();
                         let mut records = Rows::new(column_names);
                         for r in rows.iter(){
                             let mut record:Vec<Value> = vec![];
-                            for (i,c) in columns.iter().enumerate(){
+                            for (i,_) in columns.iter().enumerate(){
                                 let value: Option<Result<OwnedPgValue, postgres::Error>> = r.get_opt(i);
                                 match value{
-                                    Some(value) => match value{
-                                        Ok(value) =>  record.push(value.0),
-                                        Err(e) => {
-                                            return Err(DbError::PlatformError(PlatformError::PostgresError(PostgresError::GenericError(e))))
+                                    Some(value) => {
+                                        match value{
+                                            Ok(value) =>  record.push(value.0),
+                                            Err(e) => {
+                                                return Err(DbError::PlatformError(
+                                                        PlatformError::PostgresError(
+                                                            PostgresError::GenericError(e))))
+                                            }
                                         }
                                     },
                                     None => {
@@ -86,9 +91,17 @@ fn to_sql_types<'a>(values: &'a Vec<PgValue> ) -> Vec<&'a ToSql> {
     sql_types
 }
 
+/// need to wrap Value in order to be able to implement ToSql trait for it
+/// both of which are defined from some other traits
+/// otherwise: error[E0117]: only traits defined in the current crate can be implemented for arbitrary types
+/// For inserting, implement only ToSql
 #[derive(Debug)]
 pub struct PgValue<'a>(&'a Value);
 
+/// need to wrap Value in order to be able to implement ToSql trait for it
+/// both of which are defined from some other traits
+/// otherwise: error[E0117]: only traits defined in the current crate can be implemented for arbitrary types
+/// For retrieval, implement only FromSql
 #[derive(Debug)]
 pub struct OwnedPgValue(Value);
 
@@ -106,10 +119,11 @@ impl<'a> ToSql for PgValue<'a>{
             Value::Blob(ref v) => v.to_sql(ty, out),
             Value::Char(ref v) => v.to_string().to_sql(ty, out),
             Value::Text(ref v) => v.to_sql(ty, out),
+            Value::TextArray(ref v) => v.to_sql(ty, out),
             Value::Uuid(ref v) => v.to_sql(ty, out),
             Value::Date(ref v) => v.to_sql(ty, out),
             Value::Timestamp(ref v) => v.to_sql(ty, out),
-            Value::BigDecimal(ref v) => {
+            Value::BigDecimal(ref _v) => {
                 panic!("don't know what to do with these yet!");
             }
             Value::Nil => Ok(IsNull::Yes),
@@ -122,6 +136,7 @@ impl<'a> ToSql for PgValue<'a>{
             types::INT2 | types::INT4 | types::INT8 => true,
             types::FLOAT4 | types::FLOAT8 => true,
             types::TEXT | types::VARCHAR => true,
+            types::TEXT_ARRAY => true,
             types::BPCHAR=> true,
             types::UUID => true,
             types::TIMESTAMPTZ | types::TIMESTAMP => true,
@@ -150,6 +165,7 @@ impl FromSql for OwnedPgValue{
             types::FLOAT4 => match_type!(Float),
             types::FLOAT8 => match_type!(Double),
             types::TEXT | types::VARCHAR => match_type!(Text),
+            types::TEXT_ARRAY => match_type!(TextArray),
             types::BPCHAR => {
                 let v: Result<String,_> = FromSql::from_sql(&types::TEXT, raw);
                 match v{
@@ -185,6 +201,7 @@ impl FromSql for OwnedPgValue{
             types::INT2 | types::INT4 | types::INT8 => true,
             types::FLOAT4 | types::FLOAT8 => true,
             types::TEXT | types::VARCHAR => true,
+            types::TEXT_ARRAY => true,
             types::BPCHAR => true,
             types::UUID => true,
             types::DATE => true,
