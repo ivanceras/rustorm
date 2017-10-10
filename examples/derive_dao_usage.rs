@@ -1,9 +1,12 @@
 extern crate dao;
 #[macro_use]
-extern crate dao_codegen;
+extern crate rustorm_codegen;
+extern crate rustorm;
 
 use dao::{FromDao, ToDao};
-use dao::ToTableName;
+use rustorm::ToTableName;
+use rustorm::table_name;
+use rustorm::column_name;
 
 
 #[derive(Debug, FromDao, ToDao, ToTableName)]

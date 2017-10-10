@@ -13,16 +13,20 @@ use postgres::types::IsNull;
 use std::error::Error;
 use std::fmt;
 use bigdecimal::BigDecimal;
-use dao::TableName;
-use dao::ColumnName;
+use table_name::TableName;
+use column_name::ColumnName;
 use dao::FromDao;
 use entity::EntityManager;
+
+
+mod table_info;
 
 pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_postgres::PostgresConnectionManager>, DbError>{
     let config = r2d2::Config::default();
     let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)
         .map_err(|e| DbError::PlatformError(
-                        PlatformError::PostgresError(PostgresError::GenericError(e))))?;
+                        PlatformError::PostgresError(
+                            PostgresError::GenericError(e))))?;
     r2d2::Pool::new(config, manager)
         .map_err(|e| DbError::PlatformError(
                         PlatformError::PostgresError(
@@ -73,10 +77,14 @@ impl Database for PostgresDB{
                         }
                         Ok(records)
                     },
-                    Err(e) => Err(DbError::PlatformError(PlatformError::PostgresError(PostgresError::SqlError(e, sql.to_string())))),
+                    Err(e) => Err(DbError::PlatformError(
+                            PlatformError::PostgresError(
+                                PostgresError::SqlError(e, sql.to_string())))),
                 }
             },
-            Err(e) => Err(DbError::PlatformError(PlatformError::PostgresError(PostgresError::SqlError(e, sql.to_string()))))
+            Err(e) => Err(DbError::PlatformError(
+                    PlatformError::PostgresError(
+                        PostgresError::SqlError(e, sql.to_string()))))
         }
     }
 
@@ -96,212 +104,6 @@ fn to_sql_types<'a>(values: &'a Vec<PgValue> ) -> Vec<&'a ToSql> {
     sql_types
 }
 
-
-
-fn get_columns(em: &EntityManager, table_name: &TableName) {
-
-    #[derive(Debug, FromDao)]
-    struct ColumnSimple{
-        number: i32,
-        name: String,
-        data_type: String,
-        comment: Option<String>,
-    }
-
-    let sql = "SELECT
-                pg_attribute.attnum AS number,
-                pg_attribute.attname AS name,
-                pg_description.description as comment,
-                pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) 
-                    AS data_type
-            FROM pg_attribute
-                JOIN pg_class
-                    ON pg_class.oid = pg_attribute.attrelid
-                LEFT JOIN pg_namespace
-                    ON pg_namespace.oid = pg_class.relnamespace
-                LEFT JOIN pg_description
-                    ON pg_description.objoid = pg_class.oid
-                    AND pg_description.objsubid = pg_attribute.attnum
-            WHERE pg_class.relkind IN ('r','v')
-                AND pg_class.relname = $1
-                AND pg_namespace.nspname = $2 
-                AND pg_attribute.attnum > 0
-                AND pg_attribute.attisdropped = false
-                ORDER BY number
-    ";
-    let schema = match table_name.schema {
-        Some(ref schema) => schema.to_string(),
-        None => "public".to_string()
-    };
-    let columns: Result<Vec<ColumnSimple>, DbError> = 
-        em.execute_sql_with_return(&sql, &[&table_name.name, &schema]);
-
-    println!("columns: {:#?}", columns);
-    if let Ok(columns) = columns{
-        for column in columns{
-            let column_name = ColumnName{
-                name: column.name,
-                table: Some(table_name.name.to_owned()),
-                alias: None,
-            };
-            get_column_constraint(em, table_name, &column_name);
-            get_key(em, table_name, &column_name);
-        }
-    }
-}
-
-
-fn get_column_constraint(em: &EntityManager, table_name: &TableName, column_name: &ColumnName){
-
-    #[derive(Debug, FromDao)]
-    struct ColumnConstraint{
-        not_null: bool,
-        data_type: String,
-        default: Option<String>,
-    }
-    let sql = "SELECT
-        pg_attribute.attnotnull AS not_null,
-        pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type,
-        CASE WHEN pg_attribute.atthasdef THEN pg_attrdef.adsrc
-        END as default
-    FROM pg_attribute
-	JOIN pg_class
-	    ON pg_class.oid = pg_attribute.attrelid
-	JOIN pg_type
-	    ON pg_type.oid = pg_attribute.atttypid
-	LEFT JOIN pg_attrdef
-	    ON pg_attrdef.adrelid = pg_class.oid
-	    AND pg_attrdef.adnum = pg_attribute.attnum
-	LEFT JOIN pg_namespace
-	    ON pg_namespace.oid = pg_class.relnamespace
-	LEFT JOIN pg_constraint
-	    ON pg_constraint.conrelid = pg_class.oid
-	    AND pg_attribute.attnum = ANY (pg_constraint.conkey)
-
-    WHERE pg_class.relkind IN ('r','v')
-	AND pg_attribute.attname = $1 
-	AND pg_class.relname = $2 
-	AND pg_namespace.nspname = $3 
-	AND pg_attribute.attisdropped = false
-    ";
-    let schema = match table_name.schema {
-        Some(ref schema) => schema.to_string(),
-        None => "public".to_string()
-    };
-    let columns: Result<Vec<ColumnConstraint>, DbError> = 
-    em.execute_sql_with_return(&sql, &[&column_name.name, &table_name.name, &schema]);
-    println!("columns: {:#?}", columns);
-}
-
-fn get_column_name_from_key(em: &EntityManager, key_name: &String, table_name: &TableName) {
-    #[derive(Debug, FromDao)]
-    struct Column{
-        column: String,
-    }
-    let sql = "SELECT
-            attname as column
-            FROM pg_attribute
-            JOIN pg_class
-                ON pg_class.oid = pg_attribute.attrelid
-            LEFT JOIN pg_namespace
-                ON pg_namespace.oid = pg_class.relnamespace
-            LEFT JOIN pg_constraint
-                ON pg_constraint.conrelid = pg_class.oid
-                AND pg_attribute.attnum = ANY (pg_constraint.conkey)
-            WHERE pg_namespace.nspname = $3
-            AND pg_class.relname = $2
-            AND pg_attribute.attnum > 0
-            AND pg_constraint.conname = $1
-        ";
-    let schema = match table_name.schema {
-        Some(ref schema) => schema.to_string(),
-        None => "public".to_string()
-    };
-
-    let columns: Result<Vec<Column>, DbError> = 
-    em.execute_sql_with_return(&sql, &[&key_name, &table_name.name, &schema]);
-    println!("columns: {:#?}", columns);
-}
-
-
-fn get_table_key(em: &EntityManager, table_name: &TableName) {
-    #[derive(Debug, FromDao)]
-    struct TableKey{
-        key_name: String,
-        primary: bool,
-        unique: bool,
-        foreign: bool,
-    }
-    let sql = "SELECT conname AS key_name,
-            CASE WHEN contype = 'p' THEN true ELSE false END AS primary,
-            CASE WHEN contype = 'u' THEN true ELSE false END AS unique,
-            CASE WHEN contype = 'f' THEN true ELSE false END AS foreign
-        FROM pg_constraint
-            LEFT JOIN pg_class 
-            ON pg_class.oid = pg_constraint.conrelid
-            LEFT JOIN pg_namespace
-            ON pg_namespace.oid = pg_class.relnamespace
-            WHERE pg_class.relname = $1 
-            AND pg_namespace.nspname = $2 
-    ";
-
-    let schema = match table_name.schema {
-        Some(ref schema) => schema.to_string(),
-        None => "public".to_string()
-    };
-
-    let table_keys: Result<Vec<TableKey>, DbError> = 
-        em.execute_sql_with_return(&sql, &[&table_name.name, &schema]);
-    println!("table_keys: {:#?}", table_keys);
-    if let Ok(table_keys) = table_keys {
-        for table_key in table_keys{
-            println!("from table_key: {:#?}", table_key);
-            get_column_name_from_key(&em, &table_key.key_name, &table_name);
-        }
-    }
-}
-
-
-fn get_key(em: &EntityManager, table_name: &TableName, column_name: &ColumnName) {
-    #[derive(Debug, FromDao)]
-    struct ColumnConstraint{
-        not_null: bool,
-        data_type: String,
-        default: Option<String>,
-    }
-    let sql = "SELECT
-        pg_attribute.attnotnull AS not_null,
-        pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type,
-        CASE WHEN pg_attribute.atthasdef THEN pg_attrdef.adsrc
-        END as default
-    FROM pg_attribute
-	JOIN pg_class
-	    ON pg_class.oid = pg_attribute.attrelid
-	JOIN pg_type
-	    ON pg_type.oid = pg_attribute.atttypid
-	LEFT JOIN pg_attrdef
-	    ON pg_attrdef.adrelid = pg_class.oid
-	    AND pg_attrdef.adnum = pg_attribute.attnum
-	LEFT JOIN pg_namespace
-	    ON pg_namespace.oid = pg_class.relnamespace
-	LEFT JOIN pg_constraint
-	    ON pg_constraint.conrelid = pg_class.oid
-	    AND pg_attribute.attnum = ANY (pg_constraint.conkey)
-
-    WHERE pg_class.relkind IN ('r','v')
-	AND pg_attribute.attname = $1 
-	AND pg_class.relname = $2 
-	AND pg_namespace.nspname = $3 
-	AND pg_attribute.attisdropped = false
-    ";
-    let schema = match table_name.schema {
-        Some(ref schema) => schema.to_string(),
-        None => "public".to_string()
-    };
-    let columns: Result<Vec<ColumnConstraint>, DbError> = 
-    em.execute_sql_with_return(&sql, &[&column_name.name, &table_name.name, &schema]);
-    println!("columns: {:#?}", columns);
-}
 
 
 
@@ -441,31 +243,6 @@ impl FromSql for OwnedPgValue{
     }
 }
 
-#[derive(Debug)]
-pub enum PostgresError{
-    PoolInitializationError(r2d2::InitializationError),
-    GenericError(postgres::Error),
-    SqlError(postgres::Error, String),
-    ConvertStringToCharError(String),
-    ConvertNumericToBigDecimalError,
-}
-
-
-impl Error for PostgresError {
-    fn description(&self) -> &str{
-        "postgres error"
-    }
-
-    fn cause(&self) -> Option<&Error> { 
-        None
-    }
-}
-
-impl fmt::Display for PostgresError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:#?}", self)
-    }
-}
 
 
 #[cfg(test)]
@@ -605,27 +382,31 @@ mod test{
         }
     }
 
-    #[test]
-    fn extract_columns(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
-        let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
-        let table_name = TableName::from("film");
-        get_columns(&em, &table_name);
-        panic!();
+
+}
+
+#[derive(Debug)]
+pub enum PostgresError{
+    PoolInitializationError(r2d2::InitializationError),
+    GenericError(postgres::Error),
+    SqlError(postgres::Error, String),
+    ConvertStringToCharError(String),
+    ConvertNumericToBigDecimalError,
+}
+
+
+impl Error for PostgresError {
+    fn description(&self) -> &str{
+        "postgres error"
     }
 
-    #[test]
-    fn extract_table_info(){
-        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
-        let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
-        let table_name = TableName::from("film_actor");
-        get_table_key(&em, &table_name);
-        panic!();
+    fn cause(&self) -> Option<&Error> { 
+        None
+    }
+}
+
+impl fmt::Display for PostgresError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:#?}", self)
     }
 }

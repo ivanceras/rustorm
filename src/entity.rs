@@ -1,5 +1,7 @@
 use error::DbError;
-use dao::{FromDao, ToColumnNames, ToDao, ToTableName};
+use dao::{FromDao, ToDao};
+use column_name::ToColumnNames;
+use table_name::ToTableName;
 use dao::{ToValue, Value};
 use platform::DBPlatform;
 
@@ -121,11 +123,15 @@ impl EntityManager {
 mod test_pg {
     extern crate dao;
     use super::*;
-    use dao::{FromDao, ToColumnNames, ToDao, ToTableName};
+    use dao::{FromDao, ToDao}; 
+    use column_name::ToColumnNames;
+    use table_name::ToTableName;
     use pool::Pool;
     use chrono::{DateTime, NaiveDate};
     use chrono::offset::Utc;
     use uuid::Uuid;
+    use column_name;
+    use table_name;
 
     #[test]
     fn use_em() {

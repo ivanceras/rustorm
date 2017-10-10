@@ -8,7 +8,7 @@ extern crate url;
 extern crate bigdecimal;
 extern crate dao;
 #[macro_use]
-extern crate dao_codegen;
+extern crate rustorm_codegen;
 extern crate chrono;
 extern crate uuid;
 
@@ -30,6 +30,12 @@ mod platform;
 mod error;
 mod database;
 mod entity;
+mod table;
+mod column;
+mod foreign;
+mod types;
+pub mod table_name;
+pub mod column_name;
 
 
 pub use pool::Pool;
@@ -39,10 +45,12 @@ pub use dao::Value;
 pub use dao::Rows;
 pub use error::DbError;
 pub use dao::{ToDao,FromDao};
-pub use dao::{ToTableName};
-pub use dao::{ToColumnNames};
-pub use dao::TableName;
-pub use dao::ColumnName;
+pub use table::Table;
+pub use column::Column;
+pub use table_name::TableName;
+pub use table_name::ToTableName;
+pub use column_name::ColumnName;
+pub use column_name::ToColumnNames;
 
 
 #[cfg(test)]

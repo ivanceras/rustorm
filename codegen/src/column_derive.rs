@@ -22,7 +22,7 @@ pub fn impl_to_column_names(ast: &syn::MacroInput) -> quote::Tokens {
         .iter()
         .map(|&(field, _ty)| {
             quote!{
-                dao::ColumnName{
+                column_name::ColumnName{
                     name: stringify!(#field).into(),
                     table: Some(stringify!(#name).to_lowercase().into()),
                     alias: None,
@@ -34,7 +34,7 @@ pub fn impl_to_column_names(ast: &syn::MacroInput) -> quote::Tokens {
     quote! {
         impl ToColumnNames for  #name {
 
-            fn to_column_names() -> Vec<dao::ColumnName> {
+            fn to_column_names() -> Vec<column_name::ColumnName> {
                 vec![
                     #(#from_fields)*
                 ]
