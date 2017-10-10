@@ -1,4 +1,4 @@
-#![deny(warnings)]
+//#![deny(warnings)]
 #![feature(try_from)]
 #![feature(conservative_impl_trait)]
 #[macro_use]
@@ -7,7 +7,6 @@ extern crate r2d2;
 extern crate url;
 extern crate bigdecimal;
 extern crate dao;
-#[cfg(test)]
 #[macro_use]
 extern crate dao_codegen;
 extern crate chrono;
