@@ -1,73 +1,64 @@
 use r2d2;
-use r2d2_sqlite;
+use r2d2_sqlite3;
+use sqlite3;
 use error::DbError;
 use error::PlatformError;
-use rusqlite;
 use database::Database;
 use dao::{Value,Rows}; 
-use rusqlite::types::{ToSql,ToSqlOutput};
-use rusqlite::types::value_ref::ValueRef;
+use sqlite3::Type;
 
-pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>, DbError> {
+pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_sqlite3::SqliteConnectionManager>, DbError> {
     let config = r2d2::Config::default();
-    let manager = r2d2_sqlite::SqliteConnectionManager::new(db_url);
+    let manager = r2d2_sqlite3::SqliteConnectionManager::file(db_url);
     r2d2::Pool::new(config, manager)
             .map_err(|e| DbError::PlatformError(
                         PlatformError::SqliteError(
                             SqliteError::PoolInitializationError(e))))
 }
 
-pub struct Sqlite(pub r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>);
+pub struct Sqlite(pub r2d2::PooledConnection<r2d2_sqlite3::SqliteConnectionManager>);
 
 impl Database for Sqlite{
 
     fn execute_sql_with_return(&self, sql: &str, param: &[Value]) -> Result<Rows, DbError> {
-        let stmt = self.0.prepare(&sql);
+        let mut stmt = self.0.prepare(&sql);
         match stmt{
-            Ok(stmt) => {
-                let sqlite_values = to_sqlite_values(param);
-                let sql_types = to_sql_types(&sqlite_values);
-                let rows = stmt.query(&sql_types);
-                let columns = stmt.column_names();
-                let column_names: Vec<String> = columns
+            Ok(mut stmt) => {
+                let column_names: Vec<String> = stmt.column_names()
                     .iter()
                     .map(|c| c.to_string())
                     .collect();
-                 match rows{
-                     Ok(rows) => {
-                         let mut records = Rows::new(column_names);
-                         while let Some(row) = rows.next(){
-                             match row{
-                                 Ok(row) => {
-                                     let mut record: Vec<Value>  = vec![];
-                                     for (i, c) in columns.iter().enumerate(){
-                                         let value: Result<Value, rusqlite::Error> = row.get_checked(i as i32);
-                                         match value {
-                                             Ok(value) => record.push(value),
-                                             Err(e) => {
-                                                 return Err(DbError::PlatformError(
-                                                         PlatformError::SqliteError(
-                                                             SqliteError::GenericError(e))))
-                                             }
-                                         }
+                 let mut records = Rows::new(column_names);
+                 while let Ok(row) = stmt.next(){
+                     let mut record: Vec<Value>  = vec![];
+                     for i in 0..stmt.columns(){
+                         macro_rules! match_type {
+                             ($ty: ty, $variant: ident) => {
+                                     {
+                                      let raw: Result<$ty,sqlite3::Error> = stmt.read(i);
+                                      match raw{
+                                          Ok(raw) => Ok(Value::$variant(raw)),
+                                          Err(e) => Err(DbError::PlatformError(
+                                                     PlatformError::SqliteError(
+                                                         SqliteError::GenericError(e)))),
                                      }
-                                     records.push(record);
-                                },
-                                Err(e) => {
-                                     return Err(DbError::PlatformError(
-                                             PlatformError::SqliteError(
-                                                 SqliteError::GenericError(e))))
-                                }
-                            }
+                                 }
+                             }
                          }
-                         Ok(records)
+                         let ty = stmt.kind(i);
+                         let value:Result<Value,DbError> = 
+                             match ty{
+                                Type::Binary => match_type!(Vec<u8>, Blob),
+                                Type::Float => match_type!(f64, Double),
+                                Type::Integer => match_type!(i64, Bigint),
+                                Type::String => match_type!(String, Text),
+                                Type::Null => Ok(Value::Nil),
+                            };
+                         record.push(value?);
                      }
-                     Err(e) => {
-                         Err(DbError::PlatformError(
-                                 PlatformError::SqliteError(
-                                     SqliteError::SqlError(e,sql.to_string()))))
-                     },
+                     records.push(record);
                  }
+                 Ok(records)
             },
             Err(e) => {
                 Err(DbError::PlatformError(
@@ -78,43 +69,12 @@ impl Database for Sqlite{
     }
 }
 
-fn to_sqlite_values(values: &[Value]) -> Vec<SqliteValue> {
-    values.iter().map(|v| SqliteValue(v)).collect()
-}
 
-fn to_sql_types<'a>(values: &'a Vec<SqliteValue> ) -> Vec<&'a ToSql> {
-    values.iter().map(|v| &*v as &ToSql ).collect()
-}
-
-/// need to wrap Value in order to be able to implement ToSql trait for it
-/// both of which are defined from some other traits
-/// otherwise: error[E0117]: only traits defined in the current crate can be implemented for arbitrary types
-#[derive(Debug)]
-pub struct SqliteValue<'a>(&'a Value);
-#[derive(Debug)]
-pub struct OwnedSqliteValue(Value);
-
-
-impl<'a> ToSql for SqliteValue<'a>{
-
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput>{
-        match *self.0{
-            Value::Bool(ref v) => ToSql::to_sql(v),
-            _ => panic!("not yet!"),
-        }
-    }
-}
-
-impl FromSql for OwnedSqliteValue{
-    fn column_result(value: ValueRef) -> Result<Self, rusqlite::types::from_sql::FromSqlError>{
-        panic!("now what?");
-    }
-}
 
 
 #[derive(Debug)]
 pub enum SqliteError{
-    GenericError(rusqlite::Error),
-    SqlError(rusqlite::Error, String),
+    GenericError(sqlite3::Error),
+    SqlError(sqlite3::Error, String),
     PoolInitializationError(r2d2::InitializationError),
 }
