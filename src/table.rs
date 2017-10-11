@@ -1,4 +1,4 @@
-use table_name::TableName;
+use dao::TableName;
 use column::Column;
 use column::TableKey;
 

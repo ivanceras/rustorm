@@ -1,5 +1,5 @@
-use table_name::TableName;
-use column_name::ColumnName;
+use dao::TableName;
+use dao::ColumnName;
 
 
 pub struct Foreign {

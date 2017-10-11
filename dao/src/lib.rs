@@ -18,6 +18,8 @@ pub use dao::FromDao;
 pub use dao::ToDao;
 pub use column_name::ColumnName;
 pub use table_name::TableName;
+pub use table_name::ToTableName;
+pub use column_name::ToColumnNames;
 
 
 mod dao;

@@ -13,8 +13,8 @@ use postgres::types::IsNull;
 use std::error::Error;
 use std::fmt;
 use bigdecimal::BigDecimal;
-use table_name::TableName;
-use column_name::ColumnName;
+use dao::TableName;
+use dao::ColumnName;
 use dao::FromDao;
 use entity::EntityManager;
 

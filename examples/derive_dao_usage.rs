@@ -5,8 +5,6 @@ extern crate rustorm;
 
 use dao::{FromDao, ToDao};
 use rustorm::ToTableName;
-use rustorm::table_name;
-use rustorm::column_name;
 
 
 #[derive(Debug, FromDao, ToDao, ToTableName)]
