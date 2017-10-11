@@ -16,9 +16,13 @@ pub use rows::Rows;
 pub use dao::Dao;
 pub use dao::FromDao;
 pub use dao::ToDao;
+pub use column_name::ColumnName;
+pub use table_name::TableName;
 
 
 mod dao;
 mod value;
 mod error;
 mod rows;
+mod column_name;
+mod table_name;

@@ -34,8 +34,6 @@ mod table;
 mod column;
 mod foreign;
 mod types;
-pub mod table_name;
-pub mod column_name;
 
 
 pub use pool::Pool;
@@ -47,10 +45,10 @@ pub use error::DbError;
 pub use dao::{ToDao,FromDao};
 pub use table::Table;
 pub use column::Column;
-pub use table_name::TableName;
-pub use table_name::ToTableName;
-pub use column_name::ColumnName;
-pub use column_name::ToColumnNames;
+pub use dao::TableName;
+pub use dao::ToTableName;
+pub use dao::ColumnName;
+pub use dao::ToColumnNames;
 
 
 #[cfg(test)]
