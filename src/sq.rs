@@ -78,3 +78,13 @@ pub enum SqliteError{
     SqlError(sqlite3::Error, String),
     PoolInitializationError(r2d2::InitializationError),
 }
+
+
+#[cfg(test)]
+mod test{
+
+    #[test]
+    fn simple(){
+        assert!(1==2);
+    }
+}

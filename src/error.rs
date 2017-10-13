@@ -7,7 +7,7 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 }}
 
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
-    use sqlite::SqliteError;
+    use sq::SqliteError;
 }}
 
 #[derive(Debug)]
