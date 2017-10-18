@@ -4,5 +4,5 @@ use dao::ColumnName;
 
 pub struct Foreign {
     pub table: TableName,
-    pub column: ColumnName,
+    pub column: Vec<ColumnName>,
 }

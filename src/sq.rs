@@ -24,7 +24,12 @@ impl Database for Sqlite{
         let mut stmt = self.0.prepare(&sql);
         match stmt{
             Ok(mut stmt) => {
-                let column_names: Vec<String> = stmt.column_names()
+                let column_names = stmt.column_names()
+                    .map_err(|e| 
+                            DbError::PlatformError(
+                                PlatformError::SqliteError(
+                                    SqliteError::GenericError(e))))?;
+                let column_names: Vec<String> = column_names
                     .iter()
                     .map(|c| c.to_string())
                     .collect();

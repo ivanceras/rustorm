@@ -75,26 +75,34 @@ fn get_table(em: &EntityManager, table_name: &TableName ) -> Result<Table, DbErr
     let table_simple: Result<Vec<TableSimple>, DbError> =
         get_table_simple(em, table_name);
     println!("table simple: {:#?}", table_simple);
-    let columns: Result<Vec<ColumnSimple>, DbError> = 
+    let column_simples: Result<Vec<ColumnSimple>, DbError> = 
             get_columns(&em, &table_name);
-    println!("columns: {:#?}", columns);
-    if let Ok(columns) = columns{
-        for col in columns{
+    println!("column_simples: {:#?}", column_simples);
+    let mut columns = Vec::with_capacity(column_simples.len());
+    if let Ok(column_simples) = column_simples{
+        for col in column_simples{
             let column_name = ColumnName{
                 name: col.name,
                 table: Some(table_name.name.to_owned()),
                 alias: None,
             };
-            let column_constraint: Result<Vec<ColumnConstraint>, DbError> =
+            let column_constraint_simple: Result<Vec<ColumnConstraint>, DbError> =
                     get_column_constraint(em, table_name, &column_name);
+            let column = Column{
+                table: Some(table_name.clone()),
+                name: column_name,
+                comment: column_simple.comment, 
+                specification: column_specification,
+                is_inherited: false,
+            };
         }
     }
 
-    let table_keys: Result<Vec<TableKeySimple>, DbError> = 
+    let table_keys_simple: Result<Vec<TableKeySimple>, DbError> = 
             get_table_key(&em, &table_name);
-    println!("table keys: {:#?}", table_keys);
-    if let Ok(table_keys) = table_keys{
-        for table_key in table_keys{
+    println!("table keys: {:#?}", table_keys_simple);
+    if let Ok(table_keys_simple) = table_keys_simple{
+        for table_key in table_keys_simple{
             let key_member: Result<Vec<ColumnNameSimple>, DbError> =
                     get_column_name_from_key(&em, &table_key.key_name, &table_name);
             println!("key member of {}: {:#?}", table_key.key_name, key_member);
@@ -108,6 +116,19 @@ fn get_table(em: &EntityManager, table_name: &TableName ) -> Result<Table, DbErr
             }
         }
     }
+    let mut table = Table {
+        name: TableName {
+            name: table_simple.name.to_string(),
+            schema: Some(table_simple.schema.to_string()),
+            alias: None,
+        },
+        parent_table: None,
+        sub_table: vec![],
+        comment: Some(table_simple.comment.to_string()),
+        columns: columns,
+        is_view: table_simple.is_view,
+        table_key: table_keys,
+    };
     Ok(Table{
         name: table_name.to_owned(),
         parent_table: None,
