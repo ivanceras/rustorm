@@ -70,6 +70,7 @@ struct TableSimple{
 
 
 
+/*
 /// get the Table meta
 fn get_table(em: &EntityManager, table_name: &TableName ) -> Result<Table, DbError> {
     let table_simple: Result<Vec<TableSimple>, DbError> =
@@ -139,6 +140,7 @@ fn get_table(em: &EntityManager, table_name: &TableName ) -> Result<Table, DbErr
         table_key: vec![],
     })
 }
+*/
 
 
 /// get all the columns of the table
@@ -329,6 +331,7 @@ mod test{
     use super::*;
     use pool::Pool;
 
+    /*
     #[test]
     fn extract_table_info(){
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
@@ -354,4 +357,5 @@ mod test{
         assert!(table.is_ok());
         panic!();
     }
+    */
 }

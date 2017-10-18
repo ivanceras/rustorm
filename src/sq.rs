@@ -88,8 +88,4 @@ pub enum SqliteError{
 #[cfg(test)]
 mod test{
 
-    #[test]
-    fn simple(){
-        assert!(1==2);
-    }
 }
