@@ -66,94 +66,23 @@ fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>
     struct ColumnSimple{
         number: i32,
         name: String,
-        data_type: String,
         comment: Option<String>,
     }
 
     impl ColumnSimple{
-        fn to_column(&self, constraints: Vec<ColumnConstraint>) -> Column {
-            let (sql_type, capacity) = self.get_sql_type_capacity();
-            println!("sql type: {:?} capacity: {:?}", sql_type, capacity);
+        fn to_column(&self, specification: ColumnSpecification) -> Column {
             Column{
                 table: None,
                 name: ColumnName::from(&self.name),
                 comment: self.comment.to_owned(),
-                specification: ColumnSpecification{
-                    sql_type: sql_type, 
-                    capacity: capacity,
-                    constraints: constraints,
-                }
+                specification: specification,             
             }
         }
 
-        fn get_sql_type_capacity(&self) -> (SqlType, Option<Capacity>) {
-            let data_type: &str = &self.data_type;
-            println!("data_type: {}", data_type);
-            let start = data_type.find('(');
-            let end = data_type.find(')');
-            let (dtype, capacity) = if let Some(start) = start {
-                if let Some(end) = end {
-                    let dtype = &data_type[0..start];
-                    let range = &data_type[start+1..end];
-                    let capacity = if range.contains(","){
-                        let splinters = range.split(",").collect::<Vec<&str>>();
-                        assert!(splinters.len() == 2, "There should only be 2 parts");
-                        let r1:i32 = splinters[0].parse().unwrap();
-                        let r2:i32= splinters[1].parse().unwrap();
-                        Capacity::Range(r1,r2)
-                    }
-                    else{
-                        let limit:i32 = range.parse().unwrap();
-                        Capacity::Limit(limit)
-                    };
-                    println!("data_type: {}", dtype);
-                    println!("range: {}", range);
-                    (dtype, Some(capacity))
-                }else{
-                    (data_type, None)
-                }
-            }
-            else{
-                (data_type, None)
-            };
-
-            let sql_type = match dtype{
-                "boolean" => SqlType::Bool,
-                "tinyint" => SqlType::Tinyint,
-                "smallint" | "year" => SqlType::Smallint,
-                "int" | "integer" => SqlType::Int,
-                "bigint" => SqlType::Bigint,
-                "smallserial" => SqlType::SmallSerial,
-                "serial" => SqlType::Serial,
-                "bigserial" => SqlType::BigSerial,
-                "real" => SqlType::Real,
-                "float" => SqlType::Float,
-                "double" => SqlType::Double,
-                "numeric" => SqlType::Numeric,
-                "tinyblob" => SqlType::Tinyblob,
-                "mediumblob" => SqlType::Mediumblob,
-                "blob" => SqlType::Blob,
-                "longblob" => SqlType::Longblob,
-                "varbinary" => SqlType::Varbinary,
-                "char" => SqlType::Char,
-                "varchar" | "character varying" => SqlType::Varchar,
-                "tinytext" => SqlType::Tinytext,
-                "mediumtext" => SqlType::Mediumtext,
-                "text" => SqlType::Text,
-                "text[]" => SqlType::TextArray,
-                "uuid" => SqlType::Uuid,
-                "date" => SqlType::Date,
-                "timestamp" | "timestamp without time zone" => SqlType::Timestamp,
-                "timestamp with time zone" => SqlType::TimestampTz,
-                _ => SqlType::Custom(data_type.to_owned()), 
-            };
-            (sql_type, capacity)
-        }
     }
     let sql = "SELECT \
                  pg_attribute.attnum AS number, \
                  pg_attribute.attname AS name, \
-                 pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type, \
                  pg_description.description AS comment \
             FROM pg_attribute \
        LEFT JOIN pg_class \
@@ -182,14 +111,13 @@ fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>
         Ok(columns_simple) => {
             let mut columns = vec![];
             for column_simple in columns_simple{
-                let (sql_type,_) = column_simple.get_sql_type_capacity();
-                let constraint = get_column_constraint(em, table_name, &column_simple.name,
-                                                       sql_type);
-                match constraint{
-                    Ok(constraint) => {
-                        let column = column_simple.to_column(constraint);
+                let specification = get_column_specification(em, table_name, &column_simple.name);
+                match specification{
+                    Ok(specification) => {
+                        let column = column_simple.to_column(specification);
                         columns.push(column);
                     },
+                    // early return
                     Err(e) => {return Err(e);},
                 }
             }
@@ -201,19 +129,32 @@ fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>
 
 
 /// get the contrainst of each of this column
-fn get_column_constraint(em: &EntityManager, table_name: &TableName, column_name: &String, sql_type: SqlType)
-    -> Result<Vec<ColumnConstraint>, DbError> {
+fn get_column_specification(em: &EntityManager, table_name: &TableName, column_name: &String)
+    -> Result<ColumnSpecification, DbError> {
 
     /// null, datatype default value
     #[derive(Debug, FromDao)]
     struct ColumnConstraintSimple{
         not_null: bool,
+        data_type: String,
         default: Option<String>,
     }
 
     impl ColumnConstraintSimple{
 
-        fn to_column_constraints(&self, sql_type: SqlType) -> Vec<ColumnConstraint> {
+
+        fn to_column_specification(&self) -> ColumnSpecification {
+            let (sql_type, capacity) = self.get_sql_type_capacity();
+            println!("sql type: {:?} capacity: {:?}", sql_type, capacity);
+            ColumnSpecification{
+                 sql_type: sql_type, 
+                 capacity: capacity,
+                 constraints: self.to_column_constraints(),
+            }
+        }
+
+        fn to_column_constraints(&self) -> Vec<ColumnConstraint> {
+            let (sql_type, _) = self.get_sql_type_capacity();
             let mut constraints = vec![];
             if self.not_null{
                 constraints.push(ColumnConstraint::NotNull);
@@ -298,10 +239,75 @@ fn get_column_constraint(em: &EntityManager, table_name: &TableName, column_name
             constraints
         }
 
+        fn get_sql_type_capacity(&self) -> (SqlType, Option<Capacity>) {
+            let data_type: &str = &self.data_type;
+            println!("data_type: {}", data_type);
+            let start = data_type.find('(');
+            let end = data_type.find(')');
+            let (dtype, capacity) = if let Some(start) = start {
+                if let Some(end) = end {
+                    let dtype = &data_type[0..start];
+                    let range = &data_type[start+1..end];
+                    let capacity = if range.contains(","){
+                        let splinters = range.split(",").collect::<Vec<&str>>();
+                        assert!(splinters.len() == 2, "There should only be 2 parts");
+                        let r1:i32 = splinters[0].parse().unwrap();
+                        let r2:i32= splinters[1].parse().unwrap();
+                        Capacity::Range(r1,r2)
+                    }
+                    else{
+                        let limit:i32 = range.parse().unwrap();
+                        Capacity::Limit(limit)
+                    };
+                    println!("data_type: {}", dtype);
+                    println!("range: {}", range);
+                    (dtype, Some(capacity))
+                }else{
+                    (data_type, None)
+                }
+            }
+            else{
+                (data_type, None)
+            };
+
+            let sql_type = match dtype{
+                "boolean" => SqlType::Bool,
+                "tinyint" => SqlType::Tinyint,
+                "smallint" | "year" => SqlType::Smallint,
+                "int" | "integer" => SqlType::Int,
+                "bigint" => SqlType::Bigint,
+                "smallserial" => SqlType::SmallSerial,
+                "serial" => SqlType::Serial,
+                "bigserial" => SqlType::BigSerial,
+                "real" => SqlType::Real,
+                "float" => SqlType::Float,
+                "double" => SqlType::Double,
+                "numeric" => SqlType::Numeric,
+                "tinyblob" => SqlType::Tinyblob,
+                "mediumblob" => SqlType::Mediumblob,
+                "blob" => SqlType::Blob,
+                "longblob" => SqlType::Longblob,
+                "varbinary" => SqlType::Varbinary,
+                "char" => SqlType::Char,
+                "varchar" | "character varying" => SqlType::Varchar,
+                "tinytext" => SqlType::Tinytext,
+                "mediumtext" => SqlType::Mediumtext,
+                "text" => SqlType::Text,
+                "text[]" => SqlType::TextArray,
+                "uuid" => SqlType::Uuid,
+                "date" => SqlType::Date,
+                "timestamp" | "timestamp without time zone" => SqlType::Timestamp,
+                "timestamp with time zone" => SqlType::TimestampTz,
+                _ => SqlType::Custom(data_type.to_owned()), 
+            };
+            (sql_type, capacity)
+        }
+
     }
 
     let sql = "SELECT \
                pg_attribute.attnotnull AS not_null, \
+               pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type, \
      CASE WHEN pg_attribute.atthasdef THEN pg_attrdef.adsrc \
            END AS default \
           FROM pg_attribute \
@@ -330,7 +336,7 @@ fn get_column_constraint(em: &EntityManager, table_name: &TableName, column_name
     let column_constraint: Result<ColumnConstraintSimple, DbError> = 
         em.execute_sql_with_one_return(&sql, &[&column_name, &table_name.name, &schema]);
     column_constraint
-        .map(|c| c.to_column_constraints(sql_type) )
+        .map(|c| c.to_column_specification() )
 }
 
 /// get the column names involved in a Primary key or unique key
@@ -455,7 +461,7 @@ mod test{
 
 
     #[test]
-    fn column_constraint_for_actor_id(){
+    fn column_specification_for_actor_id(){
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -463,32 +469,37 @@ mod test{
         let em = em.unwrap();
         let actor_table = TableName::from("actor");
         let actor_id_column = ColumnName::from("actor_id");
-        let column = get_column_constraint(&em, &actor_table, &actor_id_column.name, SqlType::Int);
-        println!("column: {:#?}", column);
-        assert!(column.is_ok());
-        let constraints = column.unwrap();
-        println!("constraints: {:#?}", constraints);
-        assert_eq!(constraints.len(), 2);
-        assert_eq!(constraints, vec![ColumnConstraint::NotNull, ColumnConstraint::AutoIncrement]);
+        let specification = get_column_specification(&em, &actor_table, &actor_id_column.name);
+        println!("specification: {:#?}", specification);
+        assert!(specification.is_ok());
+        let specification = specification.unwrap();
+        assert_eq!(specification, ColumnSpecification{
+                           sql_type: SqlType::Int,
+                           capacity: None,
+                           constraints: vec![ColumnConstraint::NotNull,
+                           ColumnConstraint::AutoIncrement],
+                       });
+
     }
     #[test]
-    fn column_constraint_for_actor_last_updated(){
+    fn column_specification_for_actor_last_updated(){
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
         assert!(em.is_ok());
         let em = em.unwrap();
         let actor_table = TableName::from("actor");
-        let actor_id_column = ColumnName::from("last_update");
-        let column = get_column_constraint(&em, &actor_table, &actor_id_column.name,
-                                           SqlType::Timestamp);
-        println!("column: {:#?}", column);
-        assert!(column.is_ok());
-        let constraints = column.unwrap();
-        println!("constraints: {:#?}", constraints);
-        assert_eq!(constraints.len(), 2);
-        assert_eq!(constraints, vec![ColumnConstraint::NotNull,
-                   ColumnConstraint::DefaultValue(Literal::CurrentTimestamp)]);
+        let column = ColumnName::from("last_update");
+        let specification = get_column_specification(&em, &actor_table, &column.name);
+        println!("specification: {:#?}", specification);
+        assert!(specification.is_ok());
+        let specification = specification.unwrap();
+        assert_eq!(specification, ColumnSpecification{
+                           sql_type: SqlType::Timestamp,
+                           capacity: None,
+                           constraints: vec![ColumnConstraint::NotNull,
+                           ColumnConstraint::DefaultValue(Literal::CurrentTimestamp)],
+                       });
     }
 
     #[test]
