@@ -1,5 +1,6 @@
 
 
+#[derive(Debug, PartialEq)]
 pub enum SqlType{
     Bool,
     Tinyint,
@@ -14,6 +15,7 @@ pub enum SqlType{
     Real,
     Float,
     Double,
+    Numeric,
 
     Tinyblob,
     Mediumblob, 
@@ -26,11 +28,12 @@ pub enum SqlType{
     Tinytext,
     Mediumtext,
     Text,
+    TextArray,
 
     Uuid,
-    UuidRandom,
     Date,
-    DateToday,
     Timestamp,
-    TimestampNow,
+    TimestampTz,
+
+    Custom(String),
 }

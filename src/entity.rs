@@ -1,4 +1,4 @@
-use error::DbError;
+use error::{DbError,DataError};
 use dao::{FromDao, ToDao};
 use dao::ToColumnNames;
 use dao::ToTableName;
@@ -114,6 +114,24 @@ impl EntityManager {
             .collect::<Vec<Value>>();
         let rows = self.0.execute_sql_with_return(sql, &values)?;
         Ok(rows.iter().map(|dao| R::from_dao(&dao)).collect::<Vec<R>>())
+    }
+
+    pub fn execute_sql_with_one_return<'a, R>(
+        &self,
+        sql: &str,
+        params: &'a [&'a ToValue],
+    ) -> Result<R, DbError>
+    where R: FromDao,
+    {
+        let mut result: Result<Vec<R>,DbError> = self.execute_sql_with_return(sql, params);
+        match result{
+            Ok(mut result) => match result.len(){ 
+                    0 => Err(DbError::DataError(DataError::ZeroRecordReturned)),
+                    1 => Ok(result.swap_remove(0)),
+                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+            },
+            Err(e) => Err(e)
+        }
     }
 }
 

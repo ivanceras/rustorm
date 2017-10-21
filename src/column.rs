@@ -2,46 +2,57 @@ use dao::TableName;
 use dao::ColumnName;
 use types::SqlType;
 use foreign::Foreign;
+use uuid::Uuid;
 
+#[derive(Debug, PartialEq)]
 pub struct Column {
     pub table: Option<TableName>,
     pub name: ColumnName,
     pub comment: Option<String>,
     pub specification: ColumnSpecification,
-    /// determines if the column is inherited from the parent table
-    pub is_inherited: bool,
 }
 
-impl PartialEq for Column {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
 
-    fn ne(&self, other: &Self) -> bool {
-        self.name != other.name
-    }
+#[derive(Debug, PartialEq)]
+pub struct ColumnSpecification{
+    pub sql_type: SqlType,
+    pub capacity: Option<Capacity>,
+    pub constraints: Vec<ColumnConstraint>,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Capacity{
+    Limit(i32),
+    Range(i32, i32),
+}
+
+
+#[derive(Debug)]
 pub struct PrimaryKey{
     name: Option<String>,
     columns: Vec<ColumnName>,
 }
+
+#[derive(Debug)]
 pub struct UniqueKey{
     name: Option<String>,
     columns: Vec<ColumnName>,
 }
 
+#[derive(Debug)]
 pub struct ForeignKey{
     name: Option<String>,
     table: TableName,
     column: ColumnName,
 }
 
+#[derive(Debug)]
 pub struct Key{
     name: String,
     columns: Vec<ColumnName>,
 }
 
+#[derive(Debug)]
 pub enum TableKey {
     PrimaryKey(PrimaryKey),
     UniqueKey(UniqueKey),
@@ -49,22 +60,22 @@ pub enum TableKey {
     ForeignKey(ForeignKey),
 }
 
+#[derive(Debug, PartialEq)]
 pub enum ColumnConstraint {
     NotNull,
     DefaultValue(Literal),
     AutoIncrement,
 }
 
-pub struct ColumnSpecification {
-    pub sql_type: SqlType,
-    pub constraints: Vec<ColumnConstraint>,
-}
 
-
+#[derive(Debug, PartialEq)]
 pub enum Literal {
+    Bool(bool),
     Null,
     Integer(i64),
-    UuidV4, // pg: uuid_generate_v4();
+    Double(f64),
+    UuidGenerateV4, // pg: uuid_generate_v4();
+    Uuid(Uuid),
     String(String),
     Blob(Vec<u8>),
     CurrentTime, // pg: now()
@@ -87,27 +98,6 @@ impl From<String> for Literal {
 impl<'a> From<&'a str> for Literal {
     fn from(s: &'a str) -> Self {
         Literal::String(String::from(s))
-    }
-}
-
-impl ToString for Literal {
-    fn to_string(&self) -> String {
-        match *self {
-            Literal::Null => "NULL".to_string(),
-            Literal::Integer(ref i) => format!("{}", i),
-            Literal::UuidV4 => format!("uuid_generate_v4()"), //FIXME: finalize this
-            Literal::String(ref s) => format!("'{}'", s),
-            Literal::Blob(ref bv) => format!(
-                "{}",
-                bv.iter()
-                    .map(|v| format!("{:x}", v))
-                    .collect::<Vec<String>>()
-                    .join(" ")
-            ),
-            Literal::CurrentTime => "CURRENT_TIME".to_string(),
-            Literal::CurrentDate => "CURRENT_DATE".to_string(),
-            Literal::CurrentTimestamp => "CURRENT_TIMESTAMP".to_string(),
-        }
     }
 }
 

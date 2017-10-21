@@ -48,6 +48,7 @@ pub enum PlatformError {
 
 #[derive(Debug)]
 pub enum DbError {
+    DataError(DataError),
     PlatformError(PlatformError),
     ConvertError(ConvertError),
     ConnectError(ConnectError), //agnostic connection error
@@ -57,4 +58,10 @@ pub enum DbError {
 pub enum ConvertError {
     UnknownDataType,
     UnsupportedDataType(String),
+}
+
+#[derive(Debug)]
+pub enum DataError{
+    ZeroRecordReturned,
+    MoreThan1RecordReturned,
 }

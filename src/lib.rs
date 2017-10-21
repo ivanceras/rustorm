@@ -1,6 +1,7 @@
 //#![deny(warnings)]
 #![feature(try_from)]
 #![feature(conservative_impl_trait)]
+#![feature(splice)]
 #[macro_use]
 extern crate cfg_if;
 extern crate r2d2;

@@ -5,12 +5,6 @@ use column::TableKey;
 pub struct Table {
     pub name: TableName,
 
-    /// the parent table of this table when inheriting (>= postgresql 9.3)
-    pub parent_table: Option<TableName>,
-
-    /// what are the other table that inherits this
-    pub sub_table: Vec<TableName>,
-
     /// comment of this table
     pub comment: Option<String>,
 
@@ -24,13 +18,3 @@ pub struct Table {
 
 }
 
-
-impl PartialEq for Table {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        self.name != other.name
-    }
-}
