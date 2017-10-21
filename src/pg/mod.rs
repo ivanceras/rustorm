@@ -20,6 +20,7 @@ use entity::EntityManager;
 
 
 mod table_info;
+mod column_info;
 
 pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_postgres::PostgresConnectionManager>, DbError>{
     let config = r2d2::Config::default();

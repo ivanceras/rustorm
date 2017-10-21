@@ -27,38 +27,6 @@ pub enum Capacity{
 }
 
 
-#[derive(Debug)]
-pub struct PrimaryKey{
-    name: Option<String>,
-    columns: Vec<ColumnName>,
-}
-
-#[derive(Debug)]
-pub struct UniqueKey{
-    name: Option<String>,
-    columns: Vec<ColumnName>,
-}
-
-#[derive(Debug)]
-pub struct ForeignKey{
-    name: Option<String>,
-    table: TableName,
-    column: ColumnName,
-}
-
-#[derive(Debug)]
-pub struct Key{
-    name: String,
-    columns: Vec<ColumnName>,
-}
-
-#[derive(Debug)]
-pub enum TableKey {
-    PrimaryKey(PrimaryKey),
-    UniqueKey(UniqueKey),
-    Key(Key),
-    ForeignKey(ForeignKey),
-}
 
 #[derive(Debug, PartialEq)]
 pub enum ColumnConstraint {
