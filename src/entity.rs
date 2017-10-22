@@ -22,7 +22,6 @@ impl EntityManager {
                 .collect::<Vec<_>>()
                 .join(", ");
         let sql = format!("SELECT {} FROM {}", enumerated_columns, table.complete_name());
-        println!("sql: {}", sql);
         let rows = self.0.execute_sql_with_return(&sql, &[])?;
         let mut entities = vec![];
         for dao in rows.iter() {
@@ -89,8 +88,6 @@ impl EntityManager {
                 }
             }
         }
-        println!("sql: {}", sql);
-        println!("values: {:#?}", values);
         let rows = self.0.execute_sql_with_return(&sql, &values)?;
         let mut retrieved_entities = vec![];
         for dao in rows.iter() {

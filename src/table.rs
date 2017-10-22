@@ -44,7 +44,7 @@ pub struct ForeignKey{
 
 #[derive(Debug, PartialEq)]
 pub struct Key{
-    pub name: String,
+    pub name: Option<String>,
     pub columns: Vec<ColumnName>,
 }
 
@@ -55,3 +55,12 @@ pub enum TableKey {
     Key(Key),
     ForeignKey(ForeignKey),
 }
+
+
+#[derive(Debug)]
+pub struct SchemaContent {
+    pub schema: String,
+    pub tables: Vec<Table>,
+    pub views: Vec<Table>
+}
+

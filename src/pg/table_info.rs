@@ -20,15 +20,169 @@ use dao::ColumnName;
 use dao::FromDao;
 use entity::EntityManager;
 use column::{Column, ColumnConstraint, Literal, ColumnSpecification, Capacity};
-use table::{Table,TableKey,PrimaryKey, UniqueKey,ForeignKey};
+use table::{self, Table,TableKey,PrimaryKey, UniqueKey,ForeignKey, SchemaContent};
 use types::SqlType;
 use uuid::Uuid;
 use pg::column_info;
 
 
 
+/// get all database tables and views except from special schema
+fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
+    #[derive(Debug, FromDao)]
+    struct TableNameSimple{
+        name: String,
+        schema: String,
+    }
+    impl TableNameSimple{
+        fn to_tablename(self) -> TableName {
+            TableName{
+                name: self.name,
+                schema: Some(self.schema),
+                alias: None,
+            }
+        }
+    }
+    let sql = "SELECT \n
+             pg_class.relname AS name, \n
+             pg_namespace.nspname AS schema \n
+        FROM pg_class \n
+   LEFT JOIN pg_namespace \n
+          ON pg_namespace.oid = pg_class.relnamespace \n
+       WHERE \n
+             pg_class.relkind IN ('r','v') \n
+         AND pg_namespace.nspname NOT IN ('information_schema', 'pg_catalog', 'pg_toast') \n
+    ORDER BY nspname, relname \n
+            ";
+    let tablenames_simple: Result<Vec<TableNameSimple>, DbError> = em.execute_sql_with_return(sql, &[]);
+    match tablenames_simple{
+        Ok(simples) => {
+            let mut tables = Vec::with_capacity(simples.len()); 
+            for simple in simples{
+                let tablename = simple.to_tablename();
+                let table:Result<Table,DbError> = get_table(em, &tablename);
+                match table{
+                    Ok(table) => { tables.push(table);}
+                    Err(e) => { return Err(e);}
+                }
+            }
+            Ok(tables)
+        }
+        Err(e) => Err(e)
+    }
+
+}
+
+enum TableKind{
+    Table,
+    View,
+}
+impl TableKind{
+    
+    fn to_sql_char(&self) -> char {
+        match *self{
+            TableKind::Table => 'r',
+            TableKind::View => 'v',
+        }
+    }
+}
+
+/// get all database tables or views from this schema 
+fn get_schema_tables(em: &EntityManager, schema: &String, kind: &TableKind) -> Result<Vec<Table>, DbError> {
+    #[derive(Debug, FromDao)]
+    struct TableNameSimple{
+        name: String,
+        schema: String,
+    }
+    impl TableNameSimple{
+        fn to_tablename(self) -> TableName {
+            TableName{
+                name: self.name,
+                schema: Some(self.schema),
+                alias: None,
+            }
+        }
+    }
+    let sql = "SELECT \n
+             pg_class.relname AS name, \n
+             pg_namespace.nspname AS schema \n
+        FROM pg_class \n
+   LEFT JOIN pg_namespace \n
+          ON pg_namespace.oid = pg_class.relnamespace \n
+       WHERE \n
+             pg_class.relkind = $2::char \n
+         AND pg_namespace.nspname = $1
+    ORDER BY relname \n
+            ";
+    let tablenames_simple: Result<Vec<TableNameSimple>, DbError> 
+        = em.execute_sql_with_return(sql, &[schema, &kind.to_sql_char()]);
+    match tablenames_simple{
+        Ok(simples) => {
+            let mut tables = Vec::with_capacity(simples.len()); 
+            for simple in simples{
+                let tablename = simple.to_tablename();
+                let table:Result<Table,DbError> = get_table(em, &tablename);
+                match table{
+                    Ok(table) => { tables.push(table);}
+                    Err(e) => { return Err(e);}
+                }
+            }
+            Ok(tables)
+        }
+        Err(e) => Err(e)
+    }
+
+}
 
 
+/// get all user created schema
+/// special tables such as: information_schema, pg_catalog, pg_toast, pg_temp_1, pg_toast_temp_1,
+/// etc. are excluded
+fn get_schemas(em: &EntityManager) -> Result<Vec<String>, DbError> {
+    #[derive(Debug, FromDao)]
+    struct SchemaSimple{
+        schema: String
+    }
+    let sql = "SELECT \n
+             pg_namespace.nspname AS schema \n
+        FROM pg_namespace \n
+       WHERE \n
+             pg_namespace.nspname NOT IN ('information_schema', 'pg_catalog', 'pg_toast') \n
+         AND pg_namespace.nspname NOT LIKE 'pg_temp_%' \n
+         AND pg_namespace.nspname NOT LIKE 'pg_toast_temp_%' \n
+    ORDER BY nspname \n
+            ";
+    let schema_simples: Result<Vec<SchemaSimple>, DbError> = em.execute_sql_with_return(sql, &[]);
+    schema_simples
+        .map(|simple|
+             simple
+                .iter()
+                .map(|s| s.schema.to_string())
+                .collect())
+}
+
+/// get the table and views of this database organized per schema
+fn get_organized_tables(em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
+    let schemas = get_schemas(em);
+    match schemas{
+        Ok(schemas) => {
+            let mut contents = Vec::with_capacity(schemas.len());
+            for schema in schemas{
+                let tables = get_schema_tables(em, &schema, &TableKind::Table)?;
+                let views = get_schema_tables(em, &schema, &TableKind::View)?;
+                println!("views: {:#?}", views);
+                contents.push(
+                    SchemaContent{
+                        schema: schema.to_string(),
+                        tables: tables,
+                        views: views,
+                    });
+            }
+            Ok(contents)
+        }
+        Err(e) => Err(e)
+    }
+}
 
 
 
@@ -61,16 +215,16 @@ fn get_table(em: &EntityManager, table_name: &TableName) -> Result<Table, DbErro
     }
 
 
-    let sql = "SELECT pg_class.relname as name, \
-                pg_namespace.nspname as schema, \
-   CASE WHEN pg_class.relkind = 'v' THEN true ELSE false \
-         END AS is_view, 
-                obj_description(pg_class.oid) as comment \
-        FROM pg_class \
-   LEFT JOIN pg_namespace \
-          ON pg_namespace.oid = pg_class.relnamespace \
-       WHERE pg_class.relname = $1 \
-         AND pg_namespace.nspname = $2 \
+    let sql = "SELECT pg_class.relname as name, \n
+                pg_namespace.nspname as schema, \n
+   CASE WHEN pg_class.relkind = 'v' THEN true ELSE false \n
+         END AS is_view, \n
+                obj_description(pg_class.oid) as comment \n
+        FROM pg_class \n
+   LEFT JOIN pg_namespace \n
+          ON pg_namespace.oid = pg_class.relnamespace \n
+       WHERE pg_class.relname = $1 \n
+         AND pg_namespace.nspname = $2 \n
     ";
 
     let schema = match table_name.schema {
@@ -80,7 +234,6 @@ fn get_table(em: &EntityManager, table_name: &TableName) -> Result<Table, DbErro
 
     let table_simple: Result<TableSimple, DbError> = 
         em.execute_sql_with_one_return(&sql, &[&table_name.name, &schema]);
-    println!("table simple: {:#?}", table_simple);
 
     match table_simple{
         Ok(table_simple) => {
@@ -124,19 +277,19 @@ fn get_columnname_from_key(em: &EntityManager, key_name: &String, table_name: &T
     -> Result<Vec<ColumnName>, DbError> {
 
 
-    let sql = "SELECT pg_attribute.attname as column \
-        FROM pg_attribute \
-        JOIN pg_class \
-          ON pg_class.oid = pg_attribute.attrelid \
-   LEFT JOIN pg_namespace \
-          ON pg_namespace.oid = pg_class.relnamespace \
-   LEFT JOIN pg_constraint \
-          ON pg_constraint.conrelid = pg_class.oid \
-         AND pg_attribute.attnum = ANY (pg_constraint.conkey) \
-       WHERE pg_namespace.nspname = $3 \
-         AND pg_class.relname = $2 \
-         AND pg_attribute.attnum > 0 \
-         AND pg_constraint.conname = $1 \
+    let sql = "SELECT pg_attribute.attname as column \n
+        FROM pg_attribute \n
+        JOIN pg_class \n
+          ON pg_class.oid = pg_attribute.attrelid \n
+   LEFT JOIN pg_namespace \n
+          ON pg_namespace.oid = pg_class.relnamespace \n
+   LEFT JOIN pg_constraint \n
+          ON pg_constraint.conrelid = pg_class.oid \n
+         AND pg_attribute.attnum = ANY (pg_constraint.conkey) \n
+       WHERE pg_namespace.nspname = $3 \n
+         AND pg_class.relname = $2 \n
+         AND pg_attribute.attnum > 0 \n
+         AND pg_constraint.conname = $1 \n
         ";
     let schema = match table_name.schema {
         Some(ref schema) => schema.to_string(),
@@ -191,24 +344,28 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
                 TableKey::ForeignKey(foreign_key)
             }
             else {
-                panic!("todo on key");
+                let key = table::Key{
+                    name: Some(self.key_name.to_owned()),
+                    columns: get_columnname_from_key(em, &self.key_name, table_name).unwrap(),
+                };
+                TableKey::Key(key)
             }
         }
     }
 
-    let sql = "SELECT conname AS key_name, \
-        CASE WHEN contype = 'p' THEN true ELSE false END AS is_primary_key, \
-        CASE WHEN contype = 'u' THEN true ELSE false END AS is_unique_key, \
-        CASE WHEN contype = 'f' THEN true ELSE false END AS is_foreign_key \
-        FROM pg_constraint \
-   LEFT JOIN pg_class  \
-          ON pg_class.oid = pg_constraint.conrelid \
-   LEFT JOIN pg_namespace \
-          ON pg_namespace.oid = pg_class.relnamespace \
-   LEFT JOIN pg_class AS g
-          ON pg_constraint.confrelid = g.oid
-       WHERE pg_class.relname = $1 \
-         AND pg_namespace.nspname = $2 \
+    let sql = "SELECT conname AS key_name, \n
+        CASE WHEN contype = 'p' THEN true ELSE false END AS is_primary_key, \n
+        CASE WHEN contype = 'u' THEN true ELSE false END AS is_unique_key, \n
+        CASE WHEN contype = 'f' THEN true ELSE false END AS is_foreign_key \n
+        FROM pg_constraint \n
+   LEFT JOIN pg_class  \n
+          ON pg_class.oid = pg_constraint.conrelid \n
+   LEFT JOIN pg_namespace \n
+          ON pg_namespace.oid = pg_class.relnamespace \n
+   LEFT JOIN pg_class AS g \n
+          ON pg_constraint.confrelid = g.oid \n
+       WHERE pg_class.relname = $1 \n
+         AND pg_namespace.nspname = $2 \n
     ";
 
     let schema = match table_name.schema {
@@ -254,13 +411,13 @@ fn get_foreign_key(em: &EntityManager, foreign_key: &String, table_name: &TableN
             }
         }
     }
-    let sql = "SELECT conname AS key_name, \
-        pg_class.relname AS foreign_table, \
-        (SELECT pg_namespace.nspname FROM pg_namespace WHERE pg_namespace.oid = pg_class.relnamespace) AS foreign_schema \
-        FROM pg_constraint \
-   LEFT JOIN pg_class \
-          ON pg_constraint.confrelid = pg_class.oid \
-       WHERE pg_constraint.conname = $1
+    let sql = "SELECT conname AS key_name, \n
+        pg_class.relname AS foreign_table, \n
+        (SELECT pg_namespace.nspname FROM pg_namespace WHERE pg_namespace.oid = pg_class.relnamespace) AS foreign_schema \n
+        FROM pg_constraint \n
+   LEFT JOIN pg_class \n
+          ON pg_constraint.confrelid = pg_class.oid \n
+       WHERE pg_constraint.conname = $1 \n
     ";
 
     let foreign_key_simple: Result<ForeignKeySimple, DbError> = 
@@ -280,15 +437,15 @@ fn get_foreign_key(em: &EntityManager, foreign_key: &String, table_name: &TableN
 }
 
 fn get_referred_foreign_columns(em: &EntityManager, foreign_key: &String) -> Result<Vec<ColumnName>, DbError> {
-    let sql = "SELECT conname AS key_name, \
-        pg_attribute.attname AS column \
-        FROM pg_constraint \
-   LEFT JOIN pg_class \
-          ON pg_constraint.confrelid = pg_class.oid \
-   LEFT JOIN pg_attribute \
-          ON pg_attribute.attnum = ANY (pg_constraint.confkey) \
-         AND pg_class.oid = pg_attribute.attrelid \
-       WHERE pg_constraint.conname = $1
+    let sql = "SELECT conname AS key_name, \n
+        pg_attribute.attname AS column \n
+        FROM pg_constraint \n
+   LEFT JOIN pg_class \n
+          ON pg_constraint.confrelid = pg_class.oid \n
+   LEFT JOIN pg_attribute \n
+          ON pg_attribute.attnum = ANY (pg_constraint.confkey) \n
+         AND pg_class.oid = pg_attribute.attrelid \n
+       WHERE pg_constraint.conname = $1 \n
     ";
 
     let foreign_columns: Result<Vec<ColumnNameSimple>, DbError> = 
@@ -312,6 +469,33 @@ mod test{
 
     use super::*;
     use pool::Pool;
+
+    #[test]
+    fn all_schemas(){
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url);
+        assert!(em.is_ok());
+        let em = em.unwrap();
+        let schemas = get_schemas(&em);
+        println!("schemas: {:#?}", schemas);
+        assert!(schemas.is_ok());
+        let schemas = schemas.unwrap();
+        assert_eq!(schemas, vec!["public"]);
+    }
+
+    #[test]
+    fn all_tables(){
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url);
+        assert!(em.is_ok());
+        let em = em.unwrap();
+        let tables = get_all_tables(&em);
+        println!("tables: {:#?}", tables);
+        assert!(tables.is_ok());
+        assert_eq!(29, tables.unwrap().len());
+    }
 
     #[test]
     fn table_actor() {
@@ -444,6 +628,96 @@ mod test{
                        })
                    ]
             );
+    }
+
+
+    #[test]
+    fn composite_foreign_key() {
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url);
+        assert!(em.is_ok());
+        let em = em.unwrap();
+        let table = TableName::from("film_actor_awards");
+        let table = get_table(&em, &table);
+        println!("table: {:#?}", table);
+        assert!(table.is_ok());
+        assert_eq!(table.unwrap().table_key,
+                   vec![
+                   TableKey::PrimaryKey(
+                       PrimaryKey { 
+                           name: Some("film_actor_awards_pkey".into()),
+                           columns: vec![
+                                ColumnName {
+                                    name: "actor_id".into(),
+                                    table: None, 
+                                    alias: None
+                                }, 
+                                ColumnName { 
+                                    name: "film_id".into(),
+                                    table: None, 
+                                    alias: None 
+                                },
+                                ColumnName { 
+                                    name: "award".into(),
+                                    table: None, 
+                                    alias: None 
+                                }
+                           ] 
+                       }), 
+                   TableKey::ForeignKey(
+                       ForeignKey { 
+                            name: Some("film_actor_awards_actor_id_film_id_fkey".into()), 
+                            columns: vec![
+                                ColumnName{
+                                    name: "actor_id".into(),
+                                    table: None,
+                                    alias: None,
+                                },
+                                ColumnName { 
+                                    name: "film_id".into(),
+                                    table: None, 
+                                    alias: None 
+                                }
+                            ], 
+                            foreign_table: 
+                                TableName {
+                                    name: "film_actor".into(),
+                                    schema: Some("public".into()), 
+                                    alias: None 
+                                }, 
+                            referred_columns: vec![
+                                ColumnName{
+                                    name: "actor_id".into(),
+                                    table: None,
+                                    alias: None,
+                                },
+                                ColumnName { 
+                                    name: "film_id".into(),
+                                    table: None, 
+                                    alias: None 
+                                }
+                            ] 
+                       }), 
+                   ]
+            );
+    }
+
+    #[test]
+    fn organized_content(){
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url);
+        assert!(em.is_ok());
+        let em = em.unwrap();
+        let organized = get_organized_tables(&em);
+        //println!("organized: {:#?}", organized);
+        assert!(organized.is_ok());
+        let organized = organized.unwrap();
+        assert_eq!(organized.len(), 1);
+        assert_eq!(organized[0].schema, "public");
+        assert_eq!(organized[0].tables.len(), 22);
+        assert_eq!(organized[0].views.len(), 7);
     }
 }
 
