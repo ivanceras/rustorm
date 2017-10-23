@@ -88,7 +88,7 @@ impl TableKind{
 }
 
 /// get all database tables or views from this schema 
-fn get_schema_tables(em: &EntityManager, schema: &String, kind: &TableKind) -> Result<Vec<Table>, DbError> {
+fn get_schema_tables(em: &EntityManager, schema: &String, kind: &TableKind) -> Result<Vec<TableName>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableNameSimple{
         name: String,
@@ -118,16 +118,11 @@ fn get_schema_tables(em: &EntityManager, schema: &String, kind: &TableKind) -> R
         = em.execute_sql_with_return(sql, &[schema, &kind.to_sql_char()]);
     match tablenames_simple{
         Ok(simples) => {
-            let mut tables = Vec::with_capacity(simples.len()); 
+            let mut table_names = Vec::with_capacity(simples.len()); 
             for simple in simples{
-                let tablename = simple.to_tablename();
-                let table:Result<Table,DbError> = get_table(em, &tablename);
-                match table{
-                    Ok(table) => { tables.push(table);}
-                    Err(e) => { return Err(e);}
-                }
+                table_names.push(simple.to_tablename());
             }
-            Ok(tables)
+            Ok(table_names)
         }
         Err(e) => Err(e)
     }
