@@ -33,7 +33,7 @@ mod database;
 mod entity;
 mod table;
 mod column;
-mod foreign;
+pub mod foreign;
 mod types;
 
 
