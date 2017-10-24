@@ -361,6 +361,7 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
           ON pg_constraint.confrelid = g.oid \n
        WHERE pg_class.relname = $1 \n
          AND pg_namespace.nspname = $2 \n
+    ORDER BY is_primary_key DESC, is_unique_key DESC, is_foreign_key DESC
     ";
 
     let schema = match table_name.schema {
