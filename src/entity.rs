@@ -1,9 +1,10 @@
 use error::{DbError,DataError};
 use dao::{FromDao, ToDao};
 use dao::ToColumnNames;
-use dao::ToTableName;
+use dao::{ToTableName,TableName};
 use dao::{ToValue, Value};
 use platform::DBPlatform;
+use table::Table;
 
 pub struct EntityManager(pub DBPlatform);
 
@@ -29,6 +30,11 @@ impl EntityManager {
             entities.push(entity)
         }
         Ok(entities)
+    }
+
+
+    pub fn get_table(&self, table_name: &TableName) -> Result<Table, DbError> {
+        self.0.get_table(self, table_name)
     }
 
     /// insert to table the values of this struct

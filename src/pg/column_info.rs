@@ -34,9 +34,9 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
     }
 
     impl ColumnSimple{
-        fn to_column(&self, specification: ColumnSpecification) -> Column {
+        fn to_column(&self, table_name: &TableName, specification: ColumnSpecification) -> Column {
             Column{
-                table: None,
+                table: table_name.clone(),
                 name: ColumnName::from(&self.name),
                 comment: self.comment.to_owned(),
                 specification: specification,             
@@ -77,7 +77,7 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
                 let specification = get_column_specification(em, table_name, &column_simple.name);
                 match specification{
                     Ok(specification) => {
-                        let column = column_simple.to_column(specification);
+                        let column = column_simple.to_column(table_name, specification);
                         columns.push(column);
                     },
                     // early return
@@ -372,7 +372,7 @@ mod test{
         assert_eq!(columns.len(), 4);
         assert_eq!(columns[1], 
                    Column{
-                       table: None,
+                       table: actor_table,
                        name: ColumnName::from("first_name"),
                        comment: None,
                        specification: ColumnSpecification{
@@ -398,7 +398,7 @@ mod test{
         assert_eq!(columns.len(), 14);
         assert_eq!(columns[7], 
                    Column{
-                       table: None,
+                       table: table,
                        name: ColumnName::from("rental_rate"),
                        comment: None,
                        specification: ColumnSpecification{

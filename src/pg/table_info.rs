@@ -182,7 +182,7 @@ fn get_organized_tables(em: &EntityManager) -> Result<Vec<SchemaContent>, DbErro
 
 
 /// get the table definition, its columns and table_keys 
-fn get_table(em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
+pub fn get_table(em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
 
     #[derive(Debug, FromDao)]
     struct TableSimple{
@@ -489,7 +489,7 @@ mod test{
         let tables = get_all_tables(&em);
         println!("tables: {:#?}", tables);
         assert!(tables.is_ok());
-        assert_eq!(29, tables.unwrap().len());
+        assert_eq!(30, tables.unwrap().len());
     }
 
     #[test]
@@ -711,7 +711,7 @@ mod test{
         let organized = organized.unwrap();
         assert_eq!(organized.len(), 1);
         assert_eq!(organized[0].schema, "public");
-        assert_eq!(organized[0].tables.len(), 22);
+        assert_eq!(organized[0].tables.len(), 23);
         assert_eq!(organized[0].views.len(), 7);
     }
 }

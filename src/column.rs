@@ -6,10 +6,39 @@ use uuid::Uuid;
 
 #[derive(Debug, PartialEq)]
 pub struct Column {
-    pub table: Option<TableName>,
+    pub table: TableName,
     pub name: ColumnName,
     pub comment: Option<String>,
     pub specification: ColumnSpecification,
+}
+
+impl Column{
+    
+    /// check all the column constraint if any has AutoIncrement
+    pub fn is_autoincrement(&self) -> bool {
+        self.specification.constraints
+            .iter()
+            .any(|c| *c == ColumnConstraint::AutoIncrement) 
+    }
+
+
+    /// check if any of the column constraint default is generated from uuid
+    pub fn default_is_generated_uuid(&self) -> bool {
+        self.specification.constraints
+            .iter()
+            .any(|c|{
+                match *c {
+                    ColumnConstraint::DefaultValue(ref literal) => {
+                        match *literal {
+                            Literal::UuidGenerateV4 => true,
+                            _ => false
+                        }
+                    },
+                    _ => false
+                }
+            })
+    }
+
 }
 
 

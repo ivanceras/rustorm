@@ -34,7 +34,7 @@ mod entity;
 mod table;
 mod column;
 pub mod foreign;
-mod types;
+pub mod types;
 
 
 pub use pool::Pool;

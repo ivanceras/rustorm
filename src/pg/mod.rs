@@ -16,6 +16,7 @@ use bigdecimal::BigDecimal;
 use dao::TableName;
 use dao::ColumnName;
 use dao::FromDao;
+use table::Table;
 use entity::EntityManager;
 
 
@@ -87,6 +88,10 @@ impl Database for PostgresDB{
                     PlatformError::PostgresError(
                         PostgresError::SqlError(e, sql.to_string()))))
         }
+    }
+
+    fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
+        table_info::get_table(em, table_name)
     }
 
 }
