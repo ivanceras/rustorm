@@ -5,6 +5,8 @@ use dao::{ToTableName};
 use dao::{ToValue, Value};
 use platform::DBPlatform;
 use database::Database;
+use table::Table;
+use dao::TableName;
 
 pub struct EntityManager(pub DBPlatform);
 
@@ -35,6 +37,10 @@ impl EntityManager {
 
     pub fn db(&self) -> &Database { 
         &*self.0
+    }
+
+    pub fn get_table(&self, table_name: &TableName) -> Result<Table, DbError> {
+        self.db().get_table(self, table_name)
     }
 
     /// insert to table the values of this struct
