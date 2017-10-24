@@ -1,4 +1,5 @@
-//#![deny(warnings)]
+#![deny(warnings)]
+#![allow(dead_code)]
 #![feature(try_from)]
 #![feature(conservative_impl_trait)]
 #![feature(splice)]

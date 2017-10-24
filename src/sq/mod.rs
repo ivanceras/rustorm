@@ -23,8 +23,8 @@ pub struct Sqlite(pub r2d2::PooledConnection<r2d2_sqlite3::SqliteConnectionManag
 
 impl Database for Sqlite{
 
-    fn execute_sql_with_return(&self, sql: &str, param: &[Value]) -> Result<Rows, DbError> {
-        let mut stmt = self.0.prepare(&sql);
+    fn execute_sql_with_return(&self, sql: &str, _param: &[Value]) -> Result<Rows, DbError> {
+        let stmt = self.0.prepare(&sql);
         match stmt{
             Ok(mut stmt) => {
                 let column_names = stmt.column_names()
@@ -37,7 +37,7 @@ impl Database for Sqlite{
                     .map(|c| c.to_string())
                     .collect();
                  let mut records = Rows::new(column_names);
-                 while let Ok(row) = stmt.next(){
+                 while let Ok(_row) = stmt.next(){
                      let mut record: Vec<Value>  = vec![];
                      for i in 0..stmt.columns(){
                          macro_rules! match_type {
@@ -76,6 +76,7 @@ impl Database for Sqlite{
         }
     }
 
+    #[allow(unused_variables)]
     fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
         panic!("sqlite under construction")
     }

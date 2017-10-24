@@ -1,10 +1,9 @@
 use error::{DbError,DataError};
 use dao::{FromDao, ToDao};
 use dao::ToColumnNames;
-use dao::{ToTableName,TableName};
+use dao::{ToTableName};
 use dao::{ToValue, Value};
 use platform::DBPlatform;
-use table::Table;
 use database::Database;
 
 pub struct EntityManager(pub DBPlatform);
@@ -127,7 +126,7 @@ impl EntityManager {
     ) -> Result<R, DbError>
     where R: FromDao,
     {
-        let mut result: Result<Vec<R>,DbError> = self.execute_sql_with_return(sql, params);
+        let result: Result<Vec<R>,DbError> = self.execute_sql_with_return(sql, params);
         match result{
             Ok(mut result) => match result.len(){ 
                     0 => Err(DbError::DataError(DataError::ZeroRecordReturned)),
@@ -148,6 +147,7 @@ mod test_pg {
     use dao::{FromDao, ToDao}; 
     use dao::ToColumnNames;
     use dao::ToTableName;
+    use dao::TableName;
     use pool::Pool;
     use chrono::{DateTime, NaiveDate};
     use chrono::offset::Utc;

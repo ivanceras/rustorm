@@ -1,28 +1,13 @@
 //! module table_info extract the table meta data using SQL queries on pg_catalog.
 //! This is not using information_schema since there is a performance issue with it.
-use r2d2;
-use r2d2_postgres;
-use r2d2_postgres::TlsMode;
-use database::Database;
-use dao::{Value};
 use error::DbError;
-use dao::Rows;
 use dao;
-use postgres;
-use postgres::types::{self,ToSql,FromSql,Type};
-use error::PlatformError;
-use postgres::types::IsNull;
-use std::error::Error;
-use std::fmt;
-use bigdecimal::BigDecimal;
 use dao::TableName;
 use dao::ColumnName;
 use dao::FromDao;
 use entity::EntityManager;
-use column::{Column, ColumnConstraint, Literal, ColumnSpecification, Capacity};
+use column::{Column};
 use table::{self, Table,TableKey,PrimaryKey, UniqueKey,ForeignKey, SchemaContent};
-use types::SqlType;
-use uuid::Uuid;
 use pg::column_info;
 
 

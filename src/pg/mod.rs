@@ -5,7 +5,6 @@ use database::Database;
 use dao::{Value};
 use error::DbError;
 use dao::Rows;
-use dao;
 use postgres;
 use postgres::types::{self,ToSql,FromSql,Type};
 use error::PlatformError;
@@ -14,8 +13,6 @@ use std::error::Error;
 use std::fmt;
 use bigdecimal::BigDecimal;
 use dao::TableName;
-use dao::ColumnName;
-use dao::FromDao;
 use table::Table;
 use entity::EntityManager;
 
@@ -162,7 +159,6 @@ impl<'a> ToSql for PgValue<'a>{
             types::BPCHAR=> true,
             types::UUID => true,
             types::TIMESTAMPTZ | types::TIMESTAMP => true,
-            types::UNKNOWN => false,
             _ => false 
         }
  

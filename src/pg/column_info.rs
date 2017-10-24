@@ -1,24 +1,10 @@
-use r2d2;
-use r2d2_postgres;
-use r2d2_postgres::TlsMode;
-use database::Database;
-use dao::{Value};
 use error::DbError;
-use dao::Rows;
 use dao;
-use postgres;
-use postgres::types::{self,ToSql,FromSql,Type};
-use error::PlatformError;
-use postgres::types::IsNull;
-use std::error::Error;
-use std::fmt;
-use bigdecimal::BigDecimal;
 use dao::TableName;
 use dao::ColumnName;
 use dao::FromDao;
 use entity::EntityManager;
 use column::{Column, ColumnConstraint, Literal, ColumnSpecification, Capacity};
-use table::Table;
 use types::SqlType;
 use uuid::Uuid;
 
@@ -196,7 +182,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                             | SqlType::Mediumtext
                             | SqlType::Text
                                 => Literal::String(default.to_owned()),
-                        SqlType::Custom(s) => Literal::String(default.to_owned()),
+                        SqlType::Custom(_s) => Literal::String(default.to_owned()),
                         _ => panic!("not convered: {:?}", sql_type),
                     };
                     ColumnConstraint::DefaultValue(literal)

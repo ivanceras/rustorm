@@ -1,7 +1,6 @@
 use dao::TableName;
 use dao::ColumnName;
 use types::SqlType;
-use foreign::Foreign;
 use uuid::Uuid;
 
 #[derive(Debug, PartialEq)]
