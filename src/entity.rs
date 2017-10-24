@@ -5,6 +5,7 @@ use dao::{ToTableName,TableName};
 use dao::{ToValue, Value};
 use platform::DBPlatform;
 use table::Table;
+use database::Database;
 
 pub struct EntityManager(pub DBPlatform);
 
@@ -33,8 +34,8 @@ impl EntityManager {
     }
 
 
-    pub fn get_table(&self, table_name: &TableName) -> Result<Table, DbError> {
-        self.0.get_table(self, table_name)
+    pub fn db(&self) -> &Database { 
+        &*self.0
     }
 
     /// insert to table the values of this struct
@@ -445,6 +446,16 @@ mod test_pg {
             assert_eq!(event.name, name);
             assert_eq!(event.created.date(), created.date());
         }
+    }
+
+    #[test]
+    fn get_table() {
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url).unwrap();
+        let actor = TableName::from("actor");
+        let table = em.db().get_table(&em, &actor);
+        assert!(table.is_ok());
     }
 
 }

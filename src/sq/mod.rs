@@ -6,6 +6,9 @@ use error::PlatformError;
 use database::Database;
 use dao::{Value,Rows}; 
 use sqlite3::Type;
+use table::Table;
+use entity::EntityManager;
+use dao::TableName;
 
 pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_sqlite3::SqliteConnectionManager>, DbError> {
     let config = r2d2::Config::default();
@@ -71,6 +74,10 @@ impl Database for Sqlite{
                             SqliteError::SqlError(e,sql.to_string()))))
             }
         }
+    }
+
+    fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
+        panic!("sqlite under construction")
     }
 }
 
