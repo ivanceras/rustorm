@@ -87,6 +87,8 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
         not_null: bool,
         data_type: String,
         default: Option<String>,
+        is_enum: bool,
+        enum_choices: Vec<String>,
     }
 
     impl ColumnConstraintSimple{
@@ -182,6 +184,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                             | SqlType::Mediumtext
                             | SqlType::Text
                                 => Literal::String(default.to_owned()),
+                        SqlType::Enum(_name, _choices) => Literal::String(default.to_owned()),
                         SqlType::Custom(_s) => Literal::String(default.to_owned()),
                         _ => panic!("not convered: {:?}", sql_type),
                     };
@@ -221,37 +224,43 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                 (data_type, None)
             };
 
-            let sql_type = match dtype{
-                "boolean" => SqlType::Bool,
-                "tinyint" => SqlType::Tinyint,
-                "smallint" | "year" => SqlType::Smallint,
-                "int" | "integer" => SqlType::Int,
-                "bigint" => SqlType::Bigint,
-                "smallserial" => SqlType::SmallSerial,
-                "serial" => SqlType::Serial,
-                "bigserial" => SqlType::BigSerial,
-                "real" => SqlType::Real,
-                "float" => SqlType::Float,
-                "double" => SqlType::Double,
-                "numeric" => SqlType::Numeric,
-                "tinyblob" => SqlType::Tinyblob,
-                "mediumblob" => SqlType::Mediumblob,
-                "blob" => SqlType::Blob,
-                "longblob" => SqlType::Longblob,
-                "varbinary" => SqlType::Varbinary,
-                "char" => SqlType::Char,
-                "varchar" | "character varying" => SqlType::Varchar,
-                "tinytext" => SqlType::Tinytext,
-                "mediumtext" => SqlType::Mediumtext,
-                "text" => SqlType::Text,
-                "text[]" => SqlType::TextArray,
-                "uuid" => SqlType::Uuid,
-                "date" => SqlType::Date,
-                "timestamp" | "timestamp without time zone" => SqlType::Timestamp,
-                "timestamp with time zone" => SqlType::TimestampTz,
-                _ => SqlType::Custom(data_type.to_owned()), 
-            };
-            (sql_type, capacity)
+            if self.is_enum{
+                let enum_type = SqlType::Enum(data_type.to_owned(), self.enum_choices.to_owned());
+                (enum_type, None)
+            }
+            else{
+                let sql_type = match dtype{
+                    "boolean" => SqlType::Bool,
+                    "tinyint" => SqlType::Tinyint,
+                    "smallint" | "year" => SqlType::Smallint,
+                    "int" | "integer" => SqlType::Int,
+                    "bigint" => SqlType::Bigint,
+                    "smallserial" => SqlType::SmallSerial,
+                    "serial" => SqlType::Serial,
+                    "bigserial" => SqlType::BigSerial,
+                    "real" => SqlType::Real,
+                    "float" => SqlType::Float,
+                    "double" => SqlType::Double,
+                    "numeric" => SqlType::Numeric,
+                    "tinyblob" => SqlType::Tinyblob,
+                    "mediumblob" => SqlType::Mediumblob,
+                    "blob" => SqlType::Blob,
+                    "longblob" => SqlType::Longblob,
+                    "varbinary" => SqlType::Varbinary,
+                    "char" => SqlType::Char,
+                    "varchar" | "character varying" => SqlType::Varchar,
+                    "tinytext" => SqlType::Tinytext,
+                    "mediumtext" => SqlType::Mediumtext,
+                    "text" => SqlType::Text,
+                    "text[]" => SqlType::TextArray,
+                    "uuid" => SqlType::Uuid,
+                    "date" => SqlType::Date,
+                    "timestamp" | "timestamp without time zone" => SqlType::Timestamp,
+                    "timestamp with time zone" => SqlType::TimestampTz,
+                    _ => SqlType::Custom(data_type.to_owned()), 
+                };
+                (sql_type, capacity)
+            }
         }
 
     }
@@ -260,7 +269,11 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                pg_attribute.attnotnull AS not_null, 
                pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type, 
      CASE WHEN pg_attribute.atthasdef THEN pg_attrdef.adsrc 
-           END AS default 
+           END AS default ,
+               pg_type.typtype = 'e'::character AS is_enum,
+               ARRAY(SELECT enumlabel FROM pg_enum
+                        WHERE pg_enum.enumtypid = pg_attribute.atttypid)
+               AS enum_choices
           FROM pg_attribute 
           JOIN pg_class 
             ON pg_class.oid = pg_attribute.attrelid 
@@ -300,6 +313,26 @@ mod test{
     use super::*;
     use pool::Pool;
 
+
+    #[test]
+    fn column_specification_for_film_rating(){
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url);
+        assert!(em.is_ok());
+        let em = em.unwrap();
+        let table = TableName::from("film");
+        let column = ColumnName::from("rating");
+        let specification = get_column_specification(&em, &table, &column.name);
+        println!("specification: {:#?}", specification);
+        assert!(specification.is_ok());
+        let specification = specification.unwrap();
+        assert_eq!(specification, ColumnSpecification{
+                           sql_type: SqlType::Enum("mpaa_rating".into(), vec!["G".into(), "PG".into(), "PG-13".into(), "R".into(), "NC-17".into()]),
+                           capacity: None,
+                           constraints: vec![ColumnConstraint::DefaultValue(Literal::String("'G'::mpaa_rating".into()))],
+                       });
+    }
 
     #[test]
     fn column_specification_for_actor_id(){

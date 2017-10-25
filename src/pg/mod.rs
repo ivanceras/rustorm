@@ -184,6 +184,7 @@ impl FromSql for OwnedPgValue{
             types::FLOAT8 => match_type!(Double),
             types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => match_type!(Text),
             types::TEXT_ARRAY => match_type!(TextArray),
+            types::NAME_ARRAY => match_type!(TextArray),
             types::BPCHAR => {
                 let v: Result<String,_> = FromSql::from_sql(&types::TEXT, raw);
                 match v{
@@ -220,6 +221,7 @@ impl FromSql for OwnedPgValue{
             types::FLOAT4 | types::FLOAT8 => true,
             types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => true,
             types::TEXT_ARRAY => true,
+            types::NAME_ARRAY => true,
             types::BPCHAR => true,
             types::UUID => true,
             types::DATE => true,

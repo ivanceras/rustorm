@@ -29,11 +29,15 @@ pub enum SqlType{
     Mediumtext,
     Text,
     TextArray,
+    NameArray,
 
     Uuid,
     Date,
     Timestamp,
     TimestampTz,
+
+    // enum list with the choices value
+    Enum(String, Vec<String>),
 
     Custom(String),
 }
