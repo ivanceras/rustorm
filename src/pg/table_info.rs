@@ -28,17 +28,17 @@ fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
             }
         }
     }
-    let sql = "SELECT \n
-             pg_class.relname AS name, \n
-             pg_namespace.nspname AS schema \n
-        FROM pg_class \n
-   LEFT JOIN pg_namespace \n
-          ON pg_namespace.oid = pg_class.relnamespace \n
-       WHERE \n
-             pg_class.relkind IN ('r','v') \n
-         AND pg_namespace.nspname NOT IN ('information_schema', 'pg_catalog', 'pg_toast') \n
-    ORDER BY nspname, relname \n
-            ";
+    let sql = r#"SELECT 
+             pg_class.relname AS name, 
+             pg_namespace.nspname AS schema 
+        FROM pg_class 
+   LEFT JOIN pg_namespace 
+          ON pg_namespace.oid = pg_class.relnamespace 
+       WHERE 
+             pg_class.relkind IN ('r','v') 
+         AND pg_namespace.nspname NOT IN ('information_schema', 'pg_catalog', 'pg_toast') 
+    ORDER BY nspname, relname 
+            "#;
     let tablenames_simple: Result<Vec<TableNameSimple>, DbError> = em.execute_sql_with_return(sql, &[]);
     match tablenames_simple{
         Ok(simples) => {
@@ -88,17 +88,17 @@ fn get_schema_tables(em: &EntityManager, schema: &String, kind: &TableKind) -> R
             }
         }
     }
-    let sql = "SELECT \n
-             pg_class.relname AS name, \n
-             pg_namespace.nspname AS schema \n
-        FROM pg_class \n
-   LEFT JOIN pg_namespace \n
-          ON pg_namespace.oid = pg_class.relnamespace \n
-       WHERE \n
-             pg_class.relkind = $2::char \n
+    let sql = r#"SELECT 
+             pg_class.relname AS name, 
+             pg_namespace.nspname AS schema 
+        FROM pg_class 
+   LEFT JOIN pg_namespace 
+          ON pg_namespace.oid = pg_class.relnamespace 
+       WHERE 
+             pg_class.relkind = $2::char 
          AND pg_namespace.nspname = $1
-    ORDER BY relname \n
-            ";
+    ORDER BY relname 
+            "#;
     let tablenames_simple: Result<Vec<TableNameSimple>, DbError> 
         = em.execute_sql_with_return(sql, &[schema, &kind.to_sql_char()]);
     match tablenames_simple{
@@ -123,15 +123,15 @@ fn get_schemas(em: &EntityManager) -> Result<Vec<String>, DbError> {
     struct SchemaSimple{
         schema: String
     }
-    let sql = "SELECT \n
-             pg_namespace.nspname AS schema \n
-        FROM pg_namespace \n
-       WHERE \n
-             pg_namespace.nspname NOT IN ('information_schema', 'pg_catalog', 'pg_toast') \n
-         AND pg_namespace.nspname NOT LIKE 'pg_temp_%' \n
-         AND pg_namespace.nspname NOT LIKE 'pg_toast_temp_%' \n
-    ORDER BY nspname \n
-            ";
+    let sql = r#"SELECT 
+             pg_namespace.nspname AS schema 
+        FROM pg_namespace 
+       WHERE 
+             pg_namespace.nspname NOT IN ('information_schema', 'pg_catalog', 'pg_toast') 
+         AND pg_namespace.nspname NOT LIKE 'pg_temp_%' 
+         AND pg_namespace.nspname NOT LIKE 'pg_toast_temp_%' 
+    ORDER BY nspname 
+            "#;
     let schema_simples: Result<Vec<SchemaSimple>, DbError> = em.execute_sql_with_return(sql, &[]);
     schema_simples
         .map(|simple|
@@ -195,17 +195,17 @@ pub fn get_table(em: &EntityManager, table_name: &TableName) -> Result<Table, Db
     }
 
 
-    let sql = "SELECT pg_class.relname as name, \n
-                pg_namespace.nspname as schema, \n
-   CASE WHEN pg_class.relkind = 'v' THEN true ELSE false \n
-         END AS is_view, \n
-                obj_description(pg_class.oid) as comment \n
-        FROM pg_class \n
-   LEFT JOIN pg_namespace \n
-          ON pg_namespace.oid = pg_class.relnamespace \n
-       WHERE pg_class.relname = $1 \n
-         AND pg_namespace.nspname = $2 \n
-    ";
+    let sql = r#"SELECT pg_class.relname as name, 
+                pg_namespace.nspname as schema, 
+   CASE WHEN pg_class.relkind = 'v' THEN true ELSE false 
+         END AS is_view, 
+                obj_description(pg_class.oid) as comment 
+        FROM pg_class 
+   LEFT JOIN pg_namespace 
+          ON pg_namespace.oid = pg_class.relnamespace 
+       WHERE pg_class.relname = $1 
+         AND pg_namespace.nspname = $2 
+    "#;
 
     let schema = match table_name.schema {
         Some(ref schema) => schema.to_string(),
@@ -257,20 +257,20 @@ fn get_columnname_from_key(em: &EntityManager, key_name: &String, table_name: &T
     -> Result<Vec<ColumnName>, DbError> {
 
 
-    let sql = "SELECT pg_attribute.attname as column \n
-        FROM pg_attribute \n
-        JOIN pg_class \n
-          ON pg_class.oid = pg_attribute.attrelid \n
-   LEFT JOIN pg_namespace \n
-          ON pg_namespace.oid = pg_class.relnamespace \n
-   LEFT JOIN pg_constraint \n
-          ON pg_constraint.conrelid = pg_class.oid \n
-         AND pg_attribute.attnum = ANY (pg_constraint.conkey) \n
-       WHERE pg_namespace.nspname = $3 \n
-         AND pg_class.relname = $2 \n
-         AND pg_attribute.attnum > 0 \n
-         AND pg_constraint.conname = $1 \n
-        ";
+    let sql = r#"SELECT pg_attribute.attname as column 
+        FROM pg_attribute 
+        JOIN pg_class 
+          ON pg_class.oid = pg_attribute.attrelid 
+   LEFT JOIN pg_namespace 
+          ON pg_namespace.oid = pg_class.relnamespace 
+   LEFT JOIN pg_constraint 
+          ON pg_constraint.conrelid = pg_class.oid 
+         AND pg_attribute.attnum = ANY (pg_constraint.conkey) 
+       WHERE pg_namespace.nspname = $3 
+         AND pg_class.relname = $2 
+         AND pg_attribute.attnum > 0 
+         AND pg_constraint.conname = $1 
+        "#;
     let schema = match table_name.schema {
         Some(ref schema) => schema.to_string(),
         None => "public".to_string()
@@ -333,21 +333,21 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
         }
     }
 
-    let sql = "SELECT conname AS key_name, \n
-        CASE WHEN contype = 'p' THEN true ELSE false END AS is_primary_key, \n
-        CASE WHEN contype = 'u' THEN true ELSE false END AS is_unique_key, \n
-        CASE WHEN contype = 'f' THEN true ELSE false END AS is_foreign_key \n
-        FROM pg_constraint \n
-   LEFT JOIN pg_class  \n
-          ON pg_class.oid = pg_constraint.conrelid \n
-   LEFT JOIN pg_namespace \n
-          ON pg_namespace.oid = pg_class.relnamespace \n
-   LEFT JOIN pg_class AS g \n
-          ON pg_constraint.confrelid = g.oid \n
-       WHERE pg_class.relname = $1 \n
-         AND pg_namespace.nspname = $2 \n
+    let sql = r#"SELECT conname AS key_name, 
+        CASE WHEN contype = 'p' THEN true ELSE false END AS is_primary_key, 
+        CASE WHEN contype = 'u' THEN true ELSE false END AS is_unique_key, 
+        CASE WHEN contype = 'f' THEN true ELSE false END AS is_foreign_key 
+        FROM pg_constraint 
+   LEFT JOIN pg_class  
+          ON pg_class.oid = pg_constraint.conrelid 
+   LEFT JOIN pg_namespace 
+          ON pg_namespace.oid = pg_class.relnamespace 
+   LEFT JOIN pg_class AS g 
+          ON pg_constraint.confrelid = g.oid 
+       WHERE pg_class.relname = $1 
+         AND pg_namespace.nspname = $2 
     ORDER BY is_primary_key DESC, is_unique_key DESC, is_foreign_key DESC
-    ";
+    "#;
 
     let schema = match table_name.schema {
         Some(ref schema) => schema.to_string(),
@@ -392,14 +392,14 @@ fn get_foreign_key(em: &EntityManager, foreign_key: &String, table_name: &TableN
             }
         }
     }
-    let sql = "SELECT conname AS key_name, \n
-        pg_class.relname AS foreign_table, \n
-        (SELECT pg_namespace.nspname FROM pg_namespace WHERE pg_namespace.oid = pg_class.relnamespace) AS foreign_schema \n
-        FROM pg_constraint \n
-   LEFT JOIN pg_class \n
-          ON pg_constraint.confrelid = pg_class.oid \n
-       WHERE pg_constraint.conname = $1 \n
-    ";
+    let sql = r#"SELECT conname AS key_name, 
+        pg_class.relname AS foreign_table, 
+        (SELECT pg_namespace.nspname FROM pg_namespace WHERE pg_namespace.oid = pg_class.relnamespace) AS foreign_schema 
+        FROM pg_constraint 
+   LEFT JOIN pg_class 
+          ON pg_constraint.confrelid = pg_class.oid 
+       WHERE pg_constraint.conname = $1 
+    "#;
 
     let foreign_key_simple: Result<ForeignKeySimple, DbError> = 
         em.execute_sql_with_one_return(&sql, &[&foreign_key]);
@@ -418,16 +418,16 @@ fn get_foreign_key(em: &EntityManager, foreign_key: &String, table_name: &TableN
 }
 
 fn get_referred_foreign_columns(em: &EntityManager, foreign_key: &String) -> Result<Vec<ColumnName>, DbError> {
-    let sql = "SELECT conname AS key_name, \n
-        pg_attribute.attname AS column \n
-        FROM pg_constraint \n
-   LEFT JOIN pg_class \n
-          ON pg_constraint.confrelid = pg_class.oid \n
-   LEFT JOIN pg_attribute \n
-          ON pg_attribute.attnum = ANY (pg_constraint.confkey) \n
-         AND pg_class.oid = pg_attribute.attrelid \n
-       WHERE pg_constraint.conname = $1 \n
-    ";
+    let sql = r#"SELECT conname AS key_name, 
+        pg_attribute.attname AS column 
+        FROM pg_constraint 
+   LEFT JOIN pg_class 
+          ON pg_constraint.confrelid = pg_class.oid 
+   LEFT JOIN pg_attribute 
+          ON pg_attribute.attnum = ANY (pg_constraint.confkey) 
+         AND pg_class.oid = pg_attribute.attrelid 
+       WHERE pg_constraint.conname = $1 
+    "#;
 
     let foreign_columns: Result<Vec<ColumnNameSimple>, DbError> = 
         em.execute_sql_with_return(&sql, &[&foreign_key]);

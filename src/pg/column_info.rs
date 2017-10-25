@@ -30,25 +30,25 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
         }
 
     }
-    let sql = "SELECT \n
-                 pg_attribute.attnum AS number, \n
-                 pg_attribute.attname AS name, \n
-                 pg_description.description AS comment \n
-            FROM pg_attribute \n
-       LEFT JOIN pg_class \n
-              ON pg_class.oid = pg_attribute.attrelid \n
-       LEFT JOIN pg_namespace \n
-              ON pg_namespace.oid = pg_class.relnamespace \n
-       LEFT JOIN pg_description \n
-              ON pg_description.objoid = pg_class.oid \n
-             AND pg_description.objsubid = pg_attribute.attnum \n
-           WHERE \n
-                 pg_class.relname = $1 \n
-             AND pg_namespace.nspname = $2 \n
-             AND pg_attribute.attnum > 0 \n
-             AND pg_attribute.attisdropped = false \n
-        ORDER BY number \n
-    ";
+    let sql = r#"SELECT 
+                 pg_attribute.attnum AS number, 
+                 pg_attribute.attname AS name, 
+                 pg_description.description AS comment 
+            FROM pg_attribute 
+       LEFT JOIN pg_class 
+              ON pg_class.oid = pg_attribute.attrelid 
+       LEFT JOIN pg_namespace 
+              ON pg_namespace.oid = pg_class.relnamespace 
+       LEFT JOIN pg_description 
+              ON pg_description.objoid = pg_class.oid 
+             AND pg_description.objsubid = pg_attribute.attnum 
+           WHERE 
+                 pg_class.relname = $1 
+             AND pg_namespace.nspname = $2 
+             AND pg_attribute.attnum > 0 
+             AND pg_attribute.attisdropped = false 
+        ORDER BY number 
+    "#;
     let schema = match table_name.schema {
         Some(ref schema) => schema.to_string(),
         None => "public".to_string()
@@ -256,30 +256,30 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
 
     }
 
-    let sql = "SELECT DISTINCT \n
-               pg_attribute.attnotnull AS not_null, \n
-               pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type, \n
-     CASE WHEN pg_attribute.atthasdef THEN pg_attrdef.adsrc \n
-           END AS default \n
-          FROM pg_attribute \n
-          JOIN pg_class \n
-            ON pg_class.oid = pg_attribute.attrelid \n
-          JOIN pg_type \n
-            ON pg_type.oid = pg_attribute.atttypid \n
-     LEFT JOIN pg_attrdef \n
-            ON pg_attrdef.adrelid = pg_class.oid \n
-           AND pg_attrdef.adnum = pg_attribute.attnum \n
-     LEFT JOIN pg_namespace \n
-            ON pg_namespace.oid = pg_class.relnamespace \n
-     LEFT JOIN pg_constraint \n
-            ON pg_constraint.conrelid = pg_class.oid \n
-           AND pg_attribute.attnum = ANY (pg_constraint.conkey) \n
-         WHERE \n 
-               pg_attribute.attname = $1 \n
-           AND pg_class.relname = $2 \n
-           AND pg_namespace.nspname = $3 \n
-           AND pg_attribute.attisdropped = false \n
-    ";
+    let sql = r#"SELECT DISTINCT 
+               pg_attribute.attnotnull AS not_null, 
+               pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type, 
+     CASE WHEN pg_attribute.atthasdef THEN pg_attrdef.adsrc 
+           END AS default 
+          FROM pg_attribute 
+          JOIN pg_class 
+            ON pg_class.oid = pg_attribute.attrelid 
+          JOIN pg_type 
+            ON pg_type.oid = pg_attribute.atttypid 
+     LEFT JOIN pg_attrdef 
+            ON pg_attrdef.adrelid = pg_class.oid 
+           AND pg_attrdef.adnum = pg_attribute.attnum 
+     LEFT JOIN pg_namespace 
+            ON pg_namespace.oid = pg_class.relnamespace 
+     LEFT JOIN pg_constraint 
+            ON pg_constraint.conrelid = pg_class.oid 
+           AND pg_attribute.attnum = ANY (pg_constraint.conkey) 
+         WHERE  
+               pg_attribute.attname = $1 
+           AND pg_class.relname = $2 
+           AND pg_namespace.nspname = $3 
+           AND pg_attribute.attisdropped = false 
+    "#;
     let schema = match table_name.schema {
         Some(ref schema) => schema.to_string(),
         None => "public".to_string()
