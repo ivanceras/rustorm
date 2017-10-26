@@ -2,6 +2,9 @@ use dao::TableName;
 use dao::ColumnName;
 use types::SqlType;
 use uuid::Uuid;
+use dao::Value;
+use dao::FromDao;
+use dao;
 
 #[derive(Debug, PartialEq)]
 pub struct Column {
@@ -9,6 +12,7 @@ pub struct Column {
     pub name: ColumnName,
     pub comment: Option<String>,
     pub specification: ColumnSpecification,
+    pub stat: Option<ColumnStat>,
 }
 
 impl Column{
@@ -79,6 +83,14 @@ pub enum Literal {
     CurrentTimestamp, // pg: now()
 }
 
+/// column stat, derive from pg_stats
+#[derive(Debug, PartialEq, FromDao)]
+pub struct ColumnStat{
+    pub avg_width: i32, //average width of the column, (the number of characters)
+    //most_common_values: Value,//top 5 most common values
+    pub n_distinct: f32, // the number of distinct values of these column
+}
+
 impl From<i64> for Literal {
     fn from(i: i64) -> Self {
         Literal::Integer(i)
@@ -96,5 +108,7 @@ impl<'a> From<&'a str> for Literal {
         Literal::String(String::from(s))
     }
 }
+
+
 
 

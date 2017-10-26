@@ -4,7 +4,7 @@ use dao::TableName;
 use dao::ColumnName;
 use dao::FromDao;
 use entity::EntityManager;
-use column::{Column, ColumnConstraint, Literal, ColumnSpecification, Capacity};
+use column::{Column, ColumnStat, ColumnConstraint, Literal, ColumnSpecification, Capacity};
 use types::SqlType;
 use uuid::Uuid;
 
@@ -20,12 +20,13 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
     }
 
     impl ColumnSimple{
-        fn to_column(&self, table_name: &TableName, specification: ColumnSpecification) -> Column {
+        fn to_column(&self, table_name: &TableName, specification: ColumnSpecification, stat: Option<ColumnStat>) -> Column {
             Column{
                 table: table_name.clone(),
                 name: ColumnName::from(&self.name),
                 comment: self.comment.to_owned(),
                 specification: specification,             
+                stat
             }
         }
 
@@ -61,9 +62,10 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
             let mut columns = vec![];
             for column_simple in columns_simple{
                 let specification = get_column_specification(em, table_name, &column_simple.name);
+                let column_stat = get_column_stat(em, table_name, &column_simple.name)?;
                 match specification{
                     Ok(specification) => {
-                        let column = column_simple.to_column(table_name, specification);
+                        let column = column_simple.to_column(table_name, specification, column_stat);
                         columns.push(column);
                     },
                     // early return
@@ -304,6 +306,26 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
         .map(|c| c.to_column_specification() )
 }
 
+fn get_column_stat(em: &EntityManager, table_name: &TableName, column_name: &String)
+    -> Result<Option<ColumnStat>, DbError> {
+        let sql = r#"
+            SELECT avg_width,
+                n_distinct
+            FROM pg_stats
+           WHERE 
+                pg_stats.schemaname = $3
+            AND pg_stats.tablename = $2
+            AND pg_stats.attname = $1
+        "#;
+        let schema = match table_name.schema {
+            Some(ref schema) => schema.to_string(),
+            None => "public".to_string()
+        };
+        let column_stat: Result<Option<ColumnStat>, DbError>
+            = em.execute_sql_with_maybe_one_return(&sql, &[column_name, &table_name.name, &schema]);
+        column_stat
+}
+
 
 
 
@@ -398,7 +420,11 @@ mod test{
                            sql_type: SqlType::Varchar,
                            capacity: Some(Capacity::Limit(45)),
                            constraints: vec![ColumnConstraint::NotNull],
-                       }
+                       },
+                       stat: Some(ColumnStat{
+                           avg_width: 4,
+                           n_distinct: -0.22068965
+                       })
                     });
     }
 
@@ -426,7 +452,11 @@ mod test{
                            constraints: vec![ColumnConstraint::NotNull,
                                     ColumnConstraint::DefaultValue(Literal::Double(4.99))
                                 ],
-                       }
+                       },
+                       stat:Some(ColumnStat{
+                           avg_width: 6,
+                           n_distinct: 3f32,
+                       })
                     });
     }
 }

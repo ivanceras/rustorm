@@ -23,7 +23,7 @@ pub use column_name::ToColumnNames;
 
 
 mod dao;
-mod value;
+pub mod value;
 mod error;
 mod rows;
 mod column_name;

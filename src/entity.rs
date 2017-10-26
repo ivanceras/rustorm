@@ -142,6 +142,24 @@ impl EntityManager {
             Err(e) => Err(e)
         }
     }
+
+    pub fn execute_sql_with_maybe_one_return<'a, R>(
+        &self,
+        sql: &str,
+        params: &'a [&'a ToValue],
+    ) -> Result<Option<R>, DbError>
+    where R: FromDao,
+    {
+        let result: Result<Vec<R>,DbError> = self.execute_sql_with_return(sql, params);
+        match result{
+            Ok(mut result) => match result.len(){ 
+                    0 => Ok(None), 
+                    1 => Ok(Some(result.swap_remove(0))),
+                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+            },
+            Err(e) => Err(e)
+        }
+    }
 }
 
 

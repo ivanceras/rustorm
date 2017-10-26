@@ -15,6 +15,7 @@ use bigdecimal::BigDecimal;
 use dao::TableName;
 use table::Table;
 use entity::EntityManager;
+use dao::value::Array;
 
 
 mod table_info;
@@ -138,12 +139,14 @@ impl<'a> ToSql for PgValue<'a>{
             Value::Blob(ref v) => v.to_sql(ty, out),
             Value::Char(ref v) => v.to_string().to_sql(ty, out),
             Value::Text(ref v) => v.to_sql(ty, out),
-            Value::TextArray(ref v) => v.to_sql(ty, out),
             Value::Uuid(ref v) => v.to_sql(ty, out),
             Value::Date(ref v) => v.to_sql(ty, out),
             Value::Timestamp(ref v) => v.to_sql(ty, out),
             Value::BigDecimal(ref _v) => {
                 panic!("don't know what to do with these yet!");
+            }
+            Value::Array(ref v) => {
+                panic!("not yet with array!");
             }
             Value::Nil => Ok(IsNull::Yes),
         }
@@ -183,8 +186,11 @@ impl FromSql for OwnedPgValue{
             types::FLOAT4 => match_type!(Float),
             types::FLOAT8 => match_type!(Double),
             types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => match_type!(Text),
-            types::TEXT_ARRAY => match_type!(TextArray),
-            types::NAME_ARRAY => match_type!(TextArray),
+            types::TEXT_ARRAY 
+                | types::NAME_ARRAY => {
+                    FromSql::from_sql(ty, raw)
+                        .map(|v|OwnedPgValue(Value::Array(Array::Text(v))))
+                }
             types::BPCHAR => {
                 let v: Result<String,_> = FromSql::from_sql(&types::TEXT, raw);
                 match v{

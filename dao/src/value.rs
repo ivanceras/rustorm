@@ -26,38 +26,38 @@ pub enum Value {
     Blob(Vec<u8>),
     Char(char),
     Text(String),
-    TextArray(Vec<String>),
 
     Uuid(Uuid),
     Date(NaiveDate),
     Timestamp(DateTime<Utc>),
+
+    Array(Array),
 }
 
-impl Value {
-    #[doc(hidden)]
-    /// this is for debugging pupose only
-    #[allow(unused)]
-    fn get_type_name(&self) -> &'static str {
-        match *self {
-            Value::Nil => "Nil",
-            Value::Bool(_) => "bool",
-            Value::Tinyint(_) => "i8",
-            Value::Smallint(_) => "i16",
-            Value::Int(_) => "i32",
-            Value::Bigint(_) => "i64",
-            Value::Float(_) => "f32",
-            Value::Double(_) => "f64",
-            Value::BigDecimal(_) => "BigDecimal",
-            Value::Blob(_) => "Vec<u8>",
-            Value::Text(_) => "String",
-            Value::TextArray(_) => "Vec<String>",
-            Value::Char(_) => "char",
-            Value::Uuid(_) => "Uuid",
-            Value::Date(_) => "NaiveDate",
-            Value::Timestamp(_) => "DateTime",
-        }
-    }
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum Array{
+    /*
+    Bool(Vec<bool>),
+
+    Tinyint(Vec<i8>),
+    Smallint(Vec<i16>),
+    Int(Vec<i32>),
+    Bigint(Vec<i64>),
+
+    Float(Vec<f32>),
+    Double(Vec<f64>),
+    BigDecimal(Vec<BigDecimal>),
+    */
+    Text(Vec<String>),
+    /*
+    Char(Vec<char>),
+    Uuid(Vec<Uuid>),
+    Date(Vec<NaiveDate>),
+    Timestamp(Vec<DateTime<Utc>>),
+    */
 }
+
+
 
 
 /// A trait to allow passing of parameters ergonomically
@@ -81,6 +81,14 @@ macro_rules! impl_to_value {
             }
         }
     }
+}
+
+impl ToValue for Vec<String> {
+    
+    fn to_value(&self) -> Value {
+        Value::Array(Array::Text(self.to_owned()))
+    }
+
 }
 
 
@@ -152,13 +160,35 @@ impl_from!(f64, Double);
 impl_from!(Vec<u8>, Blob);
 impl_from!(char, Char);
 impl_from!(String, Text);
-impl_from!(Vec<String>, TextArray);
 impl_from!(&'static str, Text, to_string);
 impl_from!(Uuid, Uuid);
 impl_from!(NaiveDate, Date);
 impl_from!(DateTime<Utc>, Timestamp);
 
 
+impl From<Vec<String>> for Value {
+
+    fn from(f: Vec<String>) -> Value {
+        Value::Array(Array::Text(f))
+    }
+}
+
+impl <'a>From<&'a Vec<String>> for Value {
+
+    fn from(f: &Vec<String>) -> Value {
+        Value::Array(Array::Text(f.to_owned()))
+    }
+}
+
+impl <'a>From<&'a Value> for Vec<String> {
+
+    fn from(v: &'a Value) -> Vec<String> {
+        match *v{
+            Value::Array(Array::Text(ref t)) => t.to_owned(),
+            _ => panic!("unable to convert {:?} to Vec<String>", v)
+        }
+    }
+}
 
 macro_rules! impl_tryfrom {
     ($ty: ty, $ty_name: tt, $($variant: ident),*) => {
@@ -170,7 +200,7 @@ macro_rules! impl_tryfrom {
                 match *value {
                     $(Value::$variant(ref v) => Ok(v.to_owned() as $ty),
                     )*
-                    _ => Err(ConvertError::NotSupported(value.get_type_name().to_string(), $ty_name.into())),
+                    _ => Err(ConvertError::NotSupported(format!("{:?}",value), $ty_name.into())),
                 }
             }
         }
@@ -208,7 +238,7 @@ impl<'a> TryFrom<&'a Value> for String {
                 Ok(s)
             }
             _ => Err(ConvertError::NotSupported(
-                value.get_type_name().to_string(),
+                format!("{:?}",value),
                 "String".into(),
             )),
         }
@@ -223,7 +253,6 @@ impl_tryfrom!(i32, "i32", Tinyint, Smallint, Int);
 impl_tryfrom!(i64, "i64", Tinyint, Smallint, Int, Bigint);
 impl_tryfrom!(f32, "f32", Float);
 impl_tryfrom!(f64, "f64", Float, Double);
-impl_tryfrom!(Vec<String>, "Vec<String>", TextArray);
 impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
 impl_tryfrom!(char, "char", Char);
 impl_tryfrom!(Uuid, "Uuid", Uuid);
@@ -240,7 +269,6 @@ impl_tryfrom_option!(f64);
 impl_tryfrom_option!(Vec<u8>);
 impl_tryfrom_option!(char);
 impl_tryfrom_option!(String);
-impl_tryfrom_option!(Vec<String>);
 impl_tryfrom_option!(Uuid);
 impl_tryfrom_option!(NaiveDate);
 impl_tryfrom_option!(DateTime<Utc>);
