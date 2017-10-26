@@ -28,8 +28,6 @@ pub enum SqlType{
     Tinytext,
     Mediumtext,
     Text,
-    TextArray,
-    NameArray,
 
     Uuid,
     Date,
@@ -62,8 +60,6 @@ pub enum ArrayType{
     Tinytext,
     Mediumtext,
     Text,
-    TextArray,
-    NameArray,
 
     Uuid,
     Date,

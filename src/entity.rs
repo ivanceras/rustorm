@@ -81,7 +81,7 @@ impl EntityManager {
             .join(", ");
         let return_columns = R::to_column_names();
         sql += &format!(
-            "RETURNING {}",
+            "\nRETURNING \n{}",
             return_columns
                 .iter()
                 .map(|rc| rc.name.to_owned())

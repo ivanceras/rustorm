@@ -145,9 +145,10 @@ impl<'a> ToSql for PgValue<'a>{
             Value::BigDecimal(ref _v) => {
                 panic!("don't know what to do with these yet!");
             }
-            Value::Array(ref v) => {
-                panic!("not yet with array!");
-            }
+            Value::Array(ref v) => 
+                match *v{
+                    Array::Text(ref ar) => ar.to_sql(ty, out),
+                }
             Value::Nil => Ok(IsNull::Yes),
         }
     }

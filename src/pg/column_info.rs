@@ -7,6 +7,7 @@ use entity::EntityManager;
 use column::{Column, ColumnStat, ColumnConstraint, Literal, ColumnSpecification, Capacity};
 use types::SqlType;
 use uuid::Uuid;
+use types::ArrayType;
 
 /// get all the columns of the table
 pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>, DbError> {
@@ -254,7 +255,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "tinytext" => SqlType::Tinytext,
                     "mediumtext" => SqlType::Mediumtext,
                     "text" => SqlType::Text,
-                    "text[]" => SqlType::TextArray,
+                    "text[]" => SqlType::ArrayType(ArrayType::Text),
                     "uuid" => SqlType::Uuid,
                     "date" => SqlType::Date,
                     "timestamp" | "timestamp without time zone" => SqlType::Timestamp,
@@ -334,7 +335,45 @@ mod test{
 
     use super::*;
     use pool::Pool;
+    use dao::ToDao;
+    use dao::ToColumnNames;
+    use dao::ToTableName;
+    use chrono::offset::Utc;
+    use chrono::DateTime;
 
+
+    #[test]
+    fn insert_text_array(){
+        #[derive(Debug, ToDao, ToColumnNames, ToTableName)]
+        struct Film{
+            title: String, 
+            language_id: i16,
+            special_features: Vec<String>, 
+        }
+
+        #[derive(Debug, FromDao, ToColumnNames)]
+        struct RetrieveFilm{
+            film_id: i32,
+            title: String, 
+            language_id: i16,
+            special_features: Vec<String>, 
+            last_update: DateTime<Utc>,
+        }
+
+        let film1 = Film{
+            title: "Hurry potter and the prisoner is escaing".into(),
+            language_id: 1,
+            special_features: vec!["fantasy".into(), "magic".into()],
+        };
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url);
+        assert!(em.is_ok());
+        let em = em.unwrap();
+        let result: Result<Vec<RetrieveFilm>,DbError> = em.insert(&[&film1]);
+        println!("result: {:#?}",result);
+        assert!(result.is_ok());
+    }
 
     #[test]
     fn column_specification_for_film_rating(){
@@ -411,21 +450,18 @@ mod test{
         assert!(columns.is_ok());
         let columns = columns.unwrap();
         assert_eq!(columns.len(), 4);
-        assert_eq!(columns[1], 
-                   Column{
-                       table: actor_table,
-                       name: ColumnName::from("first_name"),
-                       comment: None,
-                       specification: ColumnSpecification{
+        assert_eq!(columns[1].name, ColumnName{
+                                    name: "first_name".to_string(),
+                                    table: None, 
+                                    alias: None
+        });
+        assert_eq!(columns[1].specification, 
+                       ColumnSpecification{
                            sql_type: SqlType::Varchar,
                            capacity: Some(Capacity::Limit(45)),
                            constraints: vec![ColumnConstraint::NotNull],
-                       },
-                       stat: Some(ColumnStat{
-                           avg_width: 4,
-                           n_distinct: -0.22068965
-                       })
-                    });
+                       }
+               );
     }
 
     #[test]
@@ -441,22 +477,15 @@ mod test{
         assert!(columns.is_ok());
         let columns = columns.unwrap();
         assert_eq!(columns.len(), 14);
-        assert_eq!(columns[7], 
-                   Column{
-                       table: table,
-                       name: ColumnName::from("rental_rate"),
-                       comment: None,
-                       specification: ColumnSpecification{
+        assert_eq!(columns[7].name, ColumnName::from("rental_rate"));
+        assert_eq!(columns[7].specification, 
+                       ColumnSpecification{
                            sql_type: SqlType::Numeric,
                            capacity: Some(Capacity::Range(4,2)),
                            constraints: vec![ColumnConstraint::NotNull,
                                     ColumnConstraint::DefaultValue(Literal::Double(4.99))
                                 ],
-                       },
-                       stat:Some(ColumnStat{
-                           avg_width: 6,
-                           n_distinct: 3f32,
-                       })
-                    });
+                       }
+                 );
     }
 }
