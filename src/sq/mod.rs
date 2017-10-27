@@ -80,6 +80,11 @@ impl Database for Sqlite{
     fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
         panic!("sqlite under construction")
     }
+
+    #[allow(unused_variables)]
+    fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError> {
+        panic!("sqlite under construction")
+    }
 }
 
 

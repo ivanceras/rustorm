@@ -92,6 +92,10 @@ impl Database for PostgresDB{
         table_info::get_table(em, table_name)
     }
 
+    fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError> {
+        table_info::get_all_tables(em)
+    }
+
 }
 
 

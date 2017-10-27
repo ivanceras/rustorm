@@ -32,9 +32,8 @@ mod platform;
 mod error;
 mod database;
 mod entity;
-mod table;
+pub mod table;
 pub mod column;
-pub mod foreign;
 pub mod types;
 
 

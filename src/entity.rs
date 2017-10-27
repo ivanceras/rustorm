@@ -39,8 +39,14 @@ impl EntityManager {
         &*self.0
     }
 
+    /// get the table from database based on this column name
     pub fn get_table(&self, table_name: &TableName) -> Result<Table, DbError> {
         self.db().get_table(self, table_name)
+    }
+
+    /// get all the user table and views from the database
+    pub fn get_all_tables(&self) -> Result<Vec<Table>, DbError> {
+        self.db().get_all_tables(self)
     }
 
     /// insert to table the values of this struct

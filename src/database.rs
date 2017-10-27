@@ -10,4 +10,6 @@ pub trait Database {
     fn execute_sql_with_return(&self, sql: &str, param: &[Value]) -> Result<Rows, DbError>;
 
     fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError>;
+
+    fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError>;
 }

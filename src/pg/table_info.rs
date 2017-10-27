@@ -13,7 +13,7 @@ use pg::column_info;
 
 
 /// get all database tables and views except from special schema
-fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
+pub fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableNameSimple{
         name: String,

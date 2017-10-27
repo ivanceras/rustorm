@@ -19,6 +19,48 @@ pub struct Table {
 
 }
 
+impl Table {
+
+    pub fn get_primary_columns(&self) -> Vec<&ColumnName> {
+        let mut primary:Vec<&ColumnName> = vec![];
+        for key in &self.table_key{
+            match *key{
+                TableKey::PrimaryKey(ref pk) => 
+                {
+                    for col in &pk.columns{
+                        primary.push(col)
+                    }
+                }
+                _ => (),
+            }
+        }
+        primary
+    }
+
+    pub fn get_foreign_keys(&self) -> Vec<&ForeignKey> {
+        let mut foreign:Vec<&ForeignKey> = vec![];
+        for key in &self.table_key{
+            match *key{
+                TableKey::ForeignKey(ref fk) => 
+                    foreign.push(fk),     
+                _ => (),
+            }
+        }
+        foreign
+    }
+
+    pub fn get_foreign_columns(&self) -> Vec<&ColumnName> {
+        let mut foreign_columns = vec![];
+        let foreign_keys = self.get_foreign_keys();
+        for fk in &foreign_keys{
+            for fk_column in &fk.columns{
+                foreign_columns.push(fk_column);
+            }
+        }
+        foreign_columns
+    }
+}
+
 
 #[derive(Debug, PartialEq)]
 pub struct PrimaryKey{
@@ -69,7 +111,7 @@ pub struct OrganizedTables(Vec<SchemaContent>);
 
 impl OrganizedTables{
 
-    fn get_all_tables(&self) -> Vec<&TableName> {
+    fn get_all_tablenames(&self) -> Vec<&TableName> {
         let mut tablenames:Vec<&TableName> = vec![]; 
         for sc in self.0.iter(){
             tablenames.extend(&sc.tables);
@@ -85,7 +127,7 @@ impl OrganizedTables{
         tablenames
     }
 
-    fn get_all_tables_and_views(&self) -> Vec<&TableName> {
+    fn get_all_tablenames_and_views(&self) -> Vec<&TableName> {
         let mut tablenames:Vec<&TableName> = vec![]; 
         for sc in self.0.iter(){
             tablenames.extend(&sc.tables);
