@@ -42,6 +42,7 @@ impl Column{
             })
     }
 
+
 }
 
 
@@ -52,10 +53,30 @@ pub struct ColumnSpecification{
     pub constraints: Vec<ColumnConstraint>,
 }
 
+impl ColumnSpecification {
+
+    pub fn get_limit(&self) -> Option<i32> {
+        match self.capacity{
+            Some(ref capacity) => capacity.get_limit(),
+            None => None,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Capacity{
     Limit(i32),
     Range(i32, i32),
+}
+
+impl Capacity{
+
+    fn get_limit(&self) -> Option<i32> {
+        match *self{
+            Capacity::Limit(limit) => Some(limit),
+            Capacity::Range(_whole, _decimal)  => None,
+        }
+    }
 }
 
 
