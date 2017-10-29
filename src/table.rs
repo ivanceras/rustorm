@@ -49,6 +49,16 @@ impl Table {
         foreign
     }
 
+    pub fn get_foreign_key_to_table(&self, table_name: &TableName) -> Option<&ForeignKey> {
+        let foreign_keys:Vec<&ForeignKey> = self.get_foreign_keys();
+        for fk in foreign_keys{
+            if fk.foreign_table == *table_name{
+                return Some(fk)
+            }
+        }
+        None
+    }
+
     pub fn get_foreign_columns(&self) -> Vec<&ColumnName> {
         let mut foreign_columns = vec![];
         let foreign_keys = self.get_foreign_keys();
