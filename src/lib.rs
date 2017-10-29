@@ -50,6 +50,7 @@ pub use dao::TableName;
 pub use dao::ToTableName;
 pub use dao::ColumnName;
 pub use dao::ToColumnNames;
+pub use entity::EntityManager;
 
 
 #[cfg(test)]

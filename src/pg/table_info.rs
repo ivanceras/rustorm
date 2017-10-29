@@ -142,7 +142,7 @@ fn get_schemas(em: &EntityManager) -> Result<Vec<String>, DbError> {
 }
 
 /// get the table and views of this database organized per schema
-fn get_organized_tables(em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
+pub fn get_organized_tables(em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
     let schemas = get_schemas(em);
     match schemas{
         Ok(schemas) => {
@@ -154,7 +154,7 @@ fn get_organized_tables(em: &EntityManager) -> Result<Vec<SchemaContent>, DbErro
                 contents.push(
                     SchemaContent{
                         schema: schema.to_string(),
-                        tables: tables,
+                        tablenames: tables,
                         views: views,
                     });
             }
@@ -697,7 +697,7 @@ mod test{
         let organized = organized.unwrap();
         assert_eq!(organized.len(), 1);
         assert_eq!(organized[0].schema, "public");
-        assert_eq!(organized[0].tables.len(), 23);
+        assert_eq!(organized[0].tablenames.len(), 23);
         assert_eq!(organized[0].views.len(), 7);
     }
 }

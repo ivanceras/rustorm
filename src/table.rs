@@ -59,6 +59,11 @@ impl Table {
         }
         foreign_columns
     }
+
+    pub fn get_column(&self, column_name: &ColumnName) -> Option<&Column> {
+        self.columns.iter()
+            .find(|c|c.name == *column_name)
+    }
 }
 
 
@@ -102,38 +107,7 @@ pub enum TableKey {
 #[derive(Debug)]
 pub struct SchemaContent {
     pub schema: String,
-    pub tables: Vec<TableName>,
+    pub tablenames: Vec<TableName>,
     pub views: Vec<TableName>
-}
-
-
-pub struct OrganizedTables(Vec<SchemaContent>);
-
-impl OrganizedTables{
-
-    fn get_all_tablenames(&self) -> Vec<&TableName> {
-        let mut tablenames:Vec<&TableName> = vec![]; 
-        for sc in self.0.iter(){
-            tablenames.extend(&sc.tables);
-        }
-        tablenames
-    }
-
-    fn get_all_views(&self) -> Vec<&TableName> {
-        let mut tablenames:Vec<&TableName> = vec![]; 
-        for sc in self.0.iter(){
-            tablenames.extend(&sc.views);
-        }
-        tablenames
-    }
-
-    fn get_all_tablenames_and_views(&self) -> Vec<&TableName> {
-        let mut tablenames:Vec<&TableName> = vec![]; 
-        for sc in self.0.iter(){
-            tablenames.extend(&sc.tables);
-            tablenames.extend(&sc.views);
-        }
-        tablenames
-    }
 }
 

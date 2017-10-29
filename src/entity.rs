@@ -6,6 +6,7 @@ use dao::{ToValue, Value};
 use platform::DBPlatform;
 use database::Database;
 use table::Table;
+use table::SchemaContent;
 use dao::TableName;
 
 pub struct EntityManager(pub DBPlatform);
@@ -47,6 +48,11 @@ impl EntityManager {
     /// get all the user table and views from the database
     pub fn get_all_tables(&self) -> Result<Vec<Table>, DbError> {
         self.db().get_all_tables(self)
+    }
+
+    /// get all table and views grouped per schema 
+    pub fn get_grouped_tables(&self) -> Result<Vec<SchemaContent>, DbError> {
+        self.db().get_grouped_tables(self)
     }
 
     /// insert to table the values of this struct

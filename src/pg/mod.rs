@@ -16,6 +16,7 @@ use dao::TableName;
 use table::Table;
 use entity::EntityManager;
 use dao::value::Array;
+use table::SchemaContent;
 
 
 mod table_info;
@@ -94,6 +95,10 @@ impl Database for PostgresDB{
 
     fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError> {
         table_info::get_all_tables(em)
+    }
+
+    fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
+        table_info::get_organized_tables(em)
     }
 
 }
