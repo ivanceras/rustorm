@@ -197,7 +197,8 @@ impl FromSql for OwnedPgValue{
             types::FLOAT8 => match_type!(Double),
             types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => match_type!(Text),
             types::TEXT_ARRAY 
-                | types::NAME_ARRAY => {
+                | types::NAME_ARRAY 
+                | types::VARCHAR_ARRAY => {
                     FromSql::from_sql(ty, raw)
                         .map(|v|OwnedPgValue(Value::Array(Array::Text(v))))
                 }
@@ -236,8 +237,7 @@ impl FromSql for OwnedPgValue{
             types::INT2 | types::INT4 | types::INT8 => true,
             types::FLOAT4 | types::FLOAT8 => true,
             types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => true,
-            types::TEXT_ARRAY => true,
-            types::NAME_ARRAY => true,
+            types::TEXT_ARRAY | types::NAME_ARRAY | types::VARCHAR_ARRAY => true,
             types::BPCHAR => true,
             types::UUID => true,
             types::DATE => true,

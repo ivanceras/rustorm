@@ -137,6 +137,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                             },
                         SqlType::Float
                             | SqlType::Double
+                            | SqlType::Real
                             | SqlType::Numeric => {
                                 let v: Result<f64,_> = default.parse();
                                 match v{
@@ -252,6 +253,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "varbinary" => SqlType::Varbinary,
                     "char" => SqlType::Char,
                     "varchar" | "character varying" => SqlType::Varchar,
+                    "varchar[]" | "character varying[]" => SqlType::ArrayType(ArrayType::Text),
                     "tinytext" => SqlType::Tinytext,
                     "mediumtext" => SqlType::Mediumtext,
                     "text" => SqlType::Text,
