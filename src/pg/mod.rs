@@ -17,6 +17,7 @@ use table::Table;
 use entity::EntityManager;
 use dao::value::Array;
 use table::SchemaContent;
+use chrono::NaiveTime;
 
 
 mod table_info;
@@ -151,6 +152,7 @@ impl<'a> ToSql for PgValue<'a>{
             Value::Uuid(ref v) => v.to_sql(ty, out),
             Value::Date(ref v) => v.to_sql(ty, out),
             Value::Timestamp(ref v) => v.to_sql(ty, out),
+            Value::Time(ref v) => v.to_sql(ty, out),
             Value::BigDecimal(ref _v) => {
                 panic!("don't know what to do with these yet!");
             }
@@ -171,7 +173,7 @@ impl<'a> ToSql for PgValue<'a>{
             types::TEXT_ARRAY => true,
             types::BPCHAR=> true,
             types::UUID => true,
-            types::TIMESTAMPTZ | types::TIMESTAMP => true,
+            types::TIMESTAMPTZ | types::TIMESTAMP | types::TIME => true,
             _ => false 
         }
  
@@ -218,6 +220,7 @@ impl FromSql for OwnedPgValue{
             types::UUID => match_type!(Uuid),
             types::DATE => match_type!(Date),
             types::TIMESTAMPTZ | types::TIMESTAMP => match_type!(Timestamp),
+            types::TIME => match_type!(Time),
             types::BYTEA => match_type!(Blob),
             types::NUMERIC => {
                 println!("raw: {:?}", raw);
@@ -241,7 +244,7 @@ impl FromSql for OwnedPgValue{
             types::BPCHAR => true,
             types::UUID => true,
             types::DATE => true,
-            types::TIMESTAMPTZ | types::TIMESTAMP => true,
+            types::TIMESTAMPTZ | types::TIMESTAMP | types::TIME => true,
             types::BYTEA => true,
             types::NUMERIC => true,
             _ => panic!("can not accept type {:?}", ty), 

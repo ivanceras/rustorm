@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use chrono::NaiveDate;
+use chrono::{NaiveDate,NaiveTime};
 use chrono::{DateTime, Utc};
 use std::convert::TryFrom;
 use error::ConvertError;
@@ -29,6 +29,7 @@ pub enum Value {
 
     Uuid(Uuid),
     Date(NaiveDate),
+    Time(NaiveTime),
     Timestamp(DateTime<Utc>),
 
     Array(Array),
