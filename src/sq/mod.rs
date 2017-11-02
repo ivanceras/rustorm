@@ -9,6 +9,7 @@ use sqlite3::Type;
 use table::Table;
 use entity::EntityManager;
 use dao::TableName;
+use table::SchemaContent;
 
 pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_sqlite3::SqliteConnectionManager>, DbError> {
     let config = r2d2::Config::default();
@@ -84,6 +85,10 @@ impl Database for Sqlite{
     #[allow(unused_variables)]
     fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError> {
         panic!("sqlite under construction")
+    }
+    #[allow(unused_variables)]
+    fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
+        panic!("not yet!");
     }
 }
 
