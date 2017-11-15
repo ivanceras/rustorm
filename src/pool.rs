@@ -11,7 +11,7 @@ use platform::DBPlatform;
 use entity::EntityManager;
 use error::DbError;
 
-pub struct Pool<'a>(BTreeMap<&'a str, ConnPool>);
+pub struct Pool(BTreeMap<String, ConnPool>);
 pub enum ConnPool {
     #[cfg(feature = "with-postgres")] PoolPg(r2d2::Pool<PostgresConnectionManager>),
 }
@@ -21,13 +21,13 @@ pub enum PooledConn {
 }
 
 
-impl<'a> Pool<'a> {
+impl Pool {
     pub fn new() -> Self {
         Pool(BTreeMap::new())
     }
 
     /// ensure that a connection pool for this db_url exist
-    fn ensure(&mut self, db_url: &'a str) -> Result<(), DbError> {
+    fn ensure(&mut self, db_url: &str) -> Result<(), DbError> {
         let platform: Result<Platform, _> = TryFrom::try_from(db_url);
         match platform {
             Ok(platform) => match platform {
@@ -37,7 +37,7 @@ impl<'a> Pool<'a> {
                     match pool_pg{
                         Ok(pool_pg) => {
                             if self.0.get(db_url).is_none() {
-                                self.0.insert(db_url, ConnPool::PoolPg(pool_pg));
+                                self.0.insert(db_url.to_string(), ConnPool::PoolPg(pool_pg));
                             }
                             Ok(())
                         },
@@ -51,7 +51,7 @@ impl<'a> Pool<'a> {
     }
 
     /// get the pool for this specific db_url, create one if it doesn't have yet.
-    fn get_pool(&mut self, db_url: &'a str) -> Result<&ConnPool, DbError> {
+    fn get_pool(&mut self, db_url: &str) -> Result<&ConnPool, DbError> {
         self.ensure(db_url)?;
         let platform: Result<Platform, ParseError> = TryFrom::try_from(db_url);
         match platform {
@@ -72,7 +72,7 @@ impl<'a> Pool<'a> {
     }
 
     /// get a usable database connection from
-    pub fn connect(&mut self, db_url: &'a str) -> Result<PooledConn, DbError> {
+    pub fn connect(&mut self, db_url: &str) -> Result<PooledConn, DbError> {
         let pool = self.get_pool(db_url)?;
         match *pool {
             #[cfg(feature = "with-postgres")]
@@ -87,7 +87,7 @@ impl<'a> Pool<'a> {
     }
 
     /// get a database instance with a connection, ready to send sql statements
-    pub fn db(&mut self, db_url: &'a str) -> Result<DBPlatform, DbError> {
+    pub fn db(&mut self, db_url: &str) -> Result<DBPlatform, DbError> {
         let pooled_conn = self.connect(db_url)?;
         match pooled_conn {
             #[cfg(feature = "with-postgres")]
@@ -95,7 +95,7 @@ impl<'a> Pool<'a> {
         }
     }
 
-    pub fn em(&mut self, db_url: &'a str) -> Result<EntityManager, DbError> {
+    pub fn em(&mut self, db_url: &str) -> Result<EntityManager, DbError> {
         let db = self.db(db_url)?;
         Ok(EntityManager(db))
     }
