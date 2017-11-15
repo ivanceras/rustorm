@@ -1,5 +1,5 @@
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct TableName {
     pub name: String,
     pub schema: Option<String>,
