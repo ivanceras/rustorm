@@ -244,7 +244,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "bigserial" => SqlType::BigSerial,
                     "real" => SqlType::Real,
                     "float" => SqlType::Float,
-                    "double" => SqlType::Double,
+                    "double" | "double precision" => SqlType::Double,
                     "numeric" => SqlType::Numeric,
                     "tinyblob" => SqlType::Tinyblob,
                     "mediumblob" => SqlType::Mediumblob,
