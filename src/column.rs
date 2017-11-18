@@ -6,7 +6,7 @@ use dao::Value;
 use dao::FromDao;
 use dao;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Column {
     pub table: TableName,
     pub name: ColumnName,
@@ -46,7 +46,7 @@ impl Column{
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ColumnSpecification{
     pub sql_type: SqlType,
     pub capacity: Option<Capacity>,
@@ -63,7 +63,7 @@ impl ColumnSpecification {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Capacity{
     Limit(i32),
     Range(i32, i32),
@@ -81,7 +81,7 @@ impl Capacity{
 
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ColumnConstraint {
     NotNull,
     DefaultValue(Literal),
@@ -89,7 +89,7 @@ pub enum ColumnConstraint {
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Literal {
     Bool(bool),
     Null,
@@ -105,7 +105,7 @@ pub enum Literal {
 }
 
 /// column stat, derive from pg_stats
-#[derive(Debug, PartialEq, FromDao)]
+#[derive(Debug, PartialEq, FromDao, Clone)]
 pub struct ColumnStat{
     pub avg_width: i32, //average width of the column, (the number of characters)
     //most_common_values: Value,//top 5 most common values

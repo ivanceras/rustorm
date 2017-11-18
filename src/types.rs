@@ -1,6 +1,6 @@
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum SqlType{
     Bool,
     Tinyint,
@@ -42,7 +42,7 @@ pub enum SqlType{
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ArrayType{
     Bool,
     Tinyint,

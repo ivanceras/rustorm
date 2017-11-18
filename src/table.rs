@@ -2,7 +2,7 @@ use dao::TableName;
 use column::Column;
 use dao::ColumnName;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Table {
     pub name: TableName,
 
@@ -77,19 +77,19 @@ impl Table {
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct PrimaryKey{
     pub name: Option<String>,
     pub columns: Vec<ColumnName>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct UniqueKey{
     pub name: Option<String>,
     pub columns: Vec<ColumnName>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ForeignKey{
     pub name: Option<String>,
     pub columns: Vec<ColumnName>,
@@ -99,13 +99,13 @@ pub struct ForeignKey{
     pub referred_columns: Vec<ColumnName>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Key{
     pub name: Option<String>,
     pub columns: Vec<ColumnName>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TableKey {
     PrimaryKey(PrimaryKey),
     UniqueKey(UniqueKey),

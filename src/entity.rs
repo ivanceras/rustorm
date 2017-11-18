@@ -47,6 +47,7 @@ impl EntityManager {
 
     /// get all the user table and views from the database
     pub fn get_all_tables(&self) -> Result<Vec<Table>, DbError> {
+        println!("EXPENSIVE DB OPERATION: get_all_tables");
         self.db().get_all_tables(self)
     }
 
