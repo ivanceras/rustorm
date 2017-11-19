@@ -257,6 +257,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "tinytext" => SqlType::Tinytext,
                     "mediumtext" => SqlType::Mediumtext,
                     "text" => SqlType::Text,
+                    "json" => SqlType::Json,
                     "text[]" => SqlType::ArrayType(ArrayType::Text),
                     "uuid" => SqlType::Uuid,
                     "date" => SqlType::Date,
@@ -490,4 +491,5 @@ mod test{
                        }
                  );
     }
+
 }

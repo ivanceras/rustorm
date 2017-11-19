@@ -21,6 +21,10 @@ pub struct Table {
 
 impl Table {
 
+    pub fn complete_name(&self) -> String {
+        self.name.complete_name()
+    }
+
     pub fn get_primary_columns(&self) -> Vec<&ColumnName> {
         let mut primary:Vec<&ColumnName> = vec![];
         for key in &self.table_key{

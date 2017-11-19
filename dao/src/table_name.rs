@@ -36,6 +36,7 @@ impl TableName {
             None => self.name.to_owned(),
         }
     }
+
 }
 
 pub trait ToTableName {

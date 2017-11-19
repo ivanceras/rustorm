@@ -28,6 +28,7 @@ pub enum SqlType{
     Tinytext,
     Mediumtext,
     Text,
+    Json,
 
     Uuid,
     Date,

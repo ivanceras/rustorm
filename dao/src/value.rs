@@ -26,6 +26,7 @@ pub enum Value {
     Blob(Vec<u8>),
     Char(char),
     Text(String),
+    Json(String),
 
     Uuid(Uuid),
     Date(NaiveDate),

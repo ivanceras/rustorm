@@ -18,6 +18,7 @@ use entity::EntityManager;
 use dao::value::Array;
 use table::SchemaContent;
 use chrono::NaiveTime;
+use std::string::FromUtf8Error;
 
 
 mod table_info;
@@ -156,6 +157,7 @@ impl<'a> ToSql for PgValue<'a>{
             Value::BigDecimal(ref _v) => {
                 panic!("don't know what to do with these yet!");
             }
+            Value::Json(ref v) => v.to_sql(ty, out),
             Value::Array(ref v) => 
                 match *v{
                     Array::Text(ref ar) => ar.to_sql(ty, out),
@@ -220,7 +222,7 @@ impl FromSql for OwnedPgValue{
             types::UUID => match_type!(Uuid),
             types::DATE => match_type!(Date),
             types::TIMESTAMPTZ | types::TIMESTAMP => match_type!(Timestamp),
-            types::TIME => match_type!(Time),
+            types::TIME | types::TIMETZ => match_type!(Time),
             types::BYTEA => match_type!(Blob),
             types::NUMERIC => {
                 println!("raw: {:?}", raw);
@@ -228,6 +230,13 @@ impl FromSql for OwnedPgValue{
                 match bd{
                     Some(bd) => Ok(OwnedPgValue(Value::BigDecimal(bd))),
                     None => Err(Box::new(PostgresError::ConvertNumericToBigDecimalError)),
+                }
+            }
+            types::JSON => {
+                let text = String::from_utf8(raw.to_owned());
+                match text{
+                    Ok(text) => Ok(OwnedPgValue(Value::Json(text))),
+                    Err(e) => Err(Box::new(PostgresError::FromUtf8Error(e))),
                 }
             }
             _ => panic!("unable to convert from {:?}", ty), 
@@ -244,9 +253,10 @@ impl FromSql for OwnedPgValue{
             types::BPCHAR => true,
             types::UUID => true,
             types::DATE => true,
-            types::TIMESTAMPTZ | types::TIMESTAMP | types::TIME => true,
+            types::TIMESTAMPTZ | types::TIMESTAMP | types::TIME | types::TIMETZ=> true,
             types::BYTEA => true,
             types::NUMERIC => true,
+            types::JSON => true,
             _ => panic!("can not accept type {:?}", ty), 
         }
     }
@@ -414,6 +424,7 @@ pub enum PostgresError{
     GenericError(postgres::Error),
     SqlError(postgres::Error, String),
     ConvertStringToCharError(String),
+    FromUtf8Error(FromUtf8Error),
     ConvertNumericToBigDecimalError,
 }
 
