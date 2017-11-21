@@ -239,9 +239,6 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "smallint" | "year" => SqlType::Smallint,
                     "int" | "integer" => SqlType::Int,
                     "bigint" => SqlType::Bigint,
-                    "smallserial" => SqlType::SmallSerial,
-                    "serial" => SqlType::Serial,
-                    "bigserial" => SqlType::BigSerial,
                     "real" => SqlType::Real,
                     "float" => SqlType::Float,
                     "double" | "double precision" => SqlType::Double,
@@ -263,6 +260,8 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "date" => SqlType::Date,
                     "timestamp" | "timestamp without time zone" => SqlType::Timestamp,
                     "timestamp with time zone" => SqlType::TimestampTz,
+                    "time with time zone" => SqlType::TimeTz,
+                    "time without time zone" => SqlType::Time,
                     _ => SqlType::Custom(data_type.to_owned()), 
                 };
                 (sql_type, capacity)

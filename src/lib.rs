@@ -13,6 +13,8 @@ extern crate dao;
 extern crate rustorm_codegen;
 extern crate chrono;
 extern crate uuid;
+#[macro_use]
+extern crate serde_derive;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate r2d2_postgres;

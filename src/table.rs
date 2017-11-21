@@ -1,6 +1,7 @@
 use dao::TableName;
 use column::Column;
 use dao::ColumnName;
+use types::SqlType;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Table {
@@ -25,7 +26,7 @@ impl Table {
         self.name.complete_name()
     }
 
-    pub fn get_primary_columns(&self) -> Vec<&ColumnName> {
+    pub fn get_primary_column_names(&self) -> Vec<&ColumnName> {
         let mut primary:Vec<&ColumnName> = vec![];
         for key in &self.table_key{
             match *key{
@@ -40,6 +41,25 @@ impl Table {
         }
         primary
     }
+
+    fn get_primary_columns(&self) -> Vec<&Column> {
+        self.get_primary_column_names()
+            .iter()
+            .filter_map(|column_name|{
+                self.get_column(column_name)
+            })
+            .collect()
+    }
+
+    pub fn get_primary_column_types(&self) -> Vec<&SqlType> {
+        self.get_primary_columns()
+            .iter()
+            .map(|column|{
+                &column.specification.sql_type
+            })
+            .collect()
+    }
+
 
     pub fn get_foreign_keys(&self) -> Vec<&ForeignKey> {
         let mut foreign:Vec<&ForeignKey> = vec![];

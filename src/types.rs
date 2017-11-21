@@ -1,16 +1,12 @@
 
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Serialize, PartialEq, Clone)]
 pub enum SqlType{
     Bool,
     Tinyint,
     Smallint,
     Int,
     Bigint,
-
-    SmallSerial,
-    Serial,
-    BigSerial,
 
     Real,
     Float,
@@ -35,6 +31,9 @@ pub enum SqlType{
     Timestamp,
     TimestampTz,
 
+    Time,
+    TimeTz,
+
     // enum list with the choices value
     Enum(String, Vec<String>),
     ArrayType(ArrayType),
@@ -43,7 +42,7 @@ pub enum SqlType{
 }
 
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Serialize, PartialEq, Clone)]
 pub enum ArrayType{
     Bool,
     Tinyint,
