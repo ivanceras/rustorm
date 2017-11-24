@@ -15,6 +15,7 @@ extern crate chrono;
 extern crate uuid;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate r2d2_postgres;
@@ -37,6 +38,8 @@ mod entity;
 pub mod table;
 pub mod column;
 pub mod types;
+pub mod record;
+pub mod record_manager;
 
 
 pub use pool::Pool;
@@ -53,6 +56,8 @@ pub use dao::ToTableName;
 pub use dao::ColumnName;
 pub use dao::ToColumnNames;
 pub use entity::EntityManager;
+pub use record::Record;
+pub use record_manager::RecordManager;
 
 
 #[cfg(test)]

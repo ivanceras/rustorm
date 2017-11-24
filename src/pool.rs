@@ -10,6 +10,7 @@ use std::collections::BTreeMap;
 use platform::DBPlatform;
 use entity::EntityManager;
 use error::DbError;
+use record_manager::RecordManager;
 
 pub struct Pool(BTreeMap<String, ConnPool>);
 pub enum ConnPool {
@@ -98,6 +99,11 @@ impl Pool {
     pub fn em(&mut self, db_url: &str) -> Result<EntityManager, DbError> {
         let db = self.db(db_url)?;
         Ok(EntityManager(db))
+    }
+
+    pub fn dm(&mut self, db_url: &str) -> Result<RecordManager, DbError> {
+        let db = self.db(db_url)?;
+        Ok(RecordManager(db))
     }
 }
 

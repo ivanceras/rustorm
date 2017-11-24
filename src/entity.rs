@@ -8,11 +8,17 @@ use database::Database;
 use table::Table;
 use table::SchemaContent;
 use dao::TableName;
+use dao::Dao;
+use dao::Rows;
 
 pub struct EntityManager(pub DBPlatform);
 
 
 impl EntityManager {
+
+    pub fn db(&self) -> &Database { 
+        &*self.0
+    }
     /// get all the records of this table
     pub fn get_all<T>(&self) -> Result<Vec<T>, DbError>
     where
@@ -36,24 +42,21 @@ impl EntityManager {
     }
 
 
-    pub fn db(&self) -> &Database { 
-        &*self.0
-    }
 
     /// get the table from database based on this column name
     pub fn get_table(&self, table_name: &TableName) -> Result<Table, DbError> {
-        self.db().get_table(self, table_name)
+        self.0.get_table(self, table_name)
     }
 
     /// get all the user table and views from the database
     pub fn get_all_tables(&self) -> Result<Vec<Table>, DbError> {
         println!("EXPENSIVE DB OPERATION: get_all_tables");
-        self.db().get_all_tables(self)
+        self.0.get_all_tables(self)
     }
 
     /// get all table and views grouped per schema 
     pub fn get_grouped_tables(&self) -> Result<Vec<SchemaContent>, DbError> {
-        self.db().get_grouped_tables(self)
+        self.0.get_grouped_tables(self)
     }
 
     /// insert to table the values of this struct
@@ -149,7 +152,7 @@ impl EntityManager {
         match result{
             Ok(mut result) => match result.len(){ 
                     0 => Err(DbError::DataError(DataError::ZeroRecordReturned)),
-                    1 => Ok(result.swap_remove(0)),
+                    1 => Ok(result.remove(0)),
                     _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
             },
             Err(e) => Err(e)
@@ -167,12 +170,13 @@ impl EntityManager {
         match result{
             Ok(mut result) => match result.len(){ 
                     0 => Ok(None), 
-                    1 => Ok(Some(result.swap_remove(0))),
+                    1 => Ok(Some(result.remove(0))),
                     _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
             },
             Err(e) => Err(e)
         }
     }
+
 }
 
 

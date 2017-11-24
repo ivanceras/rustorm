@@ -94,6 +94,16 @@ impl Table {
         foreign_columns
     }
 
+    pub fn get_referred_columns_to_table(&self, table_name: &TableName) -> Option<&Vec<ColumnName>> {
+        let foreign_keys:Vec<&ForeignKey> = self.get_foreign_keys();
+        for fk in foreign_keys{
+            if fk.foreign_table == *table_name{
+               return Some(&fk.referred_columns) 
+            }
+        }
+        None
+    }
+
     pub fn get_column(&self, column_name: &ColumnName) -> Option<&Column> {
         self.columns.iter()
             .find(|c|c.name == *column_name)

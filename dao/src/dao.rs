@@ -7,7 +7,7 @@ use serde::ser::{Serialize, Serializer};
 
 
 #[derive(Debug, PartialEq)]
-pub struct Dao<'a>(BTreeMap<&'a str, Value>);
+pub struct Dao<'a>(pub BTreeMap<&'a str, Value>);
 
 
 
