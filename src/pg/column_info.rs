@@ -162,7 +162,8 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                         SqlType::Timestamp
                             | SqlType::TimestampTz
                             => {
-                                if default == "now()" {
+                                if default == "now()" || default == "timezone('utc'::text, now())"
+                                {
                                     Literal::CurrentTimestamp
                                 }
                                 else{
@@ -211,15 +212,34 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     let capacity = if range.contains(","){
                         let splinters = range.split(",").collect::<Vec<&str>>();
                         assert!(splinters.len() == 2, "There should only be 2 parts");
-                        let r1:i32 = splinters[0].parse().unwrap();
-                        let r2:i32= splinters[1].parse().unwrap();
-                        Capacity::Range(r1,r2)
+                        let range1:Result<i32,_> = splinters[0].parse();
+                        let range2:Result<i32,_>= splinters[1].parse();
+                        match range1{
+                            Ok(r1) => match range2{
+                                Ok(r2) => Some(Capacity::Range(r1,r2)),
+                                Err(e) => {
+                                    println!("error: {} when parsing range2 for data_type: {:?}", e,  data_type);
+                                    None 
+                                }
+                            }
+                            Err(e) => {
+                                println!("error: {} when parsing range1 for data_type: {:?}", e,  data_type);
+                                None
+                            }
+                        }
+
                     }
                     else{
-                        let limit:i32 = range.parse().unwrap();
-                        Capacity::Limit(limit)
+                        let limit:Result<i32,_> = range.parse();
+                        match limit{
+                            Ok(limit) => Some(Capacity::Limit(limit)),
+                            Err(e) => {
+                                println!("error: {} when parsing limit for data_type: {:?}", e, data_type);
+                                None
+                            }
+                        }
                     };
-                    (dtype, Some(capacity))
+                    (dtype, capacity)
                 }else{
                     (data_type, None)
                 }
