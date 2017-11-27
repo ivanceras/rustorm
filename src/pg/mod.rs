@@ -213,7 +213,8 @@ impl FromSql for OwnedPgValue{
                         if v.chars().count() == 1 {
                             Ok( OwnedPgValue(Value::Char(v.chars().next().unwrap())))
                         }else {
-                            Err(Box::new(PostgresError::ConvertStringToCharError(format!("More than 1 char in '{}'",v))))
+                            //Err(Box::new(PostgresError::ConvertStringToCharError(format!("More than 1 char in '{}'",v))))
+                            FromSql::from_sql(ty, raw).map(|v|OwnedPgValue(Value::Text(v)))
                         }
                     },
                     Err(e) => Err(e)

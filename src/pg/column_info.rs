@@ -269,7 +269,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "longblob" => SqlType::Longblob,
                     "varbinary" => SqlType::Varbinary,
                     "char" => SqlType::Char,
-                    "varchar" | "character varying" => SqlType::Varchar,
+                    "varchar" | "character varying" | "character" => SqlType::Varchar,
                     "varchar[]" | "character varying[]" => SqlType::ArrayType(ArrayType::Text),
                     "tinytext" => SqlType::Tinytext,
                     "mediumtext" => SqlType::Mediumtext,
