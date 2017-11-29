@@ -83,7 +83,36 @@ impl Table {
         None
     }
 
-    pub fn get_foreign_columns(&self) -> Vec<&ColumnName> {
+    fn get_foreign_columns_to_table(&self, table_name: &TableName) -> Vec<&Column> {
+        self.get_foreign_column_names_to_table(table_name)
+            .iter()
+            .filter_map(|column_name|{
+                self.get_column(column_name)
+            })
+            .collect()
+    }
+
+    pub fn get_foreign_column_types_to_table(&self, table_name: &TableName) -> Vec<&SqlType> {
+        self.get_foreign_columns_to_table(table_name)
+            .iter()
+            .map(|column|{
+                &column.specification.sql_type
+            })
+            .collect()
+    }
+
+    pub fn get_foreign_column_names_to_table(&self, table_name: &TableName) -> Vec<&ColumnName> {
+        let mut foreign_columns = vec![];
+        let foreign_keys = self.get_foreign_key_to_table(table_name);
+        for fk in &foreign_keys{
+            for fk_column in &fk.columns{
+                foreign_columns.push(fk_column);
+            }
+        }
+        foreign_columns
+    }
+
+    pub fn get_foreign_column_names(&self) -> Vec<&ColumnName> {
         let mut foreign_columns = vec![];
         let foreign_keys = self.get_foreign_keys();
         for fk in &foreign_keys{

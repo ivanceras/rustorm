@@ -1,4 +1,4 @@
-
+use dao::Value;
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub enum SqlType{
@@ -25,6 +25,7 @@ pub enum SqlType{
     Mediumtext,
     Text,
     Json,
+    TsVector,
 
     Uuid,
     Date,
@@ -67,3 +68,34 @@ pub enum ArrayType{
     TimestampTz,
 
 }
+
+
+impl SqlType {
+
+    pub fn same_type(&self, value: &Value) -> bool {
+        match *self{
+            SqlType::Bool => match *value {
+                Value::Bool(_) => true,
+                _ => false
+            }
+            SqlType::Tinyint => match *value {
+                Value::Tinyint(_) => true,
+                _ => false
+            }
+            SqlType::Smallint => match *value {
+                Value::Smallint(_) => true,
+                _ => false
+            }
+            SqlType::Int => match *value {
+                Value::Int(_) => true,
+                _ => false
+            }
+            SqlType::Bigint => match *value {
+                Value::Bigint(_) => true,
+                _ => false
+            }
+            _ => panic!("not yet implemented for checking {:?} to {:?}", self, value)
+        }
+    }
+}
+

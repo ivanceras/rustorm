@@ -200,6 +200,7 @@ impl FromSql for OwnedPgValue{
             types::FLOAT4 => match_type!(Float),
             types::FLOAT8 => match_type!(Double),
             types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => match_type!(Text),
+            types::TS_VECTOR => match_type!(Text),
             types::TEXT_ARRAY 
                 | types::NAME_ARRAY 
                 | types::VARCHAR_ARRAY => {
@@ -250,6 +251,7 @@ impl FromSql for OwnedPgValue{
             types::INT2 | types::INT4 | types::INT8 => true,
             types::FLOAT4 | types::FLOAT8 => true,
             types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => true,
+            types::TS_VECTOR => true,
             types::TEXT_ARRAY | types::NAME_ARRAY | types::VARCHAR_ARRAY => true,
             types::BPCHAR => true,
             types::UUID => true,
