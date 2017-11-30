@@ -309,10 +309,6 @@ mod test{
     use dao::Value;
     use dao::Rows;
 
-    #[test]
-    fn test_big_decimal(){
-        assert_eq!(1, 2);
-    }
 
     #[test]
     fn connect_test_query(){
