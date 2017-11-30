@@ -171,12 +171,9 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                                 }
                             }
                         SqlType::Date => {
-                            if default == "today()" {
-                                Literal::CurrentDate
-                            }
                             // timestamp converted to text then converted to date 
                             // is equivalent to today()
-                            else if default =="('now'::text)::date" {
+                            if default == "today()" || default =="('now'::text)::date" {
                                 Literal::CurrentDate
                             }
                             else{

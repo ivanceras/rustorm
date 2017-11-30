@@ -6,9 +6,8 @@ use dao::{Value};
 use error::DbError;
 use dao::Rows;
 use postgres;
-use postgres::types::{self,ToSql,FromSql,Type};
+use postgres::types::{self,ToSql,FromSql,Type,IsNull};
 use error::PlatformError;
-use postgres::types::IsNull;
 use std::error::Error;
 use std::fmt;
 use bigdecimal::BigDecimal;
@@ -19,10 +18,12 @@ use dao::value::Array;
 use table::SchemaContent;
 use chrono::NaiveTime;
 use std::string::FromUtf8Error;
+use postgres_shared::types::Kind::Enum;
 
 
 mod table_info;
 mod column_info;
+mod numeric;
 
 pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_postgres::PostgresConnectionManager>, DbError>{
     let config = r2d2::Config::default();
@@ -191,76 +192,93 @@ impl FromSql for OwnedPgValue{
                 FromSql::from_sql(ty, raw).map(|v|OwnedPgValue(Value::$variant(v)))
             }
         }
+        let kind = ty.kind();
+        match *kind{
+            Enum(_) => match_type!(Text),
 
-        match *ty {
-            types::BOOL => match_type!(Bool), 
-            types::INT2  => match_type!(Smallint),
-            types::INT4  => match_type!(Int),
-            types::INT8  => match_type!(Bigint),
-            types::FLOAT4 => match_type!(Float),
-            types::FLOAT8 => match_type!(Double),
-            types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => match_type!(Text),
-            types::TS_VECTOR => match_type!(Text),
-            types::TEXT_ARRAY 
-                | types::NAME_ARRAY 
-                | types::VARCHAR_ARRAY => {
-                    FromSql::from_sql(ty, raw)
-                        .map(|v|OwnedPgValue(Value::Array(Array::Text(v))))
-                }
-            types::BPCHAR => {
-                let v: Result<String,_> = FromSql::from_sql(&types::TEXT, raw);
-                match v{
-                    Ok(v) => {
-                        if v.chars().count() == 1 {
-                            Ok( OwnedPgValue(Value::Char(v.chars().next().unwrap())))
-                        }else {
-                            //Err(Box::new(PostgresError::ConvertStringToCharError(format!("More than 1 char in '{}'",v))))
-                            FromSql::from_sql(ty, raw).map(|v|OwnedPgValue(Value::Text(v)))
+            _ => {
+                match *ty {
+                    types::BOOL => match_type!(Bool), 
+                    types::INT2  => match_type!(Smallint),
+                    types::INT4  => match_type!(Int),
+                    types::INT8  => match_type!(Bigint),
+                    types::FLOAT4 => match_type!(Float),
+                    types::FLOAT8 => match_type!(Double),
+                    types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => match_type!(Text),
+                    types::TS_VECTOR => {
+                        let text = String::from_utf8(raw.to_owned());
+                        match text{
+                            Ok(text) => Ok(OwnedPgValue(Value::Text(text))),
+                            Err(e) => Err(Box::new(PostgresError::FromUtf8Error(e))),
                         }
-                    },
-                    Err(e) => Err(e)
+                    }
+                    types::TEXT_ARRAY 
+                        | types::NAME_ARRAY 
+                        | types::VARCHAR_ARRAY => {
+                            FromSql::from_sql(ty, raw)
+                                .map(|v|OwnedPgValue(Value::Array(Array::Text(v))))
+                        }
+                    types::BPCHAR => {
+                        let v: Result<String,_> = FromSql::from_sql(&types::TEXT, raw);
+                        match v{
+                            Ok(v) => {
+                                if v.chars().count() == 1 {
+                                    Ok( OwnedPgValue(Value::Char(v.chars().next().unwrap())))
+                                }else {
+                                    FromSql::from_sql(ty, raw).map(|v|OwnedPgValue(Value::Text(v)))
+                                }
+                            },
+                            Err(e) => Err(e)
+                        }
+                    }
+                    types::UUID => match_type!(Uuid),
+                    types::DATE => match_type!(Date),
+                    types::TIMESTAMPTZ | types::TIMESTAMP => match_type!(Timestamp),
+                    types::TIME | types::TIMETZ => match_type!(Time),
+                    types::BYTEA => match_type!(Blob),
+                    types::NUMERIC => {
+                        let numeric: numeric::PgNumeric = FromSql::from_sql(ty, raw)?;
+                        let bigdecimal = BigDecimal::from(numeric);
+                        Ok(OwnedPgValue(Value::BigDecimal(bigdecimal)))
+                    }
+                    types::JSON => {
+                        let text = String::from_utf8(raw.to_owned());
+                        match text{
+                            Ok(text) => Ok(OwnedPgValue(Value::Json(text))),
+                            Err(e) => Err(Box::new(PostgresError::FromUtf8Error(e))),
+                        }
+                    }
+                    _ => panic!("unable to convert from {:?}", ty), 
                 }
             }
-            types::UUID => match_type!(Uuid),
-            types::DATE => match_type!(Date),
-            types::TIMESTAMPTZ | types::TIMESTAMP => match_type!(Timestamp),
-            types::TIME | types::TIMETZ => match_type!(Time),
-            types::BYTEA => match_type!(Blob),
-            types::NUMERIC => {
-                println!("raw: {:?}", raw);
-                let bd = BigDecimal::parse_bytes(raw, 16);
-                match bd{
-                    Some(bd) => Ok(OwnedPgValue(Value::BigDecimal(bd))),
-                    None => Err(Box::new(PostgresError::ConvertNumericToBigDecimalError)),
-                }
-            }
-            types::JSON => {
-                let text = String::from_utf8(raw.to_owned());
-                match text{
-                    Ok(text) => Ok(OwnedPgValue(Value::Json(text))),
-                    Err(e) => Err(Box::new(PostgresError::FromUtf8Error(e))),
-                }
-            }
-            _ => panic!("unable to convert from {:?}", ty), 
         }
+
 
     }
     fn accepts(ty: &Type) -> bool{
-        match *ty {
-            types::BOOL => true,
-            types::INT2 | types::INT4 | types::INT8 => true,
-            types::FLOAT4 | types::FLOAT8 => true,
-            types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => true,
-            types::TS_VECTOR => true,
-            types::TEXT_ARRAY | types::NAME_ARRAY | types::VARCHAR_ARRAY => true,
-            types::BPCHAR => true,
-            types::UUID => true,
-            types::DATE => true,
-            types::TIMESTAMPTZ | types::TIMESTAMP | types::TIME | types::TIMETZ=> true,
-            types::BYTEA => true,
-            types::NUMERIC => true,
-            types::JSON => true,
-            _ => panic!("can not accept type {:?}", ty), 
+        let kind = ty.kind();
+        println!("kind: {:?}", kind);
+        match *kind{
+            Enum(_) => true,
+
+            _  => {
+                match *ty {
+                    types::BOOL => true,
+                    types::INT2 | types::INT4 | types::INT8 => true,
+                    types::FLOAT4 | types::FLOAT8 => true,
+                    types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => true,
+                    types::TS_VECTOR => true,
+                    types::TEXT_ARRAY | types::NAME_ARRAY | types::VARCHAR_ARRAY => true,
+                    types::BPCHAR => true,
+                    types::UUID => true,
+                    types::DATE => true,
+                    types::TIMESTAMPTZ | types::TIMESTAMP | types::TIME | types::TIMETZ=> true,
+                    types::BYTEA => true,
+                    types::NUMERIC => true,
+                    types::JSON => true,
+                    _ => panic!("can not accept type {:?}", ty), 
+                }
+            }
         }
     }
 
@@ -290,6 +308,11 @@ mod test{
     use std::ops::Deref;
     use dao::Value;
     use dao::Rows;
+
+    #[test]
+    fn test_big_decimal(){
+        assert_eq!(1, 2);
+    }
 
     #[test]
     fn connect_test_query(){
