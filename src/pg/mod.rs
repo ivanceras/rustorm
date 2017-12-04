@@ -26,12 +26,11 @@ mod column_info;
 mod numeric;
 
 pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_postgres::PostgresConnectionManager>, DbError>{
-    let config = r2d2::Config::default();
     let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)
         .map_err(|e| DbError::PlatformError(
                         PlatformError::PostgresError(
                             PostgresError::GenericError(e))))?;
-    r2d2::Pool::new(config, manager)
+    r2d2::Pool::new(manager)
         .map_err(|e| DbError::PlatformError(
                         PlatformError::PostgresError(
                             PostgresError::PoolInitializationError(e))))
@@ -257,7 +256,6 @@ impl FromSql for OwnedPgValue{
     }
     fn accepts(ty: &Type) -> bool{
         let kind = ty.kind();
-        println!("kind: {:?}", kind);
         match *kind{
             Enum(_) => true,
 
@@ -442,12 +440,12 @@ mod test{
 
 #[derive(Debug)]
 pub enum PostgresError{
-    PoolInitializationError(r2d2::InitializationError),
     GenericError(postgres::Error),
     SqlError(postgres::Error, String),
     ConvertStringToCharError(String),
     FromUtf8Error(FromUtf8Error),
     ConvertNumericToBigDecimalError,
+    PoolInitializationError(r2d2::Error)
 }
 
 

@@ -15,7 +15,7 @@ pub enum ConnectError {
     NoSuchPoolConnection,
     ParseError(ParseError),
     UnsupportedDb(String),
-    Timeout(r2d2::GetTimeout),
+    R2d2Error(r2d2::Error),
 }
 
 /// TODO: use error_chain i guess?

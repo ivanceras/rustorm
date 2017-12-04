@@ -81,7 +81,7 @@ impl Pool {
                 let pooled_conn = pool_pg.get();
                 match pooled_conn {
                     Ok(pooled_conn) => Ok(PooledConn::PooledPg(pooled_conn)),
-                    Err(e) => Err(DbError::ConnectError(ConnectError::Timeout(e))),
+                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
                 }
             }
         }

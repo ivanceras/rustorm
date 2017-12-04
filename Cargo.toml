@@ -7,32 +7,35 @@ description = "A complete rewrite of rustorm"
 
 [dependencies]
 postgres = {version = "0.15.1",features = ["with-uuid","with-chrono"], optional = true}
-r2d2_postgres = {version = "0.13.0", optional = true}
-postgres-shared = "0.4.0"
-r2d2 = "0.7.4"
+r2d2_postgres = {version = "0.14.0", optional = true}
+postgres-shared = {version = "0.4.0", optional = true}
+#postgres = {path = "../../rust-postgres/postgres",features = ["with-uuid","with-chrono"], optional = true}
+#r2d2_postgres = {path = "../../r2d2-postgres", optional = true}
+#postgres-shared = {path = "../../rust-postgres/postgres-shared", optional = true}
+r2d2 = "0.8"
 url = "1.5.1"
 dao = {path = "dao"}
 rustorm_codegen = {path = "codegen"}
 cfg-if = "0.1.2"
 uuid = "0.5.1"
 chrono = "0.4.0"
-bigdecimal = "0.0.10"
-sqlite = {path = "../../sqlite/", version = "0.23.9", optional = true}
-r2d2-sqlite3 = {path = "../../r2d2-sqlite3", version = "0.1.0", optional = true}
-mysql = {version = "12.0.3", optional = true}
-oci_rs = {version = "0.5.0", optional = true}
-tiberius = {version = "0.2.2", optional = true}
+#sqlite = {path = "../../sqlite/", version = "0.23.9", optional = true}
+#r2d2-sqlite3 = {path = "../../r2d2-sqlite3", version = "0.1.0", optional = true}
+#mysql = {version = "12.0.3", optional = true}
+#oci_rs = {version = "0.5.0", optional = true}
+#tiberius = {version = "0.2.2", optional = true}
 serde = "1.0.15"
 serde_derive = "1.0.15"
 byteorder = "1.0"
-num-bigint = "0.1.37"
-num-traits = "0.1.35"
-num-integer = "0.1.32"
+bigdecimal = "0.0.10"
+num-bigint = "0.1"
+num-traits = "0.1"
+num-integer = "0.1"
 
 [features]
 #default = ["with-postgres"]
-with-postgres = ["postgres", "r2d2_postgres"]
-with-mysql = ["mysql"]
-with-sqlite = ["sqlite","r2d2-sqlite3"]
-with-oracle = ["oci_rs"]
-with-mssql = ["tiberius"]
+with-postgres = ["postgres", "r2d2_postgres", "postgres-shared"]
+#with-mysql = ["mysql"]
+#with-sqlite = ["sqlite","r2d2-sqlite3"]
+#with-oracle = ["oci_rs"]
+#with-mssql = ["tiberius"]
