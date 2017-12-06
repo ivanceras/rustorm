@@ -247,6 +247,10 @@ impl FromSql for OwnedPgValue{
                             Err(e) => Err(Box::new(PostgresError::FromUtf8Error(e))),
                         }
                     }
+                    types::INET => {
+                        println!("inet raw:{:?}", raw);
+                        match_type!(Text)
+                    }
                     _ => panic!("unable to convert from {:?}", ty), 
                 }
             }
@@ -274,6 +278,7 @@ impl FromSql for OwnedPgValue{
                     types::BYTEA => true,
                     types::NUMERIC => true,
                     types::JSON => true,
+                    types::INET => true,
                     _ => panic!("can not accept type {:?}", ty), 
                 }
             }

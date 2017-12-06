@@ -281,6 +281,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "timestamp with time zone" => SqlType::TimestampTz,
                     "time with time zone" => SqlType::TimeTz,
                     "time without time zone" => SqlType::Time,
+                    "inet" => SqlType::IpAddress,
                     _ => SqlType::Custom(data_type.to_owned()), 
                 };
                 (sql_type, capacity)

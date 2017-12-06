@@ -35,6 +35,8 @@ pub enum SqlType{
     Time,
     TimeTz,
 
+    IpAddress,
+
     // enum list with the choices value
     Enum(String, Vec<String>),
     ArrayType(ArrayType),
