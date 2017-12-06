@@ -255,6 +255,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "tinyint" => SqlType::Tinyint,
                     "smallint" | "year" => SqlType::Smallint,
                     "int" | "integer" => SqlType::Int,
+                    "int[]" | "integer[]" => SqlType::ArrayType(ArrayType::Int),
                     "bigint" => SqlType::Bigint,
                     "real" => SqlType::Real,
                     "float" => SqlType::Float,

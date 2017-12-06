@@ -43,7 +43,9 @@ pub enum Array{
 
     Tinyint(Vec<i8>),
     Smallint(Vec<i16>),
+    */
     Int(Vec<i32>),
+    /*
     Bigint(Vec<i64>),
 
     Float(Vec<f32>),

@@ -160,7 +160,8 @@ impl<'a> ToSql for PgValue<'a>{
             Value::Json(ref v) => v.to_sql(ty, out),
             Value::Array(ref v) => 
                 match *v{
-                    Array::Text(ref ar) => ar.to_sql(ty, out),
+                    Array::Text(ref av) => av.to_sql(ty, out),
+                    Array::Int(ref av) => av.to_sql(ty, out),
                 }
             Value::Nil => Ok(IsNull::Yes),
         }
@@ -251,6 +252,10 @@ impl FromSql for OwnedPgValue{
                         println!("inet raw:{:?}", raw);
                         match_type!(Text)
                     }
+                    types::INT4_ARRAY => {
+                            FromSql::from_sql(ty, raw)
+                                .map(|v|OwnedPgValue(Value::Array(Array::Int(v))))
+                    }
                     _ => panic!("unable to convert from {:?}", ty), 
                 }
             }
@@ -279,6 +284,7 @@ impl FromSql for OwnedPgValue{
                     types::NUMERIC => true,
                     types::JSON => true,
                     types::INET => true,
+                    types::INT4_ARRAY => true,
                     _ => panic!("can not accept type {:?}", ty), 
                 }
             }
