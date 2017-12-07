@@ -96,6 +96,10 @@ impl SqlType {
                 Value::Bigint(_) => true,
                 _ => false
             }
+            SqlType::Uuid => match *value {
+                Value::Uuid(_) => true,
+                _ => false
+            }
             _ => panic!("not yet implemented for checking {:?} to {:?}", self, value)
         }
     }
