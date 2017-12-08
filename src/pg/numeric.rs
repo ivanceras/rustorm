@@ -1,13 +1,10 @@
 use byteorder::{NetworkEndian, ReadBytesExt, WriteBytesExt};
 use std::error::Error;
-use std::io::prelude::*;
 
 use postgres::types::{self,ToSql,FromSql,Type,IsNull};
 
 use bigdecimal::BigDecimal;
 use num_bigint::{BigInt, BigUint, Sign};
-use num_integer::Integer;
-use num_traits::{Signed, ToPrimitive, Zero};
 
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -42,7 +39,7 @@ impl Error for InvalidNumericSign {
 
 impl FromSql for PgNumeric {
 
-    fn from_sql(ty: &Type, bytes: &[u8]) -> Result<Self, Box<Error + Send + Sync>> {
+    fn from_sql(_ty: &Type, bytes: &[u8]) -> Result<Self, Box<Error + Send + Sync>> {
         let mut bytes = bytes.clone();
         let ndigits = try!(bytes.read_u16::<NetworkEndian>());
         let mut digits = Vec::with_capacity(ndigits as usize);
@@ -79,7 +76,7 @@ impl FromSql for PgNumeric {
 
 impl ToSql for PgNumeric {
 
-    fn to_sql(&self, ty: &Type, out: &mut Vec<u8>) -> Result<IsNull, Box<Error + Sync + Send>>{
+    fn to_sql(&self, _ty: &Type, out: &mut Vec<u8>) -> Result<IsNull, Box<Error + Sync + Send>>{
         let sign = match *self {
             PgNumeric::Positive { .. } => 0,
             PgNumeric::Negative { .. } => 0x4000,

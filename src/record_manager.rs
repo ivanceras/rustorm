@@ -1,7 +1,6 @@
 use record::Record;
 use platform::DBPlatform;
 use error::DbError;
-use dao::Dao;
 use dao::Value;
 use error::DataError;
 use dao::Rows;

@@ -16,7 +16,6 @@ use table::Table;
 use entity::EntityManager;
 use dao::value::Array;
 use table::SchemaContent;
-use chrono::NaiveTime;
 use std::string::FromUtf8Error;
 use postgres_shared::types::Kind::Enum;
 

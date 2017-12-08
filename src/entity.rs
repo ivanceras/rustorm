@@ -8,8 +8,6 @@ use database::Database;
 use table::Table;
 use table::SchemaContent;
 use dao::TableName;
-use dao::Dao;
-use dao::Rows;
 
 pub struct EntityManager(pub DBPlatform);
 

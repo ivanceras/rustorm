@@ -2,7 +2,6 @@ use dao::TableName;
 use dao::ColumnName;
 use types::SqlType;
 use uuid::Uuid;
-use dao::Value;
 use dao::FromDao;
 use dao;
 
