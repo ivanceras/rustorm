@@ -1,7 +1,7 @@
 use dao::Value;
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
-pub enum SqlType{
+pub enum SqlType {
     Bool,
     Tinyint,
     Smallint,
@@ -14,7 +14,7 @@ pub enum SqlType{
     Numeric,
 
     Tinyblob,
-    Mediumblob, 
+    Mediumblob,
     Blob,
     Longblob,
     Varbinary,
@@ -46,7 +46,7 @@ pub enum SqlType{
 
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
-pub enum ArrayType{
+pub enum ArrayType {
     Bool,
     Tinyint,
     Smallint,
@@ -68,40 +68,37 @@ pub enum ArrayType{
     Date,
     Timestamp,
     TimestampTz,
-
 }
 
 
 impl SqlType {
-
     pub fn same_type(&self, value: &Value) -> bool {
-        match *self{
+        match *self {
             SqlType::Bool => match *value {
                 Value::Bool(_) => true,
-                _ => false
-            }
+                _ => false,
+            },
             SqlType::Tinyint => match *value {
                 Value::Tinyint(_) => true,
-                _ => false
-            }
+                _ => false,
+            },
             SqlType::Smallint => match *value {
                 Value::Smallint(_) => true,
-                _ => false
-            }
+                _ => false,
+            },
             SqlType::Int => match *value {
                 Value::Int(_) => true,
-                _ => false
-            }
+                _ => false,
+            },
             SqlType::Bigint => match *value {
                 Value::Bigint(_) => true,
-                _ => false
-            }
+                _ => false,
+            },
             SqlType::Uuid => match *value {
                 Value::Uuid(_) => true,
-                _ => false
-            }
-            _ => panic!("not yet implemented for checking {:?} to {:?}", self, value)
+                _ => false,
+            },
+            _ => panic!("not yet implemented for checking {:?} to {:?}", self, value),
         }
     }
 }
-

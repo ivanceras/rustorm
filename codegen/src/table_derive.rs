@@ -1,4 +1,3 @@
-
 use syn;
 use quote;
 

@@ -17,25 +17,20 @@ pub struct Table {
     pub is_view: bool,
 
     pub table_key: Vec<TableKey>,
-
 }
 
 impl Table {
-
     pub fn complete_name(&self) -> String {
         self.name.complete_name()
     }
 
     pub fn get_primary_column_names(&self) -> Vec<&ColumnName> {
-        let mut primary:Vec<&ColumnName> = vec![];
-        for key in &self.table_key{
-            match *key{
-                TableKey::PrimaryKey(ref pk) => 
-                {
-                    for col in &pk.columns{
-                        primary.push(col)
-                    }
-                }
+        let mut primary: Vec<&ColumnName> = vec![];
+        for key in &self.table_key {
+            match *key {
+                TableKey::PrimaryKey(ref pk) => for col in &pk.columns {
+                    primary.push(col)
+                },
                 _ => (),
             }
         }
@@ -45,28 +40,23 @@ impl Table {
     fn get_primary_columns(&self) -> Vec<&Column> {
         self.get_primary_column_names()
             .iter()
-            .filter_map(|column_name|{
-                self.get_column(column_name)
-            })
+            .filter_map(|column_name| self.get_column(column_name))
             .collect()
     }
 
     pub fn get_primary_column_types(&self) -> Vec<&SqlType> {
         self.get_primary_columns()
             .iter()
-            .map(|column|{
-                &column.specification.sql_type
-            })
+            .map(|column| &column.specification.sql_type)
             .collect()
     }
 
 
     pub fn get_foreign_keys(&self) -> Vec<&ForeignKey> {
-        let mut foreign:Vec<&ForeignKey> = vec![];
-        for key in &self.table_key{
-            match *key{
-                TableKey::ForeignKey(ref fk) => 
-                    foreign.push(fk),     
+        let mut foreign: Vec<&ForeignKey> = vec![];
+        for key in &self.table_key {
+            match *key {
+                TableKey::ForeignKey(ref fk) => foreign.push(fk),
                 _ => (),
             }
         }
@@ -74,10 +64,10 @@ impl Table {
     }
 
     pub fn get_foreign_key_to_table(&self, table_name: &TableName) -> Option<&ForeignKey> {
-        let foreign_keys:Vec<&ForeignKey> = self.get_foreign_keys();
-        for fk in foreign_keys{
-            if fk.foreign_table == *table_name{
-                return Some(fk)
+        let foreign_keys: Vec<&ForeignKey> = self.get_foreign_keys();
+        for fk in foreign_keys {
+            if fk.foreign_table == *table_name {
+                return Some(fk);
             }
         }
         None
@@ -86,26 +76,22 @@ impl Table {
     fn get_foreign_columns_to_table(&self, table_name: &TableName) -> Vec<&Column> {
         self.get_foreign_column_names_to_table(table_name)
             .iter()
-            .filter_map(|column_name|{
-                self.get_column(column_name)
-            })
+            .filter_map(|column_name| self.get_column(column_name))
             .collect()
     }
 
     pub fn get_foreign_column_types_to_table(&self, table_name: &TableName) -> Vec<&SqlType> {
         self.get_foreign_columns_to_table(table_name)
             .iter()
-            .map(|column|{
-                &column.specification.sql_type
-            })
+            .map(|column| &column.specification.sql_type)
             .collect()
     }
 
     pub fn get_foreign_column_names_to_table(&self, table_name: &TableName) -> Vec<&ColumnName> {
         let mut foreign_columns = vec![];
         let foreign_keys = self.get_foreign_key_to_table(table_name);
-        for fk in &foreign_keys{
-            for fk_column in &fk.columns{
+        for fk in &foreign_keys {
+            for fk_column in &fk.columns {
                 foreign_columns.push(fk_column);
             }
         }
@@ -115,45 +101,47 @@ impl Table {
     pub fn get_foreign_column_names(&self) -> Vec<&ColumnName> {
         let mut foreign_columns = vec![];
         let foreign_keys = self.get_foreign_keys();
-        for fk in &foreign_keys{
-            for fk_column in &fk.columns{
+        for fk in &foreign_keys {
+            for fk_column in &fk.columns {
                 foreign_columns.push(fk_column);
             }
         }
         foreign_columns
     }
 
-    pub fn get_referred_columns_to_table(&self, table_name: &TableName) -> Option<&Vec<ColumnName>> {
-        let foreign_keys:Vec<&ForeignKey> = self.get_foreign_keys();
-        for fk in foreign_keys{
-            if fk.foreign_table == *table_name{
-               return Some(&fk.referred_columns) 
+    pub fn get_referred_columns_to_table(
+        &self,
+        table_name: &TableName,
+    ) -> Option<&Vec<ColumnName>> {
+        let foreign_keys: Vec<&ForeignKey> = self.get_foreign_keys();
+        for fk in foreign_keys {
+            if fk.foreign_table == *table_name {
+                return Some(&fk.referred_columns);
             }
         }
         None
     }
 
     pub fn get_column(&self, column_name: &ColumnName) -> Option<&Column> {
-        self.columns.iter()
-            .find(|c|c.name == *column_name)
+        self.columns.iter().find(|c| c.name == *column_name)
     }
 }
 
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct PrimaryKey{
+pub struct PrimaryKey {
     pub name: Option<String>,
     pub columns: Vec<ColumnName>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct UniqueKey{
+pub struct UniqueKey {
     pub name: Option<String>,
     pub columns: Vec<ColumnName>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct ForeignKey{
+pub struct ForeignKey {
     pub name: Option<String>,
     pub columns: Vec<ColumnName>,
     // referred foreign table
@@ -163,7 +151,7 @@ pub struct ForeignKey{
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Key{
+pub struct Key {
     pub name: Option<String>,
     pub columns: Vec<ColumnName>,
 }
@@ -181,6 +169,5 @@ pub enum TableKey {
 pub struct SchemaContent {
     pub schema: String,
     pub tablenames: Vec<TableName>,
-    pub views: Vec<TableName>
+    pub views: Vec<TableName>,
 }
-

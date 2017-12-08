@@ -1,4 +1,3 @@
-
 use url::Url;
 use std::convert::TryFrom;
 use error::ParseError;

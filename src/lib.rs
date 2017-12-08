@@ -3,23 +3,23 @@
 #![feature(try_from)]
 #![feature(conservative_impl_trait)]
 #![feature(splice)]
+extern crate bigdecimal;
+extern crate byteorder;
 #[macro_use]
 extern crate cfg_if;
-extern crate r2d2;
-extern crate url;
-extern crate dao;
-#[macro_use]
-extern crate rustorm_codegen;
 extern crate chrono;
-extern crate uuid;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate byteorder;
-extern crate bigdecimal;
+extern crate dao;
 extern crate num_bigint;
 extern crate num_integer;
 extern crate num_traits;
+extern crate r2d2;
+#[macro_use]
+extern crate rustorm_codegen;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate url;
+extern crate uuid;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate r2d2_postgres;
@@ -52,7 +52,7 @@ pub use dao::Dao;
 pub use dao::Value;
 pub use dao::Rows;
 pub use error::DbError;
-pub use dao::{ToDao,FromDao};
+pub use dao::{FromDao, ToDao};
 pub use table::Table;
 pub use column::Column;
 pub use dao::TableName;

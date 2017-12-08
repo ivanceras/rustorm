@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use chrono::{NaiveDate,NaiveTime};
+use chrono::{NaiveDate, NaiveTime};
 use chrono::{DateTime, Utc};
 use std::convert::TryFrom;
 use error::ConvertError;
@@ -37,7 +37,7 @@ pub enum Value {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum Array{
+pub enum Array {
     /*
     Bool(Vec<bool>),
 
@@ -88,11 +88,9 @@ macro_rules! impl_to_value {
 }
 
 impl ToValue for Vec<String> {
-    
     fn to_value(&self) -> Value {
         Value::Array(Array::Text(self.to_owned()))
     }
-
 }
 
 
@@ -116,7 +114,7 @@ macro_rules! impl_from {
         impl<'a> From<&'a Option<$ty>> for Value {
             fn from(f: &'a Option<$ty>) -> Self{
                 match *f{
-                    Some(ref f) => From::from(f), 
+                    Some(ref f) => From::from(f),
                     None => Value::Nil,
                 }
             }
@@ -144,7 +142,7 @@ macro_rules! impl_from {
         impl<'a> From<&'a Option<$ty>> for Value {
             fn from(f: &'a Option<$ty>) -> Self{
                 match *f{
-                    Some(ref f) => From::from(f), 
+                    Some(ref f) => From::from(f),
                     None => Value::Nil,
                 }
             }
@@ -171,25 +169,22 @@ impl_from!(DateTime<Utc>, Timestamp);
 
 
 impl From<Vec<String>> for Value {
-
     fn from(f: Vec<String>) -> Value {
         Value::Array(Array::Text(f))
     }
 }
 
-impl <'a>From<&'a Vec<String>> for Value {
-
+impl<'a> From<&'a Vec<String>> for Value {
     fn from(f: &Vec<String>) -> Value {
         Value::Array(Array::Text(f.to_owned()))
     }
 }
 
-impl <'a>From<&'a Value> for Vec<String> {
-
+impl<'a> From<&'a Value> for Vec<String> {
     fn from(v: &'a Value) -> Vec<String> {
-        match *v{
+        match *v {
             Value::Array(Array::Text(ref t)) => t.to_owned(),
-            _ => panic!("unable to convert {:?} to Vec<String>", v)
+            _ => panic!("unable to convert {:?} to Vec<String>", v),
         }
     }
 }
@@ -221,7 +216,7 @@ macro_rules! impl_tryfrom_option{
             fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
                 match *value {
                     Value::Nil => Ok(None),
-                    _ => TryFrom::try_from(value).map(|v|Some(v)), 
+                    _ => TryFrom::try_from(value).map(|v|Some(v)),
                 }
             }
         }
@@ -242,7 +237,7 @@ impl<'a> TryFrom<&'a Value> for String {
                 Ok(s)
             }
             _ => Err(ConvertError::NotSupported(
-                format!("{:?}",value),
+                format!("{:?}", value),
                 "String".into(),
             )),
         }
@@ -285,7 +280,7 @@ mod tests {
 
     #[test]
     fn data_sizes() {
-        assert_eq!(48, size_of::<Value>());// use to be 32, now 48 due to the addition of BigDecimal type
+        assert_eq!(48, size_of::<Value>()); // use to be 32, now 48 due to the addition of BigDecimal type
         assert_eq!(24, size_of::<Vec<u8>>());
         assert_eq!(24, size_of::<String>());
         assert_eq!(12, size_of::<DateTime<Utc>>());

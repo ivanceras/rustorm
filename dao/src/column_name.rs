@@ -1,5 +1,3 @@
-
-
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub struct ColumnName {
     pub name: String,

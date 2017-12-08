@@ -1,13 +1,13 @@
 #![deny(warnings)]
 #![feature(try_from)]
 
+extern crate bigdecimal;
 extern crate chrono;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
-extern crate bigdecimal;
 
 
 pub use value::Value;

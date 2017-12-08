@@ -61,7 +61,7 @@ pub enum ConvertError {
 }
 
 #[derive(Debug)]
-pub enum DataError{
+pub enum DataError {
     ZeroRecordReturned,
     MoreThan1RecordReturned,
 }

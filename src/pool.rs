@@ -35,17 +35,19 @@ impl Pool {
                 #[cfg(feature = "with-postgres")]
                 Platform::Postgres => {
                     let pool_pg = pg::init_pool(db_url);
-                    match pool_pg{
+                    match pool_pg {
                         Ok(pool_pg) => {
                             if self.0.get(db_url).is_none() {
                                 self.0.insert(db_url.to_string(), ConnPool::PoolPg(pool_pg));
                             }
                             Ok(())
-                        },
+                        }
                         Err(e) => Err(e),
                     }
                 }
-                Platform::Unsupported(scheme) => Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme))),
+                Platform::Unsupported(scheme) => {
+                    Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
+                }
             },
             Err(e) => Err(DbError::ConnectError(ConnectError::ParseError(e))),
         }
@@ -66,7 +68,9 @@ impl Pool {
                         Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
                     }
                 }
-                Platform::Unsupported(scheme) => Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme))),
+                Platform::Unsupported(scheme) => {
+                    Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
+                }
             },
             Err(e) => Err(DbError::ConnectError(ConnectError::ParseError(e))),
         }

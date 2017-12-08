@@ -14,48 +14,39 @@ pub struct Column {
     pub stat: Option<ColumnStat>,
 }
 
-impl Column{
-    
+impl Column {
     /// check all the column constraint if any has AutoIncrement
     pub fn is_autoincrement(&self) -> bool {
-        self.specification.constraints
+        self.specification
+            .constraints
             .iter()
-            .any(|c| *c == ColumnConstraint::AutoIncrement) 
+            .any(|c| *c == ColumnConstraint::AutoIncrement)
     }
 
 
     /// check if any of the column constraint default is generated from uuid
     pub fn default_is_generated_uuid(&self) -> bool {
-        self.specification.constraints
-            .iter()
-            .any(|c|{
-                match *c {
-                    ColumnConstraint::DefaultValue(ref literal) => {
-                        match *literal {
-                            Literal::UuidGenerateV4 => true,
-                            _ => false
-                        }
-                    },
-                    _ => false
-                }
-            })
+        self.specification.constraints.iter().any(|c| match *c {
+            ColumnConstraint::DefaultValue(ref literal) => match *literal {
+                Literal::UuidGenerateV4 => true,
+                _ => false,
+            },
+            _ => false,
+        })
     }
-
-
 }
 
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct ColumnSpecification{
+pub struct ColumnSpecification {
     pub sql_type: SqlType,
     pub capacity: Option<Capacity>,
     pub constraints: Vec<ColumnConstraint>,
 }
 
 impl ColumnSpecification {
-
     pub fn get_limit(&self) -> Option<i32> {
-        match self.capacity{
+        match self.capacity {
             Some(ref capacity) => capacity.get_limit(),
             None => None,
         }
@@ -63,17 +54,16 @@ impl ColumnSpecification {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Capacity{
+pub enum Capacity {
     Limit(i32),
     Range(i32, i32),
 }
 
-impl Capacity{
-
+impl Capacity {
     fn get_limit(&self) -> Option<i32> {
-        match *self{
+        match *self {
             Capacity::Limit(limit) => Some(limit),
-            Capacity::Range(_whole, _decimal)  => None,
+            Capacity::Range(_whole, _decimal) => None,
         }
     }
 }
@@ -98,14 +88,14 @@ pub enum Literal {
     Uuid(Uuid),
     String(String),
     Blob(Vec<u8>),
-    CurrentTime, // pg: now()
-    CurrentDate, //pg: today()
+    CurrentTime,      // pg: now()
+    CurrentDate,      //pg: today()
     CurrentTimestamp, // pg: now()
 }
 
 /// column stat, derive from pg_stats
 #[derive(Debug, PartialEq, FromDao, Clone)]
-pub struct ColumnStat{
+pub struct ColumnStat {
     pub avg_width: i32, //average width of the column, (the number of characters)
     //most_common_values: Value,//top 5 most common values
     pub n_distinct: f32, // the number of distinct values of these column
@@ -128,7 +118,3 @@ impl<'a> From<&'a str> for Literal {
         Literal::String(String::from(s))
     }
 }
-
-
-
-

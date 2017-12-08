@@ -1,4 +1,3 @@
-
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct TableName {
     pub name: String,
@@ -7,7 +6,6 @@ pub struct TableName {
 }
 
 impl TableName {
-
     /// create table with name
     pub fn from(arg: &str) -> Self {
         if arg.contains(".") {
@@ -36,7 +34,6 @@ impl TableName {
             None => self.name.to_owned(),
         }
     }
-
 }
 
 pub trait ToTableName {

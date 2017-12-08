@@ -1,7 +1,7 @@
-use error::{DbError,DataError};
+use error::{DataError, DbError};
 use dao::{FromDao, ToDao};
 use dao::ToColumnNames;
-use dao::{ToTableName};
+use dao::ToTableName;
 use dao::{ToValue, Value};
 use platform::DBPlatform;
 use database::Database;
@@ -13,8 +13,7 @@ pub struct EntityManager(pub DBPlatform);
 
 
 impl EntityManager {
-
-    pub fn db(&self) -> &Database { 
+    pub fn db(&self) -> &Database {
         &*self.0
     }
     /// get all the records of this table
@@ -25,11 +24,15 @@ impl EntityManager {
         let table = T::to_table_name();
         let columns = T::to_column_names();
         let enumerated_columns = columns
-                .iter()
-                .map(|c| c.name.to_owned())
-                .collect::<Vec<_>>()
-                .join(", ");
-        let sql = format!("SELECT {} FROM {}", enumerated_columns, table.complete_name());
+            .iter()
+            .map(|c| c.name.to_owned())
+            .collect::<Vec<_>>()
+            .join(", ");
+        let sql = format!(
+            "SELECT {} FROM {}",
+            enumerated_columns,
+            table.complete_name()
+        );
         let rows = self.0.execute_sql_with_return(&sql, &[])?;
         let mut entities = vec![];
         for dao in rows.iter() {
@@ -52,7 +55,7 @@ impl EntityManager {
         self.0.get_all_tables(self)
     }
 
-    /// get all table and views grouped per schema 
+    /// get all table and views grouped per schema
     pub fn get_grouped_tables(&self) -> Result<Vec<SchemaContent>, DbError> {
         self.0.get_grouped_tables(self)
     }
@@ -144,16 +147,17 @@ impl EntityManager {
         sql: &str,
         params: &'a [&'a ToValue],
     ) -> Result<R, DbError>
-    where R: FromDao,
+    where
+        R: FromDao,
     {
-        let result: Result<Vec<R>,DbError> = self.execute_sql_with_return(sql, params);
-        match result{
-            Ok(mut result) => match result.len(){ 
-                    0 => Err(DbError::DataError(DataError::ZeroRecordReturned)),
-                    1 => Ok(result.remove(0)),
-                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+        let result: Result<Vec<R>, DbError> = self.execute_sql_with_return(sql, params);
+        match result {
+            Ok(mut result) => match result.len() {
+                0 => Err(DbError::DataError(DataError::ZeroRecordReturned)),
+                1 => Ok(result.remove(0)),
+                _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
             },
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 
@@ -162,19 +166,19 @@ impl EntityManager {
         sql: &str,
         params: &'a [&'a ToValue],
     ) -> Result<Option<R>, DbError>
-    where R: FromDao,
+    where
+        R: FromDao,
     {
-        let result: Result<Vec<R>,DbError> = self.execute_sql_with_return(sql, params);
-        match result{
-            Ok(mut result) => match result.len(){ 
-                    0 => Ok(None), 
-                    1 => Ok(Some(result.remove(0))),
-                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+        let result: Result<Vec<R>, DbError> = self.execute_sql_with_return(sql, params);
+        match result {
+            Ok(mut result) => match result.len() {
+                0 => Ok(None),
+                1 => Ok(Some(result.remove(0))),
+                _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
             },
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
-
 }
 
 
@@ -183,7 +187,7 @@ impl EntityManager {
 mod test_pg {
     extern crate dao;
     use super::*;
-    use dao::{FromDao, ToDao}; 
+    use dao::{FromDao, ToDao};
     use dao::ToColumnNames;
     use dao::ToTableName;
     use dao::TableName;

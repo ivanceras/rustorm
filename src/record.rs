@@ -15,11 +15,10 @@ impl Serialize for Record {
     }
 }
 
-impl<'a, 'b> From<&'b Dao<'a>> for Record{
-
+impl<'a, 'b> From<&'b Dao<'a>> for Record {
     fn from(dao: &'b Dao<'a>) -> Self {
-        let mut map: BTreeMap<String,Value> = BTreeMap::new();
-        for (k,v) in dao.0.iter(){
+        let mut map: BTreeMap<String, Value> = BTreeMap::new();
+        for (k, v) in dao.0.iter() {
             map.insert(k.to_string(), v.clone());
         }
         Record(map)
