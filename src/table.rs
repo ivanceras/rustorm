@@ -98,6 +98,7 @@ impl Table {
         foreign_columns
     }
 
+    /// 
     pub fn get_foreign_column_names(&self) -> Vec<&ColumnName> {
         let mut foreign_columns = vec![];
         let foreign_keys = self.get_foreign_keys();
@@ -109,6 +110,7 @@ impl Table {
         foreign_columns
     }
 
+    /// return the local columns of this table
     pub fn get_referred_columns_to_table(
         &self,
         table_name: &TableName,
@@ -140,13 +142,26 @@ pub struct UniqueKey {
     pub columns: Vec<ColumnName>,
 }
 
+/// example:
+///     category { id, name }
+///     product { product_id, name, category_id }
+/// 
+/// if the table in context is product and the foreign table is category
+/// ForeignKey{
+///     name: product_category_fkey
+///     columns: [category_id]
+///     foreign_table: category
+///     referred_columns: [id]
+/// }
 #[derive(Debug, PartialEq, Clone)]
 pub struct ForeignKey {
     pub name: Option<String>,
+    // the local columns
     pub columns: Vec<ColumnName>,
     // referred foreign table
     pub foreign_table: TableName,
     // referred column of the foreign table
+    // this is most likely the primary key of the table in context
     pub referred_columns: Vec<ColumnName>,
 }
 
