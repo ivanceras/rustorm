@@ -45,7 +45,6 @@ pub mod types;
 pub mod record;
 pub mod record_manager;
 
-
 pub use pool::Pool;
 pub use database::Database;
 pub use dao::Dao;
@@ -62,7 +61,6 @@ pub use dao::ToColumnNames;
 pub use entity::EntityManager;
 pub use record::Record;
 pub use record_manager::RecordManager;
-
 
 #[cfg(test)]
 mod test {

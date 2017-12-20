@@ -51,7 +51,6 @@ impl Table {
             .collect()
     }
 
-
     pub fn get_foreign_keys(&self) -> Vec<&ForeignKey> {
         let mut foreign: Vec<&ForeignKey> = vec![];
         for key in &self.table_key {
@@ -98,7 +97,7 @@ impl Table {
         foreign_columns
     }
 
-    /// 
+    ///
     pub fn get_foreign_column_names(&self) -> Vec<&ColumnName> {
         let mut foreign_columns = vec![];
         let foreign_keys = self.get_foreign_keys();
@@ -129,7 +128,6 @@ impl Table {
     }
 }
 
-
 #[derive(Debug, PartialEq, Clone)]
 pub struct PrimaryKey {
     pub name: Option<String>,
@@ -145,7 +143,7 @@ pub struct UniqueKey {
 /// example:
 ///     category { id, name }
 ///     product { product_id, name, category_id }
-/// 
+///
 /// if the table in context is product and the foreign table is category
 /// ForeignKey{
 ///     name: product_category_fkey
@@ -178,7 +176,6 @@ pub enum TableKey {
     Key(Key),
     ForeignKey(ForeignKey),
 }
-
 
 #[derive(Debug)]
 pub struct SchemaContent {

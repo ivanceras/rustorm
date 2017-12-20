@@ -8,7 +8,6 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
     use pg::PostgresDB;
 }}
 
-
 pub enum DBPlatform {
     #[cfg(feature = "with-postgres")] Postgres(PostgresDB),
 }
@@ -28,7 +27,6 @@ pub(crate) enum Platform {
     #[cfg(feature = "with-postgres")] Postgres,
     Unsupported(String),
 }
-
 
 impl<'a> TryFrom<&'a str> for Platform {
     type Error = ParseError;

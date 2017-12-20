@@ -5,11 +5,8 @@ use value::Value;
 use error::DaoError;
 use serde::ser::{Serialize, Serializer};
 
-
 #[derive(Debug, PartialEq)]
 pub struct Dao<'a>(pub BTreeMap<&'a str, Value>);
-
-
 
 impl<'a> Dao<'a> {
     pub fn new() -> Self {
@@ -22,7 +19,6 @@ impl<'a> Dao<'a> {
     {
         self.0.insert(s, v.into());
     }
-
 
     pub fn get<T>(&'a self, s: &str) -> Result<T, DaoError<T>>
     where
@@ -61,9 +57,6 @@ pub trait ToDao {
     /// to be saved into the database
     fn to_dao(&self) -> Dao;
 }
-
-
-
 
 #[cfg(test)]
 mod tests {

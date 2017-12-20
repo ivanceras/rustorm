@@ -23,7 +23,6 @@ impl Column {
             .any(|c| *c == ColumnConstraint::AutoIncrement)
     }
 
-
     /// check if any of the column constraint default is generated from uuid
     pub fn default_is_generated_uuid(&self) -> bool {
         self.specification.constraints.iter().any(|c| match *c {
@@ -35,7 +34,6 @@ impl Column {
         })
     }
 }
-
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ColumnSpecification {
@@ -68,15 +66,12 @@ impl Capacity {
     }
 }
 
-
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum ColumnConstraint {
     NotNull,
     DefaultValue(Literal),
     AutoIncrement,
 }
-
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Literal {

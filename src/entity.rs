@@ -11,7 +11,6 @@ use dao::TableName;
 
 pub struct EntityManager(pub DBPlatform);
 
-
 impl EntityManager {
     pub fn db(&self) -> &Database {
         &*self.0
@@ -41,8 +40,6 @@ impl EntityManager {
         }
         Ok(entities)
     }
-
-
 
     /// get the table from database based on this column name
     pub fn get_table(&self, table_name: &TableName) -> Result<Table, DbError> {
@@ -180,7 +177,6 @@ impl EntityManager {
         }
     }
 }
-
 
 #[cfg(test)]
 #[cfg(feature = "with-postgres")]
@@ -436,7 +432,6 @@ mod test_pg {
                 pub last_update: DateTime<Utc>,
             }
         }
-
 
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();

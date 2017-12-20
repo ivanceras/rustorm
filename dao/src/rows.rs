@@ -2,7 +2,6 @@ use value::Value;
 use dao::Dao;
 use std::slice;
 
-
 /// use this to store data retrieved from the database
 /// This is also slimmer than Vec<Dao> when serialized
 #[derive(Debug, Serialize)]
@@ -10,9 +9,6 @@ pub struct Rows {
     columns: Vec<String>,
     data: Vec<Vec<Value>>,
 }
-
-
-
 
 impl Rows {
     pub fn new(columns: Vec<String>) -> Self {
@@ -81,7 +77,6 @@ impl<'a> DoubleEndedIterator for Iter<'a> {
 }
 
 impl<'a> ExactSizeIterator for Iter<'a> {}
-
 
 #[cfg(test)]
 mod test {

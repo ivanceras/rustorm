@@ -1,7 +1,6 @@
 use syn;
 use quote;
 
-
 pub fn impl_from_dao(ast: &syn::MacroInput) -> quote::Tokens {
     let name = &ast.ident;
     let fields: Vec<(&syn::Ident, &syn::Ty)> = match ast.body {
@@ -37,7 +36,6 @@ pub fn impl_from_dao(ast: &syn::MacroInput) -> quote::Tokens {
         }
     }
 }
-
 
 pub fn impl_to_dao(ast: &syn::MacroInput) -> quote::Tokens {
     let name = &ast.ident;

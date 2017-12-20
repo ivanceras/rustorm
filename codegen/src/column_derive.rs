@@ -1,7 +1,6 @@
 use syn;
 use quote;
 
-
 pub fn impl_to_column_names(ast: &syn::MacroInput) -> quote::Tokens {
     let name = &ast.ident;
     let fields: Vec<(&syn::Ident, &syn::Ty)> = match ast.body {

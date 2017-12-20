@@ -9,7 +9,6 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
 
-
 pub use value::Value;
 pub use value::ToValue;
 pub use rows::Rows;
@@ -20,7 +19,6 @@ pub use column_name::ColumnName;
 pub use table_name::TableName;
 pub use table_name::ToTableName;
 pub use column_name::ToColumnNames;
-
 
 mod dao;
 pub mod value;

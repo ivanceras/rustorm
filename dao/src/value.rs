@@ -5,7 +5,6 @@ use std::convert::TryFrom;
 use error::ConvertError;
 use bigdecimal::BigDecimal;
 
-
 /// Generic value storage 32 byte in size
 /// Some contains the same value container, but the variant is more
 /// important for type hinting and view presentation hinting purposes
@@ -61,15 +60,11 @@ pub enum Array {
     */
 }
 
-
-
-
 /// A trait to allow passing of parameters ergonomically
 /// in em.execute_sql_with_return
 pub trait ToValue {
     fn to_value(&self) -> Value;
 }
-
 
 macro_rules! impl_to_value {
     ($ty: ty) => {
@@ -92,7 +87,6 @@ impl ToValue for Vec<String> {
         Value::Array(Array::Text(self.to_owned()))
     }
 }
-
 
 macro_rules! impl_from {
     ($ty:ty, $variant: ident) => {
@@ -166,7 +160,6 @@ impl_from!(&'static str, Text, to_string);
 impl_from!(Uuid, Uuid);
 impl_from!(NaiveDate, Date);
 impl_from!(DateTime<Utc>, Timestamp);
-
 
 impl From<Vec<String>> for Value {
     fn from(f: Vec<String>) -> Value {
@@ -243,7 +236,6 @@ impl<'a> TryFrom<&'a Value> for String {
         }
     }
 }
-
 
 impl_tryfrom!(bool, "bool", Bool);
 impl_tryfrom!(i8, "i8", Tinyint);

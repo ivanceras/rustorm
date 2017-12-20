@@ -21,7 +21,6 @@ pub enum PooledConn {
     #[cfg(feature = "with-postgres")] PooledPg(r2d2::PooledConnection<PostgresConnectionManager>),
 }
 
-
 impl Pool {
     pub fn new() -> Self {
         Pool(BTreeMap::new())

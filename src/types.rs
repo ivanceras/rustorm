@@ -44,7 +44,6 @@ pub enum SqlType {
     Custom(String),
 }
 
-
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub enum ArrayType {
     Bool,
@@ -69,7 +68,6 @@ pub enum ArrayType {
     Timestamp,
     TimestampTz,
 }
-
 
 impl SqlType {
     pub fn same_type(&self, value: &Value) -> bool {

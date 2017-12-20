@@ -39,7 +39,6 @@ pub enum ParseError {
     DbUrlParseError(url::ParseError),
 }
 
-
 #[derive(Debug)]
 pub enum PlatformError {
     #[cfg(feature = "with-postgres")] PostgresError(PostgresError),
