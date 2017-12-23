@@ -110,6 +110,7 @@ impl Table {
     }
 
     /// return the local columns of this table
+    /// that is referred by the argument table name
     pub fn get_referred_columns_to_table(
         &self,
         table_name: &TableName,
@@ -182,4 +183,39 @@ pub struct SchemaContent {
     pub schema: String,
     pub tablenames: Vec<TableName>,
     pub views: Vec<TableName>,
+}
+
+#[cfg(test)]
+mod test {
+    use dao::TableName;
+    use dao::ColumnName;
+    use pool::Pool;
+    
+    #[test]
+    fn referred_columns(){
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url);
+        assert!(em.is_ok());
+        let em = em.unwrap();
+        let film_tablename = TableName::from("public.film");
+        let film = em.get_table(&film_tablename);
+        let film_actor_tablename = TableName::from("public.film_actor");
+        let film_actor = em.get_table(&film_actor_tablename);
+        assert!(film.is_ok());
+        println!("film: {:#?}", film);
+        println!("FILM ACTOR {:#?}", film_actor);
+        let film = film.unwrap();
+        let film_actor = film_actor.unwrap();
+        let rc = film_actor.get_referred_columns_to_table(&film.name);
+        println!("rc: {:#?}", rc);
+        assert_eq!(rc, 
+            Some(&vec![ ColumnName {
+                        name: "film_id".to_string(),
+                        table: None,
+                        alias: None
+                    }
+                ])
+            );
+    }
 }
