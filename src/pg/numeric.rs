@@ -6,6 +6,11 @@ use postgres::types::{self,ToSql,FromSql,Type,IsNull};
 use bigdecimal::BigDecimal;
 use num_bigint::{BigInt, BigUint, Sign};
 
+use num_traits::Zero;
+use num_integer::Integer;
+use num_traits::ToPrimitive;
+use num_traits::Signed;
+
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PgNumeric {
@@ -116,6 +121,84 @@ impl ToSql for PgNumeric {
     }
 
     to_sql_checked!();
+}
+
+
+/// Iterator over the digits of a big uint in base 10k.
+/// The digits will be returned in little endian order.
+struct ToBase10000(Option<BigUint>);
+
+impl Iterator for ToBase10000 {
+    type Item = i16;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.take().map(|v| {
+            let (div, rem) = v.div_rem(&BigUint::from(10_000u16));
+            if !div.is_zero() {
+                self.0 = Some(div);
+            }
+            rem.to_i16().expect("10000 always fits in an i16")
+        })
+    }
+}
+
+impl<'a> From<&'a BigDecimal> for PgNumeric {
+    fn from(decimal: &'a BigDecimal) -> Self {
+        let (mut integer, scale) = decimal.as_bigint_and_exponent();
+        let scale = scale as u16;
+        integer = integer.abs();
+
+        // Ensure that the decimal will always lie on a digit boundary
+        for _ in 0..(4 - scale % 4) {
+            integer = integer * 10;
+        }
+        let integer = integer.to_biguint().expect("integer is always positive");
+
+        let mut digits = ToBase10000(Some(integer)).collect::<Vec<_>>();
+        digits.reverse();
+        let digits_after_decimal = scale as u16 / 4 + 1;
+        let weight = digits.len() as i16 - digits_after_decimal as i16 - 1;
+
+        let unnecessary_zeroes = if weight >= 0 {
+            let index_of_decimal = (weight + 1) as usize;
+            digits
+                .get(index_of_decimal..)
+                .expect("enough digits exist")
+                .iter()
+                .rev()
+                .take_while(|i| i.is_zero())
+                .count()
+        } else {
+            0
+        };
+
+        let relevant_digits = digits.len() - unnecessary_zeroes;
+        digits.truncate(relevant_digits);
+
+        match decimal.sign() {
+            Sign::Plus => PgNumeric::Positive {
+                digits,
+                scale,
+                weight,
+            },
+            Sign::Minus => PgNumeric::Negative {
+                digits,
+                scale,
+                weight,
+            },
+            Sign::NoSign => PgNumeric::Positive {
+                digits: vec![0],
+                scale: 0,
+                weight: 0,
+            },
+        }
+    }
+}
+
+impl From<BigDecimal> for PgNumeric {
+    fn from(bigdecimal: BigDecimal) -> Self {
+        (&bigdecimal).into()
+    }
 }
 
 

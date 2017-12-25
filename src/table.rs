@@ -34,6 +34,7 @@ impl Table {
                 _ => (),
             }
         }
+        primary.sort_by(|a,b|a.name.cmp(&b.name));
         primary
     }
 

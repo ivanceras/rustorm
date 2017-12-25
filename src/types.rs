@@ -70,6 +70,7 @@ pub enum ArrayType {
 }
 
 impl SqlType {
+    //TODO: turn this into a macro
     pub fn same_type(&self, value: &Value) -> bool {
         match *self {
             SqlType::Bool => match *value {
@@ -94,6 +95,10 @@ impl SqlType {
             },
             SqlType::Uuid => match *value {
                 Value::Uuid(_) => true,
+                _ => false,
+            },
+            SqlType::Numeric => match *value {
+                Value::BigDecimal(_) => true,
                 _ => false,
             },
             _ => panic!("not yet implemented for checking {:?} to {:?}", self, value),

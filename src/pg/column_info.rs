@@ -8,6 +8,7 @@ use column::{Column, ColumnStat, ColumnConstraint, Literal, ColumnSpecification,
 use types::SqlType;
 use uuid::Uuid;
 use types::ArrayType;
+use util;
 
 /// get all the columns of the table
 pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>, DbError> {
@@ -139,11 +140,17 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                             | SqlType::Double
                             | SqlType::Real
                             | SqlType::Numeric => {
-                                let v: Result<f64,_> = default.parse();
-                                match v{
-                                    Ok(v) => Literal::Double(v),
-                                    Err(e) => panic!("error parsing to f64: {} error: {}", default,
-                                                    e)
+                                // some defaults have cast type example: (0)::numeric
+                                let splinters = util::maybe_trim_parenthesis(default).split("::").collect::<Vec<&str>>();
+                                let default_value = util::maybe_trim_parenthesis(splinters[0]);
+                                if default_value == "NULL" {
+                                    Literal::Null
+                                }
+                                else{
+                                    match util::eval_f64(default_value){
+                                        Ok(val) => Literal::Double(val),
+                                        Err(e) => panic!("unable to evaluate default value expression: {}, error: {}", default_value, e),
+                                    }
                                 }
 
                             }
@@ -173,7 +180,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                         SqlType::Date => {
                             // timestamp converted to text then converted to date 
                             // is equivalent to today()
-                            if default == "today()" || default =="('now'::text)::date" {
+                            if default == "today()" || default == "now()" || default =="('now'::text)::date" {
                                 Literal::CurrentDate
                             }
                             else{

@@ -44,6 +44,7 @@ pub mod column;
 pub mod types;
 pub mod record;
 pub mod record_manager;
+mod util;
 
 pub use pool::Pool;
 pub use database::Database;

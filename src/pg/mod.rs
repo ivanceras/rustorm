@@ -18,6 +18,7 @@ use dao::value::Array;
 use table::SchemaContent;
 use std::string::FromUtf8Error;
 use postgres_shared::types::Kind::Enum;
+use self::numeric::PgNumeric;
 
 
 mod table_info;
@@ -153,8 +154,9 @@ impl<'a> ToSql for PgValue<'a>{
             Value::Date(ref v) => v.to_sql(ty, out),
             Value::Timestamp(ref v) => v.to_sql(ty, out),
             Value::Time(ref v) => v.to_sql(ty, out),
-            Value::BigDecimal(ref _v) => {
-                panic!("don't know what to do with these yet!");
+            Value::BigDecimal(ref v) => {
+                let numeric: PgNumeric = v.into();
+                numeric.to_sql(ty, out)
             }
             Value::Json(ref v) => v.to_sql(ty, out),
             Value::Array(ref v) => 
@@ -176,6 +178,7 @@ impl<'a> ToSql for PgValue<'a>{
             types::BPCHAR=> true,
             types::UUID => true,
             types::TIMESTAMPTZ | types::TIMESTAMP | types::TIME => true,
+            types::NUMERIC => true,
             _ => false 
         }
  
@@ -236,7 +239,7 @@ impl FromSql for OwnedPgValue{
                     types::TIME | types::TIMETZ => match_type!(Time),
                     types::BYTEA => match_type!(Blob),
                     types::NUMERIC => {
-                        let numeric: numeric::PgNumeric = FromSql::from_sql(ty, raw)?;
+                        let numeric: PgNumeric = FromSql::from_sql(ty, raw)?;
                         let bigdecimal = BigDecimal::from(numeric);
                         Ok(OwnedPgValue(Value::BigDecimal(bigdecimal)))
                     }
