@@ -67,6 +67,8 @@ pub enum ArrayType {
     Date,
     Timestamp,
     TimestampTz,
+
+    Enum(String, Vec<String>),
 }
 
 impl SqlType {

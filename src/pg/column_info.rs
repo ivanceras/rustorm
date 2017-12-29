@@ -92,7 +92,9 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
         data_type: String,
         default: Option<String>,
         is_enum: bool,
+        is_array_enum: bool,
         enum_choices: Vec<String>,
+        array_enum_choices: Vec<String>,
     }
 
     impl ColumnConstraintSimple{
@@ -253,8 +255,15 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
             };
 
             if self.is_enum{
-                let enum_type = SqlType::Enum(data_type.to_owned(), self.enum_choices.to_owned());
+                println!("enum: {}", data_type);
+                let enum_type = SqlType::Enum(data_type.to_owned()
+                                              , self.enum_choices.to_owned());
                 (enum_type, None)
+            }
+            else if self.is_array_enum && self.array_enum_choices.len() > 0{
+                let array_enum = SqlType::ArrayType(ArrayType::Enum(data_type.to_owned()
+                                                                    , self.array_enum_choices.to_owned()));
+                (array_enum, None)
             }
             else{
                 let sql_type = match dtype{
@@ -304,9 +313,13 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
      CASE WHEN pg_attribute.atthasdef THEN pg_attrdef.adsrc 
            END AS default ,
                pg_type.typtype = 'e'::character AS is_enum,
+               pg_type.typcategory = 'A'::character AS is_array_enum,
                ARRAY(SELECT enumlabel FROM pg_enum
                         WHERE pg_enum.enumtypid = pg_attribute.atttypid)
-               AS enum_choices
+               AS enum_choices,
+               ARRAY(SELECT enumlabel FROM pg_enum
+                        WHERE pg_enum.enumtypid = pg_type.typelem)
+               AS array_enum_choices
           FROM pg_attribute 
           JOIN pg_class 
             ON pg_class.oid = pg_attribute.attrelid 

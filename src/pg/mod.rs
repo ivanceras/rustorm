@@ -18,6 +18,7 @@ use dao::value::Array;
 use table::SchemaContent;
 use std::string::FromUtf8Error;
 use postgres_shared::types::Kind::Enum;
+use postgres_shared::types::Kind;
 use self::numeric::PgNumeric;
 
 
@@ -168,20 +169,8 @@ impl<'a> ToSql for PgValue<'a>{
         }
     }
 
-    fn accepts(ty: &Type) -> bool{
-        match *ty {
-            types::BOOL => true,
-            types::INT2 | types::INT4 | types::INT8 => true,
-            types::FLOAT4 | types::FLOAT8 => true,
-            types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => true,
-            types::TEXT_ARRAY => true,
-            types::BPCHAR=> true,
-            types::UUID => true,
-            types::TIMESTAMPTZ | types::TIMESTAMP | types::TIME => true,
-            types::NUMERIC => true,
-            _ => false 
-        }
- 
+    fn accepts(_ty: &Type) -> bool{
+        true 
     }
 
     to_sql_checked!();
@@ -195,10 +184,34 @@ impl FromSql for OwnedPgValue{
             }
         }
         let kind = ty.kind();
+        println!("kind: {:?}", kind);
         match *kind{
             Enum(_) => match_type!(Text),
-
-            _ => {
+            Kind::Array(ref array_type) => {
+                let array_type_kind = array_type.kind();
+                match *array_type_kind{
+                    Enum(_) => {
+                        FromSql::from_sql(ty, raw)
+                            .map(|v|OwnedPgValue(Value::Array(Array::Text(v))))
+                    }
+                    _ => {
+                        match *ty{
+                            types::TEXT_ARRAY 
+                                | types::NAME_ARRAY 
+                                | types::VARCHAR_ARRAY => {
+                                    FromSql::from_sql(ty, raw)
+                                        .map(|v|OwnedPgValue(Value::Array(Array::Text(v))))
+                                }
+                            types::INT4_ARRAY => {
+                                    FromSql::from_sql(ty, raw)
+                                        .map(|v|OwnedPgValue(Value::Array(Array::Int(v))))
+                            }
+                            _ => panic!("Array type {:?} is not yet covered", array_type),
+                        }
+                    }
+                }
+            },
+            Kind::Simple => {
                 match *ty {
                     types::BOOL => match_type!(Bool), 
                     types::INT2  => match_type!(Smallint),
@@ -214,12 +227,6 @@ impl FromSql for OwnedPgValue{
                             Err(e) => Err(Box::new(PostgresError::FromUtf8Error(e))),
                         }
                     }
-                    types::TEXT_ARRAY 
-                        | types::NAME_ARRAY 
-                        | types::VARCHAR_ARRAY => {
-                            FromSql::from_sql(ty, raw)
-                                .map(|v|OwnedPgValue(Value::Array(Array::Text(v))))
-                        }
                     types::BPCHAR => {
                         let v: Result<String,_> = FromSql::from_sql(&types::TEXT, raw);
                         match v{
@@ -254,43 +261,16 @@ impl FromSql for OwnedPgValue{
                         println!("inet raw:{:?}", raw);
                         match_type!(Text)
                     }
-                    types::INT4_ARRAY => {
-                            FromSql::from_sql(ty, raw)
-                                .map(|v|OwnedPgValue(Value::Array(Array::Int(v))))
-                    }
                     _ => panic!("unable to convert from {:?}", ty), 
                 }
             }
+            _ => panic!("not yet handling this kind: {:?}", kind),
         }
 
 
     }
-    fn accepts(ty: &Type) -> bool{
-        let kind = ty.kind();
-        match *kind{
-            Enum(_) => true,
-
-            _  => {
-                match *ty {
-                    types::BOOL => true,
-                    types::INT2 | types::INT4 | types::INT8 => true,
-                    types::FLOAT4 | types::FLOAT8 => true,
-                    types::TEXT | types::VARCHAR | types::NAME | types::UNKNOWN => true,
-                    types::TS_VECTOR => true,
-                    types::TEXT_ARRAY | types::NAME_ARRAY | types::VARCHAR_ARRAY => true,
-                    types::BPCHAR => true,
-                    types::UUID => true,
-                    types::DATE => true,
-                    types::TIMESTAMPTZ | types::TIMESTAMP | types::TIME | types::TIMETZ=> true,
-                    types::BYTEA => true,
-                    types::NUMERIC => true,
-                    types::JSON => true,
-                    types::INET => true,
-                    types::INT4_ARRAY => true,
-                    _ => panic!("can not accept type {:?}", ty), 
-                }
-            }
-        }
+    fn accepts(_ty: &Type) -> bool{
+        true
     }
 
     fn from_sql_null(_ty: &Type) -> Result<Self, Box<Error + Sync + Send>> { 
