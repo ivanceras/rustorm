@@ -196,7 +196,6 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                             | SqlType::Text
                                 => Literal::String(default.to_owned()),
                         SqlType::Enum(_name, _choices) => Literal::String(default.to_owned()),
-                        SqlType::Custom(_s) => Literal::String(default.to_owned()),
                         _ => panic!("not convered: {:?}", sql_type),
                     };
                     ColumnConstraint::DefaultValue(literal)
@@ -299,7 +298,8 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "time with time zone" => SqlType::TimeTz,
                     "time without time zone" => SqlType::Time,
                     "inet" => SqlType::IpAddress,
-                    _ => SqlType::Custom(data_type.to_owned()), 
+                    "real[]" => SqlType::ArrayType(ArrayType::Float),
+                    _ => panic!("not yet handled: {}", dtype), 
                 };
                 (sql_type, capacity)
             }

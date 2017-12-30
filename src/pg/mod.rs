@@ -164,6 +164,7 @@ impl<'a> ToSql for PgValue<'a>{
                 match *v{
                     Array::Text(ref av) => av.to_sql(ty, out),
                     Array::Int(ref av) => av.to_sql(ty, out),
+                    Array::Float(ref av) => av.to_sql(ty, out),
                 }
             Value::Nil => Ok(IsNull::Yes),
         }
@@ -205,6 +206,10 @@ impl FromSql for OwnedPgValue{
                             types::INT4_ARRAY => {
                                     FromSql::from_sql(ty, raw)
                                         .map(|v|OwnedPgValue(Value::Array(Array::Int(v))))
+                            }
+                            types::FLOAT4_ARRAY => {
+                                    FromSql::from_sql(ty, raw)
+                                        .map(|v|OwnedPgValue(Value::Array(Array::Float(v))))
                             }
                             _ => panic!("Array type {:?} is not yet covered", array_type),
                         }

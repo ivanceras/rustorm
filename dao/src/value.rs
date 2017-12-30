@@ -44,10 +44,10 @@ pub enum Array {
     Smallint(Vec<i16>),
     */
     Int(Vec<i32>),
+    Float(Vec<f32>),
     /*
     Bigint(Vec<i64>),
 
-    Float(Vec<f32>),
     Double(Vec<f64>),
     BigDecimal(Vec<BigDecimal>),
     */

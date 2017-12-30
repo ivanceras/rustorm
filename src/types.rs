@@ -41,7 +41,6 @@ pub enum SqlType {
     Enum(String, Vec<String>),
     ArrayType(ArrayType),
 
-    Custom(String),
 }
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
