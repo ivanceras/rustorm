@@ -191,6 +191,7 @@ mod test {
     use dao::TableName;
     use dao::ColumnName;
     use pool::Pool;
+    use table::ForeignKey;
     
     #[test]
     fn referred_columns(){
@@ -218,5 +219,66 @@ mod test {
                     }
                 ])
             );
+    }
+
+    #[test]
+    fn referred_columns_hero_id(){
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/dota";
+        let mut pool = Pool::new();
+        let em = pool.em(db_url);
+        assert!(em.is_ok());
+        let em = em.unwrap();
+        let hero_tablename = TableName::from("public.hero");
+        let hero = em.get_table(&hero_tablename);
+        let hero_ability_tablename = TableName::from("public.hero_ability");
+        let hero_ability = em.get_table(&hero_ability_tablename);
+        assert!(hero.is_ok());
+        println!("hero {:#?}", hero);
+        println!("hero ability {:#?}", hero_ability);
+        let hero = hero.unwrap();
+        let hero_ability = hero_ability.unwrap();
+        let rc = hero_ability.get_referred_columns_to_table(&hero.name);
+        println!("rc: {:#?}", rc);
+        assert_eq!(rc, 
+            Some(&vec![ ColumnName {
+                        name: "id".to_string(),
+                        table: None,
+                        alias: None
+                    }
+                ])
+            );
+        let foreign_key = hero_ability.get_foreign_key_to_table(&hero.name);
+        println!("foreign_key: {:#?}", foreign_key);
+        assert_eq!(foreign_key,
+
+                Some(
+                    &ForeignKey {
+                        name: Some(
+                            "hero_id_fkey".to_string()
+                        ),
+                        columns: vec![
+                            ColumnName {
+                                name: "hero_id".to_string(),
+                                table: None,
+                                alias: None
+                            }
+                        ],
+                        foreign_table: TableName {
+                            name: "hero".to_string(),
+                            schema: Some(
+                                "public".to_string()
+                            ),
+                            alias: None
+                        },
+                        referred_columns: vec![
+                            ColumnName {
+                                name: "id".to_string(),
+                                table: None,
+                                alias: None
+                            }
+                        ]
+                    }
+                )
+        );
     }
 }

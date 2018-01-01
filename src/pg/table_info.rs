@@ -392,7 +392,7 @@ fn get_foreign_key(em: &EntityManager, foreign_key: &String, table_name: &TableN
             }
         }
     }
-    let sql = r#"SELECT conname AS key_name, 
+    let sql = r#"SELECT DISTINCT conname AS key_name, 
         pg_class.relname AS foreign_table, 
         (SELECT pg_namespace.nspname FROM pg_namespace WHERE pg_namespace.oid = pg_class.relnamespace) AS foreign_schema 
         FROM pg_constraint 
@@ -418,7 +418,7 @@ fn get_foreign_key(em: &EntityManager, foreign_key: &String, table_name: &TableN
 }
 
 fn get_referred_foreign_columns(em: &EntityManager, foreign_key: &String) -> Result<Vec<ColumnName>, DbError> {
-    let sql = r#"SELECT conname AS key_name, 
+    let sql = r#"SELECT DISTINCT conname AS key_name, 
         pg_attribute.attname AS column 
         FROM pg_constraint 
    LEFT JOIN pg_class 

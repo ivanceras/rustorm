@@ -152,7 +152,9 @@ impl EntityManager {
             Ok(mut result) => match result.len() {
                 0 => Err(DbError::DataError(DataError::ZeroRecordReturned)),
                 1 => Ok(result.remove(0)),
-                _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+                _ => {
+                    Err(DbError::DataError(DataError::MoreThan1RecordReturned))
+                }
             },
             Err(e) => Err(e),
         }
@@ -171,7 +173,9 @@ impl EntityManager {
             Ok(mut result) => match result.len() {
                 0 => Ok(None),
                 1 => Ok(Some(result.remove(0))),
-                _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+                _ => {
+                    Err(DbError::DataError(DataError::MoreThan1RecordReturned))
+                }
             },
             Err(e) => Err(e),
         }

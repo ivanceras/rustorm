@@ -321,9 +321,9 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                         WHERE pg_enum.enumtypid = pg_type.typelem)
                AS array_enum_choices
           FROM pg_attribute 
-          JOIN pg_class 
+     LEFT JOIN pg_class 
             ON pg_class.oid = pg_attribute.attrelid 
-          JOIN pg_type 
+     LEFT JOIN pg_type 
             ON pg_type.oid = pg_attribute.atttypid 
      LEFT JOIN pg_attrdef 
             ON pg_attrdef.adrelid = pg_class.oid 
