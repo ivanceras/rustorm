@@ -33,16 +33,11 @@ impl Pool {
             Ok(platform) => match platform {
                 #[cfg(feature = "with-postgres")]
                 Platform::Postgres => {
-                    let pool_pg = pg::init_pool(db_url);
-                    match pool_pg {
-                        Ok(pool_pg) => {
+                    let pool_pg = pg::init_pool(db_url)?;
                             if self.0.get(db_url).is_none() {
                                 self.0.insert(db_url.to_string(), ConnPool::PoolPg(pool_pg));
                             }
                             Ok(())
-                        }
-                        Err(e) => Err(e),
-                    }
                 }
                 Platform::Unsupported(scheme) => {
                     Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
@@ -99,6 +94,7 @@ impl Pool {
         }
     }
 
+
     pub fn em(&mut self, db_url: &str) -> Result<EntityManager, DbError> {
         let db = self.db(db_url)?;
         Ok(EntityManager(db))
@@ -107,6 +103,23 @@ impl Pool {
     pub fn dm(&mut self, db_url: &str) -> Result<RecordManager, DbError> {
         let db = self.db(db_url)?;
         Ok(RecordManager(db))
+    }
+}
+
+pub fn test_connection(db_url: &str) -> Result<(), DbError> {
+    let platform: Result<Platform, ParseError> = TryFrom::try_from(db_url);
+    match platform {
+        Ok(platform) => match platform {
+            #[cfg(feature = "with-postgres")]
+            Platform::Postgres => {
+                pg::test_connection(db_url)?;
+                Ok(())
+            }
+            Platform::Unsupported(scheme) => {
+                Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
+            }
+        },
+        Err(e) => Err(DbError::ConnectError(ConnectError::ParseError(e))),
     }
 }
 

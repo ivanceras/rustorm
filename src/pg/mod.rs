@@ -20,27 +20,31 @@ use std::string::FromUtf8Error;
 use postgres_shared::types::Kind::Enum;
 use postgres_shared::types::Kind;
 use self::numeric::PgNumeric;
+use r2d2::ManageConnection;
 
 
 mod table_info;
 mod column_info;
 mod numeric;
 
-pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_postgres::PostgresConnectionManager>, DbError>{
-    let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)
-        .map_err(|e| DbError::PlatformError(
-                        PlatformError::PostgresError(
-                            PostgresError::GenericError(e))))?;
-    r2d2::Pool::new(manager)
-        .map_err(|e| DbError::PlatformError(
-                        PlatformError::PostgresError(
-                            PostgresError::PoolInitializationError(e))))
+pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_postgres::PostgresConnectionManager>, PostgresError>{
+    test_connection(db_url)?;
+    let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)?;
+    let pool = r2d2::Pool::new(manager)?;
+    Ok(pool)
+}
 
+pub fn test_connection(db_url: &str) -> Result<(), PostgresError> {
+    let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)?;
+    let mut conn = manager.connect()?;
+    manager.is_valid(&mut conn)?;
+    Ok(())
 }
 
 pub struct PostgresDB(pub r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>);
 
 impl Database for PostgresDB{
+
     
     fn execute_sql_with_return(&self, sql: &str, param: &[Value]) -> Result<Rows, DbError> {
         let stmt = self.0.prepare(&sql);
@@ -444,6 +448,18 @@ pub enum PostgresError{
     FromUtf8Error(FromUtf8Error),
     ConvertNumericToBigDecimalError,
     PoolInitializationError(r2d2::Error)
+}
+
+impl From<postgres::Error> for PostgresError {
+    fn from(e: postgres::Error) -> Self {
+        PostgresError::GenericError(e)
+    }
+}
+
+impl From<r2d2::Error> for PostgresError {
+    fn from(e: r2d2::Error) -> Self {
+        PostgresError::PoolInitializationError(e)
+    }
 }
 
 

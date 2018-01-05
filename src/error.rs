@@ -45,12 +45,32 @@ pub enum PlatformError {
     #[cfg(feature = "with-sqlite")] SqliteError(SqliteError),
 }
 
+impl From<PostgresError> for PlatformError {
+    fn from(e: PostgresError) -> Self {
+        PlatformError::PostgresError(e)
+    }
+}
+
+impl From<PostgresError> for DbError {
+    fn from(e: PostgresError) -> Self {
+        DbError::PlatformError(PlatformError::from(e))
+    }
+}
+
+
 #[derive(Debug)]
 pub enum DbError {
     DataError(DataError),
     PlatformError(PlatformError),
     ConvertError(ConvertError),
     ConnectError(ConnectError), //agnostic connection error
+}
+
+#[cfg(feature = "with-postgres")] 
+impl From<PlatformError> for DbError {
+    fn from(e: PlatformError) -> Self {
+        DbError::PlatformError(e)
+    }
 }
 
 #[derive(Debug)]

@@ -34,7 +34,7 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
     mod sq;
 }}
 
-mod pool;
+pub mod pool;
 mod platform;
 pub mod error;
 mod database;
