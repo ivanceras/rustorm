@@ -45,12 +45,14 @@ pub enum PlatformError {
     #[cfg(feature = "with-sqlite")] SqliteError(SqliteError),
 }
 
+#[cfg(feature = "with-postgres")] 
 impl From<PostgresError> for PlatformError {
     fn from(e: PostgresError) -> Self {
         PlatformError::PostgresError(e)
     }
 }
 
+#[cfg(feature = "with-postgres")] 
 impl From<PostgresError> for DbError {
     fn from(e: PostgresError) -> Self {
         DbError::PlatformError(PlatformError::from(e))
