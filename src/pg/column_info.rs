@@ -299,6 +299,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "time without time zone" => SqlType::Time,
                     "inet" => SqlType::IpAddress,
                     "real[]" => SqlType::ArrayType(ArrayType::Float),
+                    "oid" => SqlType::Int,
                     _ => panic!("not yet handled: {}", dtype), 
                 };
                 (sql_type, capacity)
