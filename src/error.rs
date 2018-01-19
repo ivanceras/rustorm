@@ -62,6 +62,7 @@ impl From<PostgresError> for DbError {
 
 #[derive(Debug)]
 pub enum DbError {
+    SqlInjectionAttempt(String),
     DataError(DataError),
     PlatformError(PlatformError),
     ConvertError(ConvertError),
