@@ -263,7 +263,7 @@ impl FromSql for OwnedPgValue{
                         println!("mime_type: {}", mime_type);
                         let bytes:Vec<u8> = FromSql::from_sql(ty, raw).unwrap();
                         //assert_eq!(raw, &*bytes);
-                        let base64 = base64::encode_config(raw, base64::MIME);
+                        let base64 = base64::encode_config(&bytes, base64::MIME);
                         match &*mime_type {
                             "image/jpeg"|
                             "image/png" => {
