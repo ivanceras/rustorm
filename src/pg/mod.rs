@@ -22,6 +22,7 @@ use postgres_shared::types::Kind;
 use self::numeric::PgNumeric;
 use r2d2::ManageConnection;
 use tree_magic;
+use base64;
 
 
 mod table_info;
@@ -156,6 +157,7 @@ impl<'a> ToSql for PgValue<'a>{
             Value::Float(ref v) => v.to_sql(ty, out),
             Value::Double(ref v) => v.to_sql(ty, out),
             Value::Blob(ref v) => v.to_sql(ty, out),
+            Value::ImageUri(ref _v) => panic!("ImageUri is only used for reading data from DB, not inserting into DB"),
             Value::Char(ref v) => v.to_string().to_sql(ty, out),
             Value::Text(ref v) => v.to_sql(ty, out),
             Value::Uuid(ref v) => v.to_sql(ty, out),
@@ -259,7 +261,18 @@ impl FromSql for OwnedPgValue{
                     types::BYTEA => {
                         let mime_type = tree_magic::from_u8(raw);
                         println!("mime_type: {}", mime_type);
-                        match_type!(Blob)
+                        let bytes:Vec<u8> = FromSql::from_sql(ty, raw).unwrap();
+                        //assert_eq!(raw, &*bytes);
+                        let base64 = base64::encode_config(raw, base64::MIME);
+                        match &*mime_type {
+                            "image/jpeg"|
+                            "image/png" => {
+                                Ok(OwnedPgValue(Value::ImageUri(format!("data:{};base64,{}",mime_type,base64))))
+                            }
+                            _ => {
+                                match_type!(Blob)
+                            }
+                        }
                     }
                     types::NUMERIC => {
                         let numeric: PgNumeric = FromSql::from_sql(ty, raw)?;

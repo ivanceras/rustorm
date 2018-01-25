@@ -23,6 +23,7 @@ pub enum Value {
     BigDecimal(BigDecimal),
 
     Blob(Vec<u8>),
+    ImageUri(String),
     Char(char),
     Text(String),
     Json(String),

@@ -21,6 +21,7 @@ extern crate serde_derive;
 extern crate url;
 extern crate uuid;
 extern crate tree_magic;
+extern crate base64;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate r2d2_postgres;
