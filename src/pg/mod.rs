@@ -21,6 +21,7 @@ use postgres_shared::types::Kind::Enum;
 use postgres_shared::types::Kind;
 use self::numeric::PgNumeric;
 use r2d2::ManageConnection;
+use tree_magic;
 
 
 mod table_info;
@@ -63,16 +64,18 @@ impl Database for PostgresDB{
                         let mut records = Rows::new(column_names);
                         for r in rows.iter(){
                             let mut record:Vec<Value> = vec![];
-                            for (i,_) in columns.iter().enumerate(){
+                            for (i,column) in columns.iter().enumerate(){
                                 let value: Option<Result<OwnedPgValue, postgres::Error>> = r.get_opt(i);
                                 match value{
                                     Some(value) => {
                                         match value{
                                             Ok(value) =>  record.push(value.0),
                                             Err(e) => {
+                                                //println!("Row {:?}", r);
+                                                println!("column {:?} index: {}", column, i);
+                                                let msg = format!("Error converting column {:?} at index {}", column, i);
                                                 return Err(DbError::PlatformError(
-                                                        PlatformError::PostgresError(
-                                                            PostgresError::GenericError(e))))
+                                                        PlatformError::PostgresError(PostgresError::GenericError(msg, e))))
                                             }
                                         }
                                     },
@@ -253,7 +256,11 @@ impl FromSql for OwnedPgValue{
                     types::DATE => match_type!(Date),
                     types::TIMESTAMPTZ | types::TIMESTAMP => match_type!(Timestamp),
                     types::TIME | types::TIMETZ => match_type!(Time),
-                    types::BYTEA => match_type!(Blob),
+                    types::BYTEA => {
+                        let mime_type = tree_magic::from_u8(raw);
+                        println!("mime_type: {}", mime_type);
+                        match_type!(Blob)
+                    }
                     types::NUMERIC => {
                         let numeric: PgNumeric = FromSql::from_sql(ty, raw)?;
                         let bigdecimal = BigDecimal::from(numeric);
@@ -442,7 +449,7 @@ mod test{
 
 #[derive(Debug)]
 pub enum PostgresError{
-    GenericError(postgres::Error),
+    GenericError(String, postgres::Error),
     SqlError(postgres::Error, String),
     ConvertStringToCharError(String),
     FromUtf8Error(FromUtf8Error),
@@ -452,7 +459,7 @@ pub enum PostgresError{
 
 impl From<postgres::Error> for PostgresError {
     fn from(e: postgres::Error) -> Self {
-        PostgresError::GenericError(e)
+        PostgresError::GenericError("From conversion".into(), e)
     }
 }
 

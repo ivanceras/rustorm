@@ -159,6 +159,7 @@ impl_from!(String, Text);
 impl_from!(&'static str, Text, to_string);
 impl_from!(Uuid, Uuid);
 impl_from!(NaiveDate, Date);
+impl_from!(NaiveTime, Time);
 impl_from!(DateTime<Utc>, Timestamp);
 
 impl From<Vec<String>> for Value {

@@ -32,6 +32,7 @@ num-bigint = "0.1"
 num-traits = "0.1"
 num-integer = "0.1"
 meval = "0.1.0"
+tree_magic = "0.2"
 
 [features]
 #default = ["with-postgres"]
