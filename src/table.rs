@@ -187,6 +187,7 @@ pub struct SchemaContent {
 }
 
 #[cfg(test)]
+#[cfg(feature = "with-postgres")]
 mod test {
     use dao::TableName;
     use dao::ColumnName;

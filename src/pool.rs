@@ -3,6 +3,12 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
     use pg::{self, PostgresDB};
     use r2d2;
 }}
+cfg_if! {if #[cfg(feature = "with-sqlite")]{
+    use r2d2_sqlite3::SqliteConnectionManager;
+    use sq::{self, SqliteDB};
+    use r2d2;
+}}
+
 use std::convert::TryFrom;
 use platform::Platform;
 use error::{ConnectError, ParseError};
@@ -15,10 +21,12 @@ use record_manager::RecordManager;
 pub struct Pool(BTreeMap<String, ConnPool>);
 pub enum ConnPool {
     #[cfg(feature = "with-postgres")] PoolPg(r2d2::Pool<PostgresConnectionManager>),
+    #[cfg(feature = "with-sqlite")] PoolSq(r2d2::Pool<SqliteConnectionManager>),
 }
 
 pub enum PooledConn {
     #[cfg(feature = "with-postgres")] PooledPg(r2d2::PooledConnection<PostgresConnectionManager>),
+    #[cfg(feature = "with-sqlite")] PooledSq(r2d2::PooledConnection<SqliteConnectionManager>),
 }
 
 impl Pool {
@@ -28,6 +36,7 @@ impl Pool {
 
     /// ensure that a connection pool for this db_url exist
     fn ensure(&mut self, db_url: &str) -> Result<(), DbError> {
+        println!("ensure db_url: {}", db_url);
         let platform: Result<Platform, _> = TryFrom::try_from(db_url);
         match platform {
             Ok(platform) => match platform {
@@ -39,7 +48,17 @@ impl Pool {
                             }
                             Ok(())
                 }
+                #[cfg(feature = "with-sqlite")]
+                Platform::Sqlite(path) => {
+                    println!("matched sqlite");
+                    let pool_sq = sq::init_pool(&path)?;
+                            if self.0.get(db_url).is_none() {
+                                self.0.insert(db_url.to_string(), ConnPool::PoolSq(pool_sq));
+                            }
+                            Ok(())
+                }
                 Platform::Unsupported(scheme) => {
+                    println!("unsupported");
                     Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
                 }
             },
@@ -62,6 +81,17 @@ impl Pool {
                         Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
                     }
                 }
+                #[cfg(feature="with-sqlite")]
+                Platform::Sqlite(_path) => {
+                    println!("getting sqlite pool");
+                    let conn: Option<&ConnPool> = self.0.get(db_url);
+                    if let Some(conn) = conn {
+                        Ok(conn)
+                    } else {
+                        Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
+                    }
+                }
+
                 Platform::Unsupported(scheme) => {
                     Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
                 }
@@ -82,6 +112,14 @@ impl Pool {
                     Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
                 }
             }
+            #[cfg(feature = "with-sqlite")]
+            ConnPool::PoolSq(ref pool_sq) => {
+                let pooled_conn = pool_sq.get();
+                match pooled_conn {
+                    Ok(pooled_conn) => Ok(PooledConn::PooledSq(pooled_conn)),
+                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
+                }
+            }
         }
     }
 
@@ -91,6 +129,8 @@ impl Pool {
         match pooled_conn {
             #[cfg(feature = "with-postgres")]
             PooledConn::PooledPg(pooled_pg) => Ok(DBPlatform::Postgres(PostgresDB(pooled_pg))),
+            #[cfg(feature = "with-sqlite")]
+            PooledConn::PooledSq(pooled_sq) => Ok(DBPlatform::Sqlite(SqliteDB(pooled_sq))),
         }
     }
 
@@ -113,6 +153,12 @@ pub fn test_connection(db_url: &str) -> Result<(), DbError> {
             #[cfg(feature = "with-postgres")]
             Platform::Postgres => {
                 pg::test_connection(db_url)?;
+                Ok(())
+            }
+            #[cfg(feature = "with-sqlite")]
+            Platform::Sqlite(path) => {
+                println!("testing connection: {}", path);
+                sq::test_connection(&path)?;
                 Ok(())
             }
             Platform::Unsupported(scheme) => {

@@ -1,4 +1,4 @@
-#![deny(warnings)]
+//#![deny(warnings)]
 #![allow(dead_code)]
 #![feature(try_from)]
 #![feature(conservative_impl_trait)]
@@ -33,6 +33,7 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
     extern crate r2d2_sqlite3;
     extern crate sqlite as sqlite3;
+    extern crate nom_sql;
     mod sq;
 }}
 

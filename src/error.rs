@@ -8,6 +8,7 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use sq::SqliteError;
+    use sqlite3;
 }}
 
 #[derive(Debug)]
@@ -59,6 +60,27 @@ impl From<PostgresError> for DbError {
     }
 }
 
+#[cfg(feature = "with-sqlite")] 
+impl From<sqlite3::Error> for DbError {
+    fn from(e: sqlite3::Error) -> Self {
+        DbError::PlatformError(PlatformError::SqliteError(SqliteError::from(e)))
+    }
+}
+
+#[cfg(feature = "with-sqlite")] 
+impl From<SqliteError> for PlatformError {
+    fn from(e: SqliteError) -> Self {
+        PlatformError::SqliteError(e)
+    }
+}
+
+#[cfg(feature = "with-sqlite")] 
+impl From<SqliteError> for DbError {
+    fn from(e: SqliteError) -> Self {
+        DbError::PlatformError(PlatformError::from(e))
+    }
+}
+
 
 #[derive(Debug)]
 pub enum DbError {
@@ -69,7 +91,6 @@ pub enum DbError {
     ConnectError(ConnectError), //agnostic connection error
 }
 
-#[cfg(feature = "with-postgres")] 
 impl From<PlatformError> for DbError {
     fn from(e: PlatformError) -> Self {
         DbError::PlatformError(e)
