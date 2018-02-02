@@ -9,6 +9,7 @@ use types::SqlType;
 use uuid::Uuid;
 use types::ArrayType;
 use util;
+use common;
 
 /// get all the columns of the table
 pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>, DbError> {
@@ -116,10 +117,11 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                 constraints.push(ColumnConstraint::NotNull);
             }
             if let Some(ref default) = self.default{
-                let constraint = if default == "null" {
+                let ic_default = default.to_lowercase();
+                let constraint = if ic_default == "null" {
                     ColumnConstraint::DefaultValue(Literal::Null)
                 }
-                else if default.starts_with("nextval"){
+                else if ic_default.starts_with("nextval"){
                     ColumnConstraint::AutoIncrement
                 }
                 else {
@@ -143,9 +145,9 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                             | SqlType::Real
                             | SqlType::Numeric => {
                                 // some defaults have cast type example: (0)::numeric
-                                let splinters = util::maybe_trim_parenthesis(default).split("::").collect::<Vec<&str>>();
+                                let splinters = util::maybe_trim_parenthesis(&default).split("::").collect::<Vec<&str>>();
                                 let default_value = util::maybe_trim_parenthesis(splinters[0]);
-                                if default_value == "NULL" {
+                                if default_value.to_lowercase() == "null" {
                                     Literal::Null
                                 }
                                 else{
@@ -161,7 +163,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                                Literal::UuidGenerateV4
                             }
                             else{
-                                let v: Result<Uuid,_> = Uuid::parse_str(default);
+                                let v: Result<Uuid,_> = Uuid::parse_str(&default);
                                 match v{
                                     Ok(v) => Literal::Uuid(v),
                                     Err(e) => panic!("error parsing to uuid: {} error: {}", default, e)
@@ -208,50 +210,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
 
         fn get_sql_type_capacity(&self) -> (SqlType, Option<Capacity>) {
             let data_type: &str = &self.data_type;
-            let start = data_type.find('(');
-            let end = data_type.find(')');
-            let (dtype, capacity) = if let Some(start) = start {
-                if let Some(end) = end {
-                    let dtype = &data_type[0..start];
-                    let range = &data_type[start+1..end];
-                    let capacity = if range.contains(","){
-                        let splinters = range.split(",").collect::<Vec<&str>>();
-                        assert!(splinters.len() == 2, "There should only be 2 parts");
-                        let range1:Result<i32,_> = splinters[0].parse();
-                        let range2:Result<i32,_>= splinters[1].parse();
-                        match range1{
-                            Ok(r1) => match range2{
-                                Ok(r2) => Some(Capacity::Range(r1,r2)),
-                                Err(e) => {
-                                    println!("error: {} when parsing range2 for data_type: {:?}", e,  data_type);
-                                    None 
-                                }
-                            }
-                            Err(e) => {
-                                println!("error: {} when parsing range1 for data_type: {:?}", e,  data_type);
-                                None
-                            }
-                        }
-
-                    }
-                    else{
-                        let limit:Result<i32,_> = range.parse();
-                        match limit{
-                            Ok(limit) => Some(Capacity::Limit(limit)),
-                            Err(e) => {
-                                println!("error: {} when parsing limit for data_type: {:?}", e, data_type);
-                                None
-                            }
-                        }
-                    };
-                    (dtype, capacity)
-                }else{
-                    (data_type, None)
-                }
-            }
-            else{
-                (data_type, None)
-            };
+            let (dtype, capacity) = common::extract_datatype_with_capacity(data_type); 
 
             if self.is_enum{
                 println!("enum: {}", data_type);
@@ -265,7 +224,7 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                 (array_enum, None)
             }
             else{
-                let sql_type = match dtype{
+                let sql_type = match &*dtype{
                     "boolean" => SqlType::Bool,
                     "tinyint" => SqlType::Tinyint,
                     "smallint" | "year" => SqlType::Smallint,

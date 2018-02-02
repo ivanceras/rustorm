@@ -1,4 +1,4 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 #![allow(dead_code)]
 #![feature(try_from)]
 #![feature(conservative_impl_trait)]
@@ -48,6 +48,7 @@ pub mod types;
 pub mod record;
 pub mod record_manager;
 mod util;
+pub mod common;
 
 pub use pool::Pool;
 pub use database::Database;

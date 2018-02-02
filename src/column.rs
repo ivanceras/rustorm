@@ -33,6 +33,10 @@ impl Column {
             _ => false,
         })
     }
+
+    pub fn get_sql_type(&self) -> SqlType {
+        self.specification.sql_type.clone()
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]

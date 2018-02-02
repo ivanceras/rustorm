@@ -1,12 +1,14 @@
+
+#[cfg(any(feature = "with-postgres",feature = "with-sqlite"))]
+use r2d2;
+
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     use r2d2_postgres::PostgresConnectionManager;
     use pg::{self, PostgresDB};
-    use r2d2;
 }}
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use r2d2_sqlite3::SqliteConnectionManager;
     use sq::{self, SqliteDB};
-    use r2d2;
 }}
 
 use std::convert::TryFrom;

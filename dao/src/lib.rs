@@ -19,6 +19,7 @@ pub use column_name::ColumnName;
 pub use table_name::TableName;
 pub use table_name::ToTableName;
 pub use column_name::ToColumnNames;
+pub use error::DaoError;
 
 mod dao;
 pub mod value;

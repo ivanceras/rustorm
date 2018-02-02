@@ -163,6 +163,7 @@ impl<'a> ToSql for PgValue<'a>{
             Value::Uuid(ref v) => v.to_sql(ty, out),
             Value::Date(ref v) => v.to_sql(ty, out),
             Value::Timestamp(ref v) => v.to_sql(ty, out),
+            Value::DateTime(ref v) => v.to_sql(ty, out),
             Value::Time(ref v) => v.to_sql(ty, out),
             Value::BigDecimal(ref v) => {
                 let numeric: PgNumeric = v.into();
@@ -318,7 +319,6 @@ impl FromSql for OwnedPgValue{
 }
 
 
-
 #[cfg(test)]
 mod test{
 
@@ -328,7 +328,6 @@ mod test{
     use std::ops::Deref;
     use dao::Value;
     use dao::Rows;
-
 
     #[test]
     fn connect_test_query(){
@@ -347,6 +346,8 @@ mod test{
                     assert_eq!(l, "life");
                 }
             }
+        #[cfg(any(feature = "with-sqlite"))]
+            _ => unreachable!()
         }
     }
     #[test]
@@ -367,6 +368,8 @@ mod test{
                     assert_eq!(l, "life");
                 }
             }
+        #[cfg(any(feature = "with-sqlite"))]
+            _ => unreachable!()
         }
     }
     #[test]

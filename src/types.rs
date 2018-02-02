@@ -73,35 +73,32 @@ pub enum ArrayType {
 impl SqlType {
     //TODO: turn this into a macro
     pub fn same_type(&self, value: &Value) -> bool {
+        macro_rules! match_value{
+            ($variant: ident) => {
+                match *value {
+                    Value::$variant(_) => true,
+                    _ => false,
+                }
+            }
+        }
         match *self {
-            SqlType::Bool => match *value {
-                Value::Bool(_) => true,
-                _ => false,
-            },
-            SqlType::Tinyint => match *value {
-                Value::Tinyint(_) => true,
-                _ => false,
-            },
-            SqlType::Smallint => match *value {
-                Value::Smallint(_) => true,
-                _ => false,
-            },
-            SqlType::Int => match *value {
-                Value::Int(_) => true,
-                _ => false,
-            },
-            SqlType::Bigint => match *value {
-                Value::Bigint(_) => true,
-                _ => false,
-            },
-            SqlType::Uuid => match *value {
-                Value::Uuid(_) => true,
-                _ => false,
-            },
-            SqlType::Numeric => match *value {
-                Value::BigDecimal(_) => true,
-                _ => false,
-            },
+            SqlType::Bool => match_value!(Bool),
+            SqlType::Tinyint => match_value!(Tinyint),
+            SqlType::Smallint => match_value!(Smallint),
+            SqlType::Int => match_value!(Int),
+            SqlType::Bigint => match_value!(Bigint),
+            SqlType::Float => match_value!(Float),
+            SqlType::Double =>  match_value!(Double),
+            SqlType::Numeric => match_value!(BigDecimal),
+            SqlType::Blob => match_value!(Blob),
+            SqlType::Char => match_value!(Char),
+            SqlType::Text 
+                | SqlType::Varchar => match_value!(Text),
+            SqlType::Json => match_value!(Json),
+            SqlType::Uuid => match_value!(Uuid),
+            SqlType::Date => match_value!(Date),
+            SqlType::Timestamp => match_value!(Timestamp),
+            SqlType::TimestampTz => match_value!(Timestamp),
             _ => panic!("not yet implemented for checking {:?} to {:?}", self, value),
         }
     }

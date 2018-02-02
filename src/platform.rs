@@ -45,12 +45,23 @@ impl<'a> TryFrom<&'a str> for Platform {
             Ok(url) => {
                 println!("url: {:#?}", url);
                 println!("host: {:?}", url.host_str());
+                println!("path: {:?}", url.path());
                 let scheme = url.scheme();
                 match scheme {
                     #[cfg(feature = "with-postgres")]
                     "postgres" => Ok(Platform::Postgres),
                     #[cfg(feature = "with-sqlite")]
-                    "sqlite" => Ok(Platform::Sqlite(url.host_str().unwrap().to_owned())),
+                    "sqlite" => {
+                        let host = url.host_str().unwrap();
+                        let path = url.path();
+                        let path = if path == "/" {
+                            ""
+                            } else {
+                                path
+                            };
+                        let db_file = format!("{}{}", host, path);
+                        Ok(Platform::Sqlite(db_file))
+                    }
                     _ => Ok(Platform::Unsupported(scheme.to_string())),
                 }
             }
