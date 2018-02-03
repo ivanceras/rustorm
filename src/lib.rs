@@ -33,7 +33,6 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
     extern crate r2d2_sqlite3;
     extern crate sqlite as sqlite3;
-    extern crate nom_sql;
     mod sq;
 }}
 
