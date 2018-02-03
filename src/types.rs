@@ -1,4 +1,5 @@
 use dao::Value;
+use dao::value::Array;
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub enum SqlType {
@@ -71,7 +72,6 @@ pub enum ArrayType {
 }
 
 impl SqlType {
-    //TODO: turn this into a macro
     pub fn same_type(&self, value: &Value) -> bool {
         macro_rules! match_value{
             ($variant: ident) => {
@@ -99,6 +99,12 @@ impl SqlType {
             SqlType::Date => match_value!(Date),
             SqlType::Timestamp => match_value!(Timestamp),
             SqlType::TimestampTz => match_value!(Timestamp),
+            SqlType::Enum(_,_) => match_value!(Text),
+            SqlType::ArrayType(ArrayType::Text) => match *value{
+                Value::Array(Array::Text(_)) => true,
+                _ => false
+            }
+            SqlType::TsVector => match_value!(Text),
             _ => panic!("not yet implemented for checking {:?} to {:?}", self, value),
         }
     }

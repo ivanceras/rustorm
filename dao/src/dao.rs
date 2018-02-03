@@ -20,6 +20,10 @@ impl<'a> Dao<'a> {
         self.0.insert(s, v.into());
     }
 
+    pub fn insert_value(&mut self, s: &'a str, value: Value) {
+        self.0.insert(s, value);
+    }
+
     pub fn get<T>(&'a self, s: &str) -> Result<T, DaoError<T>>
     where
         T: TryFrom<&'a Value>,
