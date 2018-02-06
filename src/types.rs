@@ -104,6 +104,18 @@ impl SqlType {
                 Value::Array(Array::Text(_)) => true,
                 _ => false
             }
+            SqlType::ArrayType(ArrayType::Enum(_,_)) => match * value {
+                Value::Array(Array::Text(_)) => true,
+                _ => false
+            }
+            SqlType::Real => match *value{
+                Value::Float(_) => true,
+                _ => false
+            }
+            SqlType::ArrayType(ArrayType::Float) => match *value{
+                Value::Array(Array::Float(_)) => true,
+                _ => false
+            }
             SqlType::TsVector => match_value!(Text),
             _ => panic!("not yet implemented for checking {:?} to {:?}", self, value),
         }
