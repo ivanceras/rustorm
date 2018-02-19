@@ -195,7 +195,6 @@ impl FromSql for OwnedPgValue{
             }
         }
         let kind = ty.kind();
-        println!("kind: {:?}", kind);
         match *kind{
             Enum(_) => match_type!(Text),
             Kind::Array(ref array_type) => {
