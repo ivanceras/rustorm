@@ -14,7 +14,7 @@ postgres-shared = {version = "0.4.0", optional = true}
 #postgres-shared = {path = "../../rust-postgres/postgres-shared", optional = true}
 r2d2 = "0.8"
 url = "1.5.1"
-dao = {path = "dao"}
+dao = {path = "dao", version = "0.1.0"}
 rustorm_codegen = {path = "codegen"}
 cfg-if = "0.1.2"
 uuid = "0.5.1"
