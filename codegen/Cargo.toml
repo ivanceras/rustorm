@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
 license = "MIT"
 description = "code gen provides macro for generating code on data access objects on table metadata"
+repository = "https://github.com/ivanceras/rustorm"
+documentation = "https://docs.rs/rustorm"
+keywords = ["orm", "postgresql", "sqlite"]
 
 [dependencies]
 syn = "0.11.11"

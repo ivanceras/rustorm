@@ -4,6 +4,9 @@ version = "0.10.0"
 authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
 license = "MIT"
 description = "A complete rewrite of rustorm"
+repository = "https://github.com/ivanceras/rustorm"
+documentation = "https://docs.rs/rustorm"
+keywords = ["orm", "postgresql", "sqlite"]
 
 [dependencies]
 postgres = {version = "0.15.1",features = ["with-uuid","with-chrono"], optional = true}

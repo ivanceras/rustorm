@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
 license = "MIT"
 description = "Dao provides a flexible way to access data from the database"
+repository = "https://github.com/ivanceras/rustorm"
+documentation = "https://docs.rs/rustorm"
+keywords = ["orm", "postgresql", "sqlite"]
 
 [dependencies]
 chrono = {version = "0.4.0", features = ["serde"]}
