@@ -42,45 +42,46 @@ pub enum ParseError {
 
 #[derive(Debug)]
 pub enum PlatformError {
-    #[cfg(feature = "with-postgres")] PostgresError(PostgresError),
-    #[cfg(feature = "with-sqlite")] SqliteError(SqliteError),
+    #[cfg(feature = "with-postgres")]
+    PostgresError(PostgresError),
+    #[cfg(feature = "with-sqlite")]
+    SqliteError(SqliteError),
 }
 
-#[cfg(feature = "with-postgres")] 
+#[cfg(feature = "with-postgres")]
 impl From<PostgresError> for PlatformError {
     fn from(e: PostgresError) -> Self {
         PlatformError::PostgresError(e)
     }
 }
 
-#[cfg(feature = "with-postgres")] 
+#[cfg(feature = "with-postgres")]
 impl From<PostgresError> for DbError {
     fn from(e: PostgresError) -> Self {
         DbError::PlatformError(PlatformError::from(e))
     }
 }
 
-#[cfg(feature = "with-sqlite")] 
+#[cfg(feature = "with-sqlite")]
 impl From<sqlite3::Error> for DbError {
     fn from(e: sqlite3::Error) -> Self {
         DbError::PlatformError(PlatformError::SqliteError(SqliteError::from(e)))
     }
 }
 
-#[cfg(feature = "with-sqlite")] 
+#[cfg(feature = "with-sqlite")]
 impl From<SqliteError> for PlatformError {
     fn from(e: SqliteError) -> Self {
         PlatformError::SqliteError(e)
     }
 }
 
-#[cfg(feature = "with-sqlite")] 
+#[cfg(feature = "with-sqlite")]
 impl From<SqliteError> for DbError {
     fn from(e: SqliteError) -> Self {
         DbError::PlatformError(PlatformError::from(e))
     }
 }
-
 
 #[derive(Debug)]
 pub enum DbError {

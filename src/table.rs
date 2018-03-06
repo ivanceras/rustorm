@@ -34,7 +34,7 @@ impl Table {
                 _ => (),
             }
         }
-        primary.sort_by(|a,b|a.name.cmp(&b.name));
+        primary.sort_by(|a, b| a.name.cmp(&b.name));
         primary
     }
 
@@ -193,9 +193,9 @@ mod test {
     use dao::ColumnName;
     use pool::Pool;
     use table::ForeignKey;
-    
+
     #[test]
-    fn referred_columns(){
+    fn referred_columns() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -212,18 +212,20 @@ mod test {
         let film_actor = film_actor.unwrap();
         let rc = film_actor.get_referred_columns_to_table(&film.name);
         println!("rc: {:#?}", rc);
-        assert_eq!(rc, 
-            Some(&vec![ ColumnName {
-                        name: "film_id".to_string(),
-                        table: None,
-                        alias: None
-                    }
-                ])
-            );
+        assert_eq!(
+            rc,
+            Some(&vec![
+                ColumnName {
+                    name: "film_id".to_string(),
+                    table: None,
+                    alias: None,
+                },
+            ])
+        );
     }
 
     #[test]
-    fn referred_columns_hero_id(){
+    fn referred_columns_hero_id() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/dota";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -240,46 +242,42 @@ mod test {
         let hero_ability = hero_ability.unwrap();
         let rc = hero_ability.get_referred_columns_to_table(&hero.name);
         println!("rc: {:#?}", rc);
-        assert_eq!(rc, 
-            Some(&vec![ ColumnName {
-                        name: "id".to_string(),
-                        table: None,
-                        alias: None
-                    }
-                ])
-            );
+        assert_eq!(
+            rc,
+            Some(&vec![
+                ColumnName {
+                    name: "id".to_string(),
+                    table: None,
+                    alias: None,
+                },
+            ])
+        );
         let foreign_key = hero_ability.get_foreign_key_to_table(&hero.name);
         println!("foreign_key: {:#?}", foreign_key);
-        assert_eq!(foreign_key,
-
-                Some(
-                    &ForeignKey {
-                        name: Some(
-                            "hero_id_fkey".to_string()
-                        ),
-                        columns: vec![
-                            ColumnName {
-                                name: "hero_id".to_string(),
-                                table: None,
-                                alias: None
-                            }
-                        ],
-                        foreign_table: TableName {
-                            name: "hero".to_string(),
-                            schema: Some(
-                                "public".to_string()
-                            ),
-                            alias: None
-                        },
-                        referred_columns: vec![
-                            ColumnName {
-                                name: "id".to_string(),
-                                table: None,
-                                alias: None
-                            }
-                        ]
-                    }
-                )
+        assert_eq!(
+            foreign_key,
+            Some(&ForeignKey {
+                name: Some("hero_id_fkey".to_string()),
+                columns: vec![
+                    ColumnName {
+                        name: "hero_id".to_string(),
+                        table: None,
+                        alias: None,
+                    },
+                ],
+                foreign_table: TableName {
+                    name: "hero".to_string(),
+                    schema: Some("public".to_string()),
+                    alias: None,
+                },
+                referred_columns: vec![
+                    ColumnName {
+                        name: "id".to_string(),
+                        table: None,
+                        alias: None,
+                    },
+                ],
+            })
         );
     }
 }

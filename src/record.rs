@@ -6,13 +6,13 @@ use serde::ser::{Serialize, Serializer};
 #[derive(Debug)]
 pub struct Record(pub BTreeMap<String, Value>);
 
-impl Record{
-    pub fn new() -> Record{
+impl Record {
+    pub fn new() -> Record {
         Record(BTreeMap::new())
     }
 
     pub fn get_value(&self, s: &str) -> Option<Value> {
-        self.0.get(s).map(|v|v.clone())
+        self.0.get(s).map(|v| v.clone())
     }
 
     pub fn insert_value(&mut self, s: String, value: Value) {

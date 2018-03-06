@@ -1,5 +1,4 @@
-
-#[cfg(any(feature = "with-postgres",feature = "with-sqlite"))]
+#[cfg(any(feature = "with-postgres", feature = "with-sqlite"))]
 use r2d2;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
@@ -22,13 +21,17 @@ use record_manager::RecordManager;
 
 pub struct Pool(BTreeMap<String, ConnPool>);
 pub enum ConnPool {
-    #[cfg(feature = "with-postgres")] PoolPg(r2d2::Pool<PostgresConnectionManager>),
-    #[cfg(feature = "with-sqlite")] PoolSq(r2d2::Pool<SqliteConnectionManager>),
+    #[cfg(feature = "with-postgres")]
+    PoolPg(r2d2::Pool<PostgresConnectionManager>),
+    #[cfg(feature = "with-sqlite")]
+    PoolSq(r2d2::Pool<SqliteConnectionManager>),
 }
 
 pub enum PooledConn {
-    #[cfg(feature = "with-postgres")] PooledPg(r2d2::PooledConnection<PostgresConnectionManager>),
-    #[cfg(feature = "with-sqlite")] PooledSq(r2d2::PooledConnection<SqliteConnectionManager>),
+    #[cfg(feature = "with-postgres")]
+    PooledPg(r2d2::PooledConnection<PostgresConnectionManager>),
+    #[cfg(feature = "with-sqlite")]
+    PooledSq(r2d2::PooledConnection<SqliteConnectionManager>),
 }
 
 impl Pool {
@@ -45,19 +48,19 @@ impl Pool {
                 #[cfg(feature = "with-postgres")]
                 Platform::Postgres => {
                     let pool_pg = pg::init_pool(db_url)?;
-                            if self.0.get(db_url).is_none() {
-                                self.0.insert(db_url.to_string(), ConnPool::PoolPg(pool_pg));
-                            }
-                            Ok(())
+                    if self.0.get(db_url).is_none() {
+                        self.0.insert(db_url.to_string(), ConnPool::PoolPg(pool_pg));
+                    }
+                    Ok(())
                 }
                 #[cfg(feature = "with-sqlite")]
                 Platform::Sqlite(path) => {
                     println!("matched sqlite");
                     let pool_sq = sq::init_pool(&path)?;
-                            if self.0.get(db_url).is_none() {
-                                self.0.insert(db_url.to_string(), ConnPool::PoolSq(pool_sq));
-                            }
-                            Ok(())
+                    if self.0.get(db_url).is_none() {
+                        self.0.insert(db_url.to_string(), ConnPool::PoolSq(pool_sq));
+                    }
+                    Ok(())
                 }
                 Platform::Unsupported(scheme) => {
                     println!("unsupported");
@@ -83,7 +86,7 @@ impl Pool {
                         Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
                     }
                 }
-                #[cfg(feature="with-sqlite")]
+                #[cfg(feature = "with-sqlite")]
                 Platform::Sqlite(_path) => {
                     println!("getting sqlite pool");
                     let conn: Option<&ConnPool> = self.0.get(db_url);
@@ -135,7 +138,6 @@ impl Pool {
             PooledConn::PooledSq(pooled_sq) => Ok(DBPlatform::Sqlite(SqliteDB(pooled_sq))),
         }
     }
-
 
     pub fn em(&mut self, db_url: &str) -> Result<EntityManager, DbError> {
         let db = self.db(db_url)?;

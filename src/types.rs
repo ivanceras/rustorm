@@ -41,7 +41,6 @@ pub enum SqlType {
     // enum list with the choices value
     Enum(String, Vec<String>),
     ArrayType(ArrayType),
-
 }
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
@@ -88,34 +87,33 @@ impl SqlType {
             SqlType::Int => match_value!(Int),
             SqlType::Bigint => match_value!(Bigint),
             SqlType::Float => match_value!(Float),
-            SqlType::Double =>  match_value!(Double),
+            SqlType::Double => match_value!(Double),
             SqlType::Numeric => match_value!(BigDecimal),
             SqlType::Blob => match_value!(Blob),
             SqlType::Char => match_value!(Char),
-            SqlType::Text 
-                | SqlType::Varchar => match_value!(Text),
+            SqlType::Text | SqlType::Varchar => match_value!(Text),
             SqlType::Json => match_value!(Json),
             SqlType::Uuid => match_value!(Uuid),
             SqlType::Date => match_value!(Date),
             SqlType::Timestamp => match_value!(Timestamp),
             SqlType::TimestampTz => match_value!(Timestamp),
-            SqlType::Enum(_,_) => match_value!(Text),
-            SqlType::ArrayType(ArrayType::Text) => match *value{
+            SqlType::Enum(_, _) => match_value!(Text),
+            SqlType::ArrayType(ArrayType::Text) => match *value {
                 Value::Array(Array::Text(_)) => true,
-                _ => false
-            }
-            SqlType::ArrayType(ArrayType::Enum(_,_)) => match * value {
+                _ => false,
+            },
+            SqlType::ArrayType(ArrayType::Enum(_, _)) => match *value {
                 Value::Array(Array::Text(_)) => true,
-                _ => false
-            }
-            SqlType::Real => match *value{
+                _ => false,
+            },
+            SqlType::Real => match *value {
                 Value::Float(_) => true,
-                _ => false
-            }
-            SqlType::ArrayType(ArrayType::Float) => match *value{
+                _ => false,
+            },
+            SqlType::ArrayType(ArrayType::Float) => match *value {
                 Value::Array(Array::Float(_)) => true,
-                _ => false
-            }
+                _ => false,
+            },
             SqlType::TsVector => match_value!(Text),
             _ => panic!("not yet implemented for checking {:?} to {:?}", self, value),
         }

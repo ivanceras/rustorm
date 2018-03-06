@@ -13,8 +13,10 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
 }}
 
 pub enum DBPlatform {
-    #[cfg(feature = "with-postgres")] Postgres(PostgresDB),
-    #[cfg(feature = "with-sqlite")] Sqlite(SqliteDB),
+    #[cfg(feature = "with-postgres")]
+    Postgres(PostgresDB),
+    #[cfg(feature = "with-sqlite")]
+    Sqlite(SqliteDB),
 }
 
 impl Deref for DBPlatform {
@@ -31,8 +33,10 @@ impl Deref for DBPlatform {
 }
 
 pub(crate) enum Platform {
-    #[cfg(feature = "with-postgres")] Postgres,
-    #[cfg(feature = "with-sqlite")] Sqlite(String),
+    #[cfg(feature = "with-postgres")]
+    Postgres,
+    #[cfg(feature = "with-sqlite")]
+    Sqlite(String),
     Unsupported(String),
 }
 
@@ -54,11 +58,7 @@ impl<'a> TryFrom<&'a str> for Platform {
                     "sqlite" => {
                         let host = url.host_str().unwrap();
                         let path = url.path();
-                        let path = if path == "/" {
-                            ""
-                            } else {
-                                path
-                            };
+                        let path = if path == "/" { "" } else { path };
                         let db_file = format!("{}{}", host, path);
                         Ok(Platform::Sqlite(db_file))
                     }

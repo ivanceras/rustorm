@@ -3,6 +3,7 @@
 #![feature(try_from)]
 #![feature(conservative_impl_trait)]
 #![feature(splice)]
+extern crate base64;
 extern crate bigdecimal;
 extern crate byteorder;
 #[macro_use]
@@ -18,10 +19,9 @@ extern crate rustorm_codegen;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate tree_magic;
 extern crate url;
 extern crate uuid;
-extern crate tree_magic;
-extern crate base64;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate r2d2_postgres;
@@ -32,7 +32,7 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 }}
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
     extern crate r2d2_sqlite3;
-    extern crate sqlite as sqlite3;
+    extern crate sqlite3;
     mod sq;
 }}
 
