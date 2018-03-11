@@ -12,13 +12,8 @@ keywords = ["orm", "postgresql", "sqlite"]
 postgres = {version = "0.15.1",features = ["with-uuid","with-chrono"], optional = true}
 r2d2_postgres = {version = "0.14.0", optional = true}
 postgres-shared = {version = "0.4.0", optional = true}
-#postgres = {path = "../../rust-postgres/postgres",features = ["with-uuid","with-chrono"], optional = true}
-#r2d2_postgres = {path = "../../r2d2-postgres", optional = true}
-#postgres-shared = {path = "../../rust-postgres/postgres-shared", optional = true}
 r2d2 = "0.8"
 url = "1.5.1"
-dao = {path = "dao", version = "0.1.0"}
-rustorm_codegen = {path = "codegen", version = "0.1.0"}
 cfg-if = "0.1.2"
 uuid = "0.5.1"
 chrono = "0.4.0"
@@ -37,6 +32,14 @@ num-integer = "0.1"
 meval = "0.1.0"
 tree_magic = "0.2"
 base64 = "0.9"
+
+[dependencies.rustorm_dao]
+#path = "dao"
+version = "0.1.0"
+
+[dependencies.rustorm_codegen]
+#path = "codegen"
+version = "0.1.0"
 
 [features]
 #default = ["with-postgres"]

@@ -9,13 +9,13 @@ extern crate byteorder;
 #[macro_use]
 extern crate cfg_if;
 extern crate chrono;
-extern crate dao;
 extern crate num_bigint;
 extern crate num_integer;
 extern crate num_traits;
 extern crate r2d2;
 #[macro_use]
 extern crate rustorm_codegen;
+extern crate rustorm_dao as dao;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
