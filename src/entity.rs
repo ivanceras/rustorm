@@ -181,7 +181,7 @@ impl EntityManager {
 #[cfg(test)]
 #[cfg(feature = "with-postgres")]
 mod test_pg {
-    extern crate dao;
+    extern crate rustorm_dao as dao;
     use super::*;
     use dao::{FromDao, ToDao};
     use dao::ToColumnNames;

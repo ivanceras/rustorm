@@ -68,7 +68,7 @@ pub use record_manager::RecordManager;
 #[cfg(test)]
 mod test {
     use super::*;
-    use dao::{FromDao, ToDao};
+    use dao::{Dao, FromDao, ToDao};
 
     #[test]
     fn derive_fromdao_and_todao() {
