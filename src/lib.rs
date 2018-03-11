@@ -51,7 +51,6 @@ pub mod common;
 
 pub use pool::Pool;
 pub use database::Database;
-pub use dao::Dao;
 pub use dao::Value;
 pub use dao::Rows;
 pub use error::DbError;
