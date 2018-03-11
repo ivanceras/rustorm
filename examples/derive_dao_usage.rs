@@ -1,11 +1,10 @@
 extern crate dao;
+extern crate rustorm;
 #[macro_use]
 extern crate rustorm_codegen;
-extern crate rustorm;
 
 use dao::{FromDao, ToDao};
 use rustorm::ToTableName;
-
 
 #[derive(Debug, FromDao, ToDao, ToTableName)]
 struct User {

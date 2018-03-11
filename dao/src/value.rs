@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use chrono::{NaiveDate, NaiveTime, NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use chrono::{DateTime, Utc};
 use std::convert::TryFrom;
 use error::ConvertError;

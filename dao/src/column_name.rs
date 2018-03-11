@@ -10,7 +10,11 @@ impl ColumnName {
     pub fn from(arg: &str) -> Self {
         if arg.contains(".") {
             let splinters = arg.split(".").collect::<Vec<&str>>();
-            assert!(splinters.len() == 2, "There should only be 2 parts, trying to split `.` {}",arg);
+            assert!(
+                splinters.len() == 2,
+                "There should only be 2 parts, trying to split `.` {}",
+                arg
+            );
             let table = splinters[0].to_owned();
             let name = splinters[1].to_owned();
             ColumnName {

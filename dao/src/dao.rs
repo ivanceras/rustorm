@@ -35,7 +35,7 @@ impl<'a> Dao<'a> {
             None => Err(DaoError::NoSuchValueError(s.into())),
         }
     }
-    
+
     pub fn get_value(&self, s: &str) -> Option<&Value> {
         self.0.get(s)
     }
