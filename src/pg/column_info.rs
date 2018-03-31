@@ -4,7 +4,7 @@ use dao::TableName;
 use dao::ColumnName;
 use dao::FromDao;
 use entity::EntityManager;
-use column::{Column, ColumnStat, ColumnConstraint, Literal, ColumnSpecification, Capacity};
+use column::{Capacity, Column, ColumnConstraint, ColumnSpecification, ColumnStat, Literal};
 use types::SqlType;
 use uuid::Uuid;
 use types::ArrayType;
@@ -13,26 +13,29 @@ use common;
 
 /// get all the columns of the table
 pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>, DbError> {
-
     /// column name and comment
     #[derive(Debug, FromDao)]
-    struct ColumnSimple{
+    struct ColumnSimple {
         number: i32,
         name: String,
         comment: Option<String>,
     }
 
-    impl ColumnSimple{
-        fn to_column(&self, table_name: &TableName, specification: ColumnSpecification, stat: Option<ColumnStat>) -> Column {
-            Column{
+    impl ColumnSimple {
+        fn to_column(
+            &self,
+            table_name: &TableName,
+            specification: ColumnSpecification,
+            stat: Option<ColumnStat>,
+        ) -> Column {
+            Column {
                 table: table_name.clone(),
                 name: ColumnName::from(&self.name),
                 comment: self.comment.to_owned(),
-                specification: specification,             
-                stat
+                specification: specification,
+                stat,
             }
         }
-
     }
     let sql = r#"SELECT 
                  pg_attribute.attnum AS number, 
@@ -55,40 +58,44 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
     "#;
     let schema = match table_name.schema {
         Some(ref schema) => schema.to_string(),
-        None => "public".to_string()
+        None => "public".to_string(),
     };
-    let columns_simple: Result<Vec<ColumnSimple>, DbError> = 
+    let columns_simple: Result<Vec<ColumnSimple>, DbError> =
         em.execute_sql_with_return(&sql, &[&table_name.name, &schema]);
 
-    match columns_simple{
+    match columns_simple {
         Ok(columns_simple) => {
             let mut columns = vec![];
-            for column_simple in columns_simple{
+            for column_simple in columns_simple {
                 let specification = get_column_specification(em, table_name, &column_simple.name);
                 let column_stat = get_column_stat(em, table_name, &column_simple.name)?;
-                match specification{
+                match specification {
                     Ok(specification) => {
-                        let column = column_simple.to_column(table_name, specification, column_stat);
+                        let column =
+                            column_simple.to_column(table_name, specification, column_stat);
                         columns.push(column);
-                    },
+                    }
                     // early return
-                    Err(e) => {return Err(e);},
+                    Err(e) => {
+                        return Err(e);
+                    }
                 }
             }
             Ok(columns)
-        },
+        }
         Err(e) => Err(e),
     }
 }
 
-
 /// get the contrainst of each of this column
-fn get_column_specification(em: &EntityManager, table_name: &TableName, column_name: &String)
-    -> Result<ColumnSpecification, DbError> {
-
+fn get_column_specification(
+    em: &EntityManager,
+    table_name: &TableName,
+    column_name: &String,
+) -> Result<ColumnSpecification, DbError> {
     /// null, datatype default value
     #[derive(Debug, FromDao)]
-    struct ColumnConstraintSimple{
+    struct ColumnConstraintSimple {
         not_null: bool,
         data_type: String,
         default: Option<String>,
@@ -98,133 +105,121 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
         array_enum_choices: Vec<String>,
     }
 
-    impl ColumnConstraintSimple{
-
-
+    impl ColumnConstraintSimple {
         fn to_column_specification(&self) -> ColumnSpecification {
             let (sql_type, capacity) = self.get_sql_type_capacity();
-            ColumnSpecification{
-                 sql_type: sql_type, 
-                 capacity: capacity,
-                 constraints: self.to_column_constraints(),
+            ColumnSpecification {
+                sql_type: sql_type,
+                capacity: capacity,
+                constraints: self.to_column_constraints(),
             }
         }
 
         fn to_column_constraints(&self) -> Vec<ColumnConstraint> {
             let (sql_type, _) = self.get_sql_type_capacity();
             let mut constraints = vec![];
-            if self.not_null{
+            if self.not_null {
                 constraints.push(ColumnConstraint::NotNull);
             }
-            if let Some(ref default) = self.default{
+            if let Some(ref default) = self.default {
                 let ic_default = default.to_lowercase();
                 let constraint = if ic_default == "null" {
                     ColumnConstraint::DefaultValue(Literal::Null)
-                }
-                else if ic_default.starts_with("nextval"){
+                } else if ic_default.starts_with("nextval") {
                     ColumnConstraint::AutoIncrement
-                }
-                else {
-                    let literal =  match sql_type {
+                } else {
+                    let literal = match sql_type {
                         SqlType::Bool => {
                             let v: bool = default.parse().unwrap();
                             Literal::Bool(v)
                         }
-                        SqlType::Int 
-                            | SqlType::Smallint 
-                            | SqlType::Tinyint 
-                            | SqlType::Bigint => {
-                                let v: Result<i64,_> = default.parse();
-                                match v{
-                                    Ok(v) => Literal::Integer(v),
-                                    Err(e) => panic!("error parsing to integer: {} error: {}", default, e)
+                        SqlType::Int | SqlType::Smallint | SqlType::Tinyint | SqlType::Bigint => {
+                            let v: Result<i64, _> = default.parse();
+                            match v {
+                                Ok(v) => Literal::Integer(v),
+                                Err(e) => {
+                                    panic!("error parsing to integer: {} error: {}", default, e)
                                 }
-                            },
-                        SqlType::Float
-                            | SqlType::Double
-                            | SqlType::Real
-                            | SqlType::Numeric => {
-                                // some defaults have cast type example: (0)::numeric
-                                let splinters = util::maybe_trim_parenthesis(&default).split("::").collect::<Vec<&str>>();
-                                let default_value = util::maybe_trim_parenthesis(splinters[0]);
-                                if default_value.to_lowercase() == "null" {
-                                    Literal::Null
-                                }
-                                else{
-                                    match util::eval_f64(default_value){
+                            }
+                        }
+                        SqlType::Float | SqlType::Double | SqlType::Real | SqlType::Numeric => {
+                            // some defaults have cast type example: (0)::numeric
+                            let splinters = util::maybe_trim_parenthesis(&default)
+                                .split("::")
+                                .collect::<Vec<&str>>();
+                            let default_value = util::maybe_trim_parenthesis(splinters[0]);
+                            if default_value.to_lowercase() == "null" {
+                                Literal::Null
+                            } else {
+                                match util::eval_f64(default_value){
                                         Ok(val) => Literal::Double(val),
                                         Err(e) => panic!("unable to evaluate default value expression: {}, error: {}", default_value, e),
                                     }
-                                }
-
                             }
+                        }
                         SqlType::Uuid => {
-                            if default == "uuid_generate_v4()"{
-                               Literal::UuidGenerateV4
-                            }
-                            else{
-                                let v: Result<Uuid,_> = Uuid::parse_str(&default);
-                                match v{
+                            if default == "uuid_generate_v4()" {
+                                Literal::UuidGenerateV4
+                            } else {
+                                let v: Result<Uuid, _> = Uuid::parse_str(&default);
+                                match v {
                                     Ok(v) => Literal::Uuid(v),
-                                    Err(e) => panic!("error parsing to uuid: {} error: {}", default, e)
+                                    Err(e) => {
+                                        panic!("error parsing to uuid: {} error: {}", default, e)
+                                    }
                                 }
                             }
                         }
-                        SqlType::Timestamp
-                            | SqlType::TimestampTz
-                            => {
-                                if default == "now()" || default == "timezone('utc'::text, now())"
-                                {
-                                    Literal::CurrentTimestamp
-                                }
-                                else{
-                                    panic!("timestamp other than now is not covered")
-                                }
+                        SqlType::Timestamp | SqlType::TimestampTz => {
+                            if default == "now()" || default == "timezone('utc'::text, now())" {
+                                Literal::CurrentTimestamp
+                            } else {
+                                //panic!("timestamp other than now is not covered")
+                                Literal::Null
                             }
+                        }
                         SqlType::Date => {
-                            // timestamp converted to text then converted to date 
+                            // timestamp converted to text then converted to date
                             // is equivalent to today()
-                            if default == "today()" || default == "now()" || default =="('now'::text)::date" {
+                            if default == "today()" || default == "now()"
+                                || default == "('now'::text)::date"
+                            {
                                 Literal::CurrentDate
-                            }
-                            else{
+                            } else {
                                 panic!("date other than today is not covered in {:?}", self)
                             }
                         }
-                        SqlType::Varchar 
-                            | SqlType::Char
-                            | SqlType::Tinytext
-                            | SqlType::Mediumtext
-                            | SqlType::Text
-                                => Literal::String(default.to_owned()),
+                        SqlType::Varchar
+                        | SqlType::Char
+                        | SqlType::Tinytext
+                        | SqlType::Mediumtext
+                        | SqlType::Text => Literal::String(default.to_owned()),
                         SqlType::Enum(_name, _choices) => Literal::String(default.to_owned()),
                         _ => panic!("not convered: {:?}", sql_type),
                     };
                     ColumnConstraint::DefaultValue(literal)
                 };
                 constraints.push(constraint);
-                
             }
             constraints
         }
 
         fn get_sql_type_capacity(&self) -> (SqlType, Option<Capacity>) {
             let data_type: &str = &self.data_type;
-            let (dtype, capacity) = common::extract_datatype_with_capacity(data_type); 
+            let (dtype, capacity) = common::extract_datatype_with_capacity(data_type);
 
-            if self.is_enum{
+            if self.is_enum {
                 println!("enum: {}", data_type);
-                let enum_type = SqlType::Enum(data_type.to_owned()
-                                              , self.enum_choices.to_owned());
+                let enum_type = SqlType::Enum(data_type.to_owned(), self.enum_choices.to_owned());
                 (enum_type, None)
-            }
-            else if self.is_array_enum && self.array_enum_choices.len() > 0{
-                let array_enum = SqlType::ArrayType(ArrayType::Enum(data_type.to_owned()
-                                                                    , self.array_enum_choices.to_owned()));
+            } else if self.is_array_enum && self.array_enum_choices.len() > 0 {
+                let array_enum = SqlType::ArrayType(ArrayType::Enum(
+                    data_type.to_owned(),
+                    self.array_enum_choices.to_owned(),
+                ));
                 (array_enum, None)
-            }
-            else{
-                let sql_type = match &*dtype{
+            } else {
+                let sql_type = match &*dtype {
                     "boolean" => SqlType::Bool,
                     "tinyint" => SqlType::Tinyint,
                     "smallint" | "year" => SqlType::Smallint,
@@ -241,9 +236,11 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "bytea" => SqlType::Blob,
                     "longblob" => SqlType::Longblob,
                     "varbinary" => SqlType::Varbinary,
-                    "char"| "bpchar" => SqlType::Char,
+                    "char" | "bpchar" => SqlType::Char,
                     "varchar" | "character varying" | "character" => SqlType::Varchar,
-                    "varchar[]" | "character varying[]" | "name" => SqlType::ArrayType(ArrayType::Text),
+                    "varchar[]" | "character varying[]" | "name" => {
+                        SqlType::ArrayType(ArrayType::Text)
+                    }
                     "tinytext" => SqlType::Tinytext,
                     "mediumtext" => SqlType::Mediumtext,
                     "text" => SqlType::Text,
@@ -259,12 +256,13 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
                     "inet" => SqlType::IpAddress,
                     "real[]" => SqlType::ArrayType(ArrayType::Float),
                     "oid" => SqlType::Int,
-                    _ => panic!("not yet handled: {}", dtype), 
+                    "unknown" => SqlType::Text,
+                    "\"char\"" => SqlType::Char,
+                    _ => panic!("not yet handled: {}", dtype),
                 };
                 (sql_type, capacity)
             }
         }
-
     }
 
     let sql = r#"SELECT DISTINCT 
@@ -301,18 +299,20 @@ fn get_column_specification(em: &EntityManager, table_name: &TableName, column_n
     "#;
     let schema = match table_name.schema {
         Some(ref schema) => schema.to_string(),
-        None => "public".to_string()
+        None => "public".to_string(),
     };
     //println!("sql: {} column_name: {}, table_name: {}", sql, column_name, table_name.name);
-    let column_constraint: Result<ColumnConstraintSimple, DbError> = 
+    let column_constraint: Result<ColumnConstraintSimple, DbError> =
         em.execute_sql_with_one_return(&sql, &[&column_name, &table_name.name, &schema]);
-    column_constraint
-        .map(|c| c.to_column_specification() )
+    column_constraint.map(|c| c.to_column_specification())
 }
 
-fn get_column_stat(em: &EntityManager, table_name: &TableName, column_name: &String)
-    -> Result<Option<ColumnStat>, DbError> {
-        let sql = r#"
+fn get_column_stat(
+    em: &EntityManager,
+    table_name: &TableName,
+    column_name: &String,
+) -> Result<Option<ColumnStat>, DbError> {
+    let sql = r#"
             SELECT avg_width,
                 n_distinct
             FROM pg_stats
@@ -321,20 +321,17 @@ fn get_column_stat(em: &EntityManager, table_name: &TableName, column_name: &Str
             AND pg_stats.tablename = $2
             AND pg_stats.attname = $1
         "#;
-        let schema = match table_name.schema {
-            Some(ref schema) => schema.to_string(),
-            None => "public".to_string()
-        };
-        let column_stat: Result<Option<ColumnStat>, DbError>
-            = em.execute_sql_with_maybe_one_return(&sql, &[column_name, &table_name.name, &schema]);
-        column_stat
+    let schema = match table_name.schema {
+        Some(ref schema) => schema.to_string(),
+        None => "public".to_string(),
+    };
+    let column_stat: Result<Option<ColumnStat>, DbError> =
+        em.execute_sql_with_maybe_one_return(&sql, &[column_name, &table_name.name, &schema]);
+    column_stat
 }
 
-
-
-
 #[cfg(test)]
-mod test{
+mod test {
 
     use super::*;
     use pool::Pool;
@@ -344,26 +341,25 @@ mod test{
     use chrono::offset::Utc;
     use chrono::DateTime;
 
-
     #[test]
-    fn insert_text_array(){
+    fn insert_text_array() {
         #[derive(Debug, ToDao, ToColumnNames, ToTableName)]
-        struct Film{
-            title: String, 
+        struct Film {
+            title: String,
             language_id: i16,
-            special_features: Vec<String>, 
+            special_features: Vec<String>,
         }
 
         #[derive(Debug, FromDao, ToColumnNames)]
-        struct RetrieveFilm{
+        struct RetrieveFilm {
             film_id: i32,
-            title: String, 
+            title: String,
             language_id: i16,
-            special_features: Vec<String>, 
+            special_features: Vec<String>,
             last_update: DateTime<Utc>,
         }
 
-        let film1 = Film{
+        let film1 = Film {
             title: "Hurry potter and the prisoner is escaing".into(),
             language_id: 1,
             special_features: vec!["fantasy".into(), "magic".into()],
@@ -373,13 +369,13 @@ mod test{
         let em = pool.em(db_url);
         assert!(em.is_ok());
         let em = em.unwrap();
-        let result: Result<Vec<RetrieveFilm>,DbError> = em.insert(&[&film1]);
-        println!("result: {:#?}",result);
+        let result: Result<Vec<RetrieveFilm>, DbError> = em.insert(&[&film1]);
+        println!("result: {:#?}", result);
         assert!(result.is_ok());
     }
 
     #[test]
-    fn column_specification_for_film_rating(){
+    fn column_specification_for_film_rating() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -391,15 +387,29 @@ mod test{
         println!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
-        assert_eq!(specification, ColumnSpecification{
-                           sql_type: SqlType::Enum("mpaa_rating".into(), vec!["G".into(), "PG".into(), "PG-13".into(), "R".into(), "NC-17".into()]),
-                           capacity: None,
-                           constraints: vec![ColumnConstraint::DefaultValue(Literal::String("'G'::mpaa_rating".into()))],
-                       });
+        assert_eq!(
+            specification,
+            ColumnSpecification {
+                sql_type: SqlType::Enum(
+                    "mpaa_rating".into(),
+                    vec![
+                        "G".into(),
+                        "PG".into(),
+                        "PG-13".into(),
+                        "R".into(),
+                        "NC-17".into(),
+                    ]
+                ),
+                capacity: None,
+                constraints: vec![
+                    ColumnConstraint::DefaultValue(Literal::String("'G'::mpaa_rating".into())),
+                ],
+            }
+        );
     }
 
     #[test]
-    fn column_specification_for_actor_id(){
+    fn column_specification_for_actor_id() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -411,16 +421,17 @@ mod test{
         println!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
-        assert_eq!(specification, ColumnSpecification{
-                           sql_type: SqlType::Int,
-                           capacity: None,
-                           constraints: vec![ColumnConstraint::NotNull,
-                           ColumnConstraint::AutoIncrement],
-                       });
-
+        assert_eq!(
+            specification,
+            ColumnSpecification {
+                sql_type: SqlType::Int,
+                capacity: None,
+                constraints: vec![ColumnConstraint::NotNull, ColumnConstraint::AutoIncrement],
+            }
+        );
     }
     #[test]
-    fn column_specification_for_actor_last_updated(){
+    fn column_specification_for_actor_last_updated() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -432,16 +443,21 @@ mod test{
         println!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
-        assert_eq!(specification, ColumnSpecification{
-                           sql_type: SqlType::Timestamp,
-                           capacity: None,
-                           constraints: vec![ColumnConstraint::NotNull,
-                           ColumnConstraint::DefaultValue(Literal::CurrentTimestamp)],
-                       });
+        assert_eq!(
+            specification,
+            ColumnSpecification {
+                sql_type: SqlType::Timestamp,
+                capacity: None,
+                constraints: vec![
+                    ColumnConstraint::NotNull,
+                    ColumnConstraint::DefaultValue(Literal::CurrentTimestamp),
+                ],
+            }
+        );
     }
 
     #[test]
-    fn column_for_actor(){
+    fn column_for_actor() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -453,22 +469,26 @@ mod test{
         assert!(columns.is_ok());
         let columns = columns.unwrap();
         assert_eq!(columns.len(), 4);
-        assert_eq!(columns[1].name, ColumnName{
-                                    name: "first_name".to_string(),
-                                    table: None, 
-                                    alias: None
-        });
-        assert_eq!(columns[1].specification, 
-                       ColumnSpecification{
-                           sql_type: SqlType::Varchar,
-                           capacity: Some(Capacity::Limit(45)),
-                           constraints: vec![ColumnConstraint::NotNull],
-                       }
-               );
+        assert_eq!(
+            columns[1].name,
+            ColumnName {
+                name: "first_name".to_string(),
+                table: None,
+                alias: None,
+            }
+        );
+        assert_eq!(
+            columns[1].specification,
+            ColumnSpecification {
+                sql_type: SqlType::Varchar,
+                capacity: Some(Capacity::Limit(45)),
+                constraints: vec![ColumnConstraint::NotNull],
+            }
+        );
     }
 
     #[test]
-    fn column_for_film(){
+    fn column_for_film() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url);
@@ -481,15 +501,17 @@ mod test{
         let columns = columns.unwrap();
         assert_eq!(columns.len(), 14);
         assert_eq!(columns[7].name, ColumnName::from("rental_rate"));
-        assert_eq!(columns[7].specification, 
-                       ColumnSpecification{
-                           sql_type: SqlType::Numeric,
-                           capacity: Some(Capacity::Range(4,2)),
-                           constraints: vec![ColumnConstraint::NotNull,
-                                    ColumnConstraint::DefaultValue(Literal::Double(4.99))
-                                ],
-                       }
-                 );
+        assert_eq!(
+            columns[7].specification,
+            ColumnSpecification {
+                sql_type: SqlType::Numeric,
+                capacity: Some(Capacity::Range(4, 2)),
+                constraints: vec![
+                    ColumnConstraint::NotNull,
+                    ColumnConstraint::DefaultValue(Literal::Double(4.99)),
+                ],
+            }
+        );
     }
 
 }

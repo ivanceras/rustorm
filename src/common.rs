@@ -138,6 +138,13 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
                 println!("passing ImageUri as is");
                 value.clone()
             }
+            Value::Char(v) => match *required_type {
+                SqlType::Varchar => Value::Text(format!("{}", v)),
+                _ => panic!(
+                    "unsupported conversion from {:?} to {:?}",
+                    value, required_type
+                ),
+            },
             _ => panic!(
                 "unsupported conversion from {:?} to {:?}",
                 value, required_type

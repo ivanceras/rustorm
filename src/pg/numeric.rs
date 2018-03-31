@@ -1,7 +1,7 @@
 use byteorder::{NetworkEndian, ReadBytesExt, WriteBytesExt};
 use std::error::Error;
 
-use postgres::types::{self,ToSql,FromSql,Type,IsNull};
+use postgres::types::{self, FromSql, IsNull, ToSql, Type};
 
 use bigdecimal::BigDecimal;
 use num_bigint::{BigInt, BigUint, Sign};
@@ -10,7 +10,6 @@ use num_traits::Zero;
 use num_integer::Integer;
 use num_traits::ToPrimitive;
 use num_traits::Signed;
-
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PgNumeric {
@@ -43,7 +42,6 @@ impl Error for InvalidNumericSign {
 }
 
 impl FromSql for PgNumeric {
-
     fn from_sql(_ty: &Type, bytes: &[u8]) -> Result<Self, Box<Error + Send + Sync>> {
         let mut bytes = bytes.clone();
         let ndigits = try!(bytes.read_u16::<NetworkEndian>());
@@ -71,17 +69,16 @@ impl FromSql for PgNumeric {
         }
     }
 
-    fn accepts(ty: &Type) -> bool{
+    fn accepts(ty: &Type) -> bool {
         match *ty {
             types::NUMERIC => true,
-            _ => panic!("can not accept type {:?}", ty), 
+            _ => panic!("can not accept type {:?}", ty),
         }
     }
 }
 
 impl ToSql for PgNumeric {
-
-    fn to_sql(&self, _ty: &Type, out: &mut Vec<u8>) -> Result<IsNull, Box<Error + Sync + Send>>{
+    fn to_sql(&self, _ty: &Type, out: &mut Vec<u8>) -> Result<IsNull, Box<Error + Sync + Send>> {
         let sign = match *self {
             PgNumeric::Positive { .. } => 0,
             PgNumeric::Negative { .. } => 0x4000,
@@ -113,7 +110,7 @@ impl ToSql for PgNumeric {
         Ok(IsNull::No)
     }
 
-    fn accepts(ty: &Type) -> bool{
+    fn accepts(ty: &Type) -> bool {
         match *ty {
             types::NUMERIC => true,
             _ => false,
@@ -122,7 +119,6 @@ impl ToSql for PgNumeric {
 
     to_sql_checked!();
 }
-
 
 /// Iterator over the digits of a big uint in base 10k.
 /// The digits will be returned in little endian order.
@@ -201,9 +197,7 @@ impl From<BigDecimal> for PgNumeric {
     }
 }
 
-
 impl From<PgNumeric> for BigDecimal {
-
     fn from(numeric: PgNumeric) -> Self {
         let (sign, weight, _, digits) = match numeric {
             PgNumeric::Positive {
@@ -232,5 +226,3 @@ impl From<PgNumeric> for BigDecimal {
         result
     }
 }
-
-
