@@ -1,10 +1,10 @@
+use bigdecimal::BigDecimal;
+use chrono::NaiveDateTime;
 use column::Capacity;
 use dao::Value;
-use types::SqlType;
-use bigdecimal::BigDecimal;
-use std::str::FromStr;
-use chrono::NaiveDateTime;
 use num_traits::ToPrimitive;
+use std::str::FromStr;
+use types::SqlType;
 
 pub fn extract_datatype_with_capacity(data_type: &str) -> (String, Option<Capacity>) {
     let start = data_type.find('(');

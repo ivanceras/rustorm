@@ -1,7 +1,7 @@
-use url;
+use r2d2;
 use std::error::Error;
 use std::fmt;
-use r2d2;
+use url;
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     use pg::PostgresError;
 }}

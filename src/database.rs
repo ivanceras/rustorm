@@ -1,8 +1,8 @@
+use dao::TableName;
 use dao::{Rows, Value};
 use entity::EntityManager;
-use table::Table;
-use dao::TableName;
 use table::SchemaContent;
+use table::Table;
 
 use error::DbError;
 

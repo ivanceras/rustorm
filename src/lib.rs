@@ -37,34 +37,34 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
     mod sq;
 }}
 
-pub mod pool;
-mod platform;
-pub mod error;
+pub mod column;
+pub mod common;
 mod database;
 mod entity;
-pub mod table;
-pub mod column;
-pub mod types;
+pub mod error;
+mod platform;
+pub mod pool;
 pub mod record;
 pub mod record_manager;
+pub mod table;
+pub mod types;
 mod util;
-pub mod common;
 
-pub use pool::Pool;
-pub use database::Database;
-pub use dao::Value;
-pub use dao::Rows;
-pub use error::DbError;
-pub use dao::{FromDao, ToDao};
-pub use table::Table;
 pub use column::Column;
-pub use dao::TableName;
-pub use dao::ToTableName;
 pub use dao::ColumnName;
+pub use dao::Rows;
+pub use dao::TableName;
 pub use dao::ToColumnNames;
+pub use dao::ToTableName;
+pub use dao::Value;
+pub use dao::{FromDao, ToDao};
+pub use database::Database;
 pub use entity::EntityManager;
+pub use error::DbError;
+pub use pool::Pool;
 pub use record::Record;
 pub use record_manager::RecordManager;
+pub use table::Table;
 
 #[cfg(test)]
 mod test {

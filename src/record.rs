@@ -1,7 +1,7 @@
-use std::collections::BTreeMap;
 use dao::Dao;
 use dao::Value;
 use serde::ser::{Serialize, Serializer};
+use std::collections::BTreeMap;
 
 #[derive(Debug)]
 pub struct Record(pub BTreeMap<String, Value>);

@@ -1,8 +1,8 @@
-use url::Url;
-use std::convert::TryFrom;
-use error::ParseError;
 use database::Database;
+use error::ParseError;
+use std::convert::TryFrom;
 use std::ops::Deref;
+use url::Url;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     use pg::PostgresDB;

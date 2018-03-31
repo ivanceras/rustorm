@@ -1,13 +1,13 @@
-use error::{DataError, DbError};
-use dao::{FromDao, ToDao};
+use dao::TableName;
 use dao::ToColumnNames;
 use dao::ToTableName;
+use dao::{FromDao, ToDao};
 use dao::{ToValue, Value};
-use platform::DBPlatform;
 use database::Database;
-use table::Table;
+use error::{DataError, DbError};
+use platform::DBPlatform;
 use table::SchemaContent;
-use dao::TableName;
+use table::Table;
 
 pub struct EntityManager(pub DBPlatform);
 
@@ -183,13 +183,13 @@ impl EntityManager {
 mod test_pg {
     extern crate rustorm_dao as dao;
     use super::*;
-    use dao::{FromDao, ToDao};
+    use chrono::offset::Utc;
+    use chrono::{DateTime, NaiveDate};
+    use dao::TableName;
     use dao::ToColumnNames;
     use dao::ToTableName;
-    use dao::TableName;
+    use dao::{FromDao, ToDao};
     use pool::Pool;
-    use chrono::{DateTime, NaiveDate};
-    use chrono::offset::Utc;
     use uuid::Uuid;
 
     #[test]

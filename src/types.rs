@@ -72,13 +72,13 @@ pub enum ArrayType {
 
 impl SqlType {
     pub fn same_type(&self, value: &Value) -> bool {
-        macro_rules! match_value{
-            ($variant: ident) => {
+        macro_rules! match_value {
+            ($variant:ident) => {
                 match *value {
                     Value::$variant(_) => true,
                     _ => false,
                 }
-            }
+            };
         }
         match *self {
             SqlType::Bool => match_value!(Bool),

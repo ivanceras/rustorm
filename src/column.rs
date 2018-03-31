@@ -1,9 +1,9 @@
-use dao::TableName;
+use dao;
 use dao::ColumnName;
+use dao::FromDao;
+use dao::TableName;
 use types::SqlType;
 use uuid::Uuid;
-use dao::FromDao;
-use dao;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Column {

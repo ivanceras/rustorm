@@ -1,9 +1,9 @@
-use record::Record;
-use platform::DBPlatform;
-use error::DbError;
+use dao::Rows;
 use dao::Value;
 use error::DataError;
-use dao::Rows;
+use error::DbError;
+use platform::DBPlatform;
+use record::Record;
 
 pub struct RecordManager(pub DBPlatform);
 

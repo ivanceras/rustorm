@@ -10,14 +10,14 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use sq::{self, SqliteDB};
 }}
 
-use std::convert::TryFrom;
-use platform::Platform;
-use error::{ConnectError, ParseError};
-use std::collections::BTreeMap;
-use platform::DBPlatform;
 use entity::EntityManager;
 use error::DbError;
+use error::{ConnectError, ParseError};
+use platform::DBPlatform;
+use platform::Platform;
 use record_manager::RecordManager;
+use std::collections::BTreeMap;
+use std::convert::TryFrom;
 
 pub struct Pool(BTreeMap<String, ConnPool>);
 pub enum ConnPool {

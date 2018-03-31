@@ -1,6 +1,6 @@
-use dao::TableName;
 use column::Column;
 use dao::ColumnName;
+use dao::TableName;
 use types::SqlType;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -189,8 +189,8 @@ pub struct SchemaContent {
 #[cfg(test)]
 #[cfg(feature = "with-postgres")]
 mod test {
-    use dao::TableName;
     use dao::ColumnName;
+    use dao::TableName;
     use pool::Pool;
     use table::ForeignKey;
 
