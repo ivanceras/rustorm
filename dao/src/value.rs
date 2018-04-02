@@ -1,9 +1,9 @@
-use uuid::Uuid;
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use chrono::{DateTime, Utc};
-use std::convert::TryFrom;
-use error::ConvertError;
 use bigdecimal::BigDecimal;
+use chrono::{DateTime, Utc};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use error::ConvertError;
+use std::convert::TryFrom;
+use uuid::Uuid;
 
 /// Generic value storage 32 byte in size
 /// Some contains the same value container, but the variant is more
@@ -69,7 +69,7 @@ pub trait ToValue {
 }
 
 macro_rules! impl_to_value {
-    ($ty: ty) => {
+    ($ty:ty) => {
         impl ToValue for $ty {
             fn to_value(&self) -> Value {
                 self.into()
@@ -81,7 +81,7 @@ macro_rules! impl_to_value {
                 (*self).into()
             }
         }
-    }
+    };
 }
 
 impl ToValue for Vec<String> {
@@ -91,25 +91,25 @@ impl ToValue for Vec<String> {
 }
 
 macro_rules! impl_from {
-    ($ty:ty, $variant: ident) => {
+    ($ty:ty, $variant:ident) => {
         /// Owned types
         impl From<$ty> for Value {
-            fn from(f: $ty) -> Self{
+            fn from(f: $ty) -> Self {
                 Value::$variant(f)
             }
         }
 
         /// For borrowed types
         impl<'a> From<&'a $ty> for Value {
-            fn from(f: &'a $ty) -> Self{
+            fn from(f: &'a $ty) -> Self {
                 Value::$variant(f.to_owned())
             }
         }
 
         /// for borrowed option types
         impl<'a> From<&'a Option<$ty>> for Value {
-            fn from(f: &'a Option<$ty>) -> Self{
-                match *f{
+            fn from(f: &'a Option<$ty>) -> Self {
+                match *f {
                     Some(ref f) => From::from(f),
                     None => Value::Nil,
                 }
@@ -119,25 +119,25 @@ macro_rules! impl_from {
         impl_to_value!($ty);
     };
 
-    ($ty:ty, $variant: ident, $fn: ident) => {
+    ($ty:ty, $variant:ident, $fn:ident) => {
         /// Owned types
         impl From<$ty> for Value {
-            fn from(f: $ty) -> Self{
+            fn from(f: $ty) -> Self {
                 Value::$variant(f.$fn())
             }
         }
 
         /// For borrowed types
         impl<'a> From<&'a $ty> for Value {
-            fn from(f: &'a $ty) -> Self{
+            fn from(f: &'a $ty) -> Self {
                 Value::$variant(f.$fn())
             }
         }
 
         /// for borrowed option types
         impl<'a> From<&'a Option<$ty>> for Value {
-            fn from(f: &'a Option<$ty>) -> Self{
-                match *f{
+            fn from(f: &'a Option<$ty>) -> Self {
+                match *f {
                     Some(ref f) => From::from(f),
                     None => Value::Nil,
                 }
@@ -145,7 +145,7 @@ macro_rules! impl_from {
         }
 
         impl_to_value!($ty);
-    }
+    };
 }
 
 impl_from!(bool, Bool);
@@ -203,8 +203,8 @@ macro_rules! impl_tryfrom {
     }
 }
 
-macro_rules! impl_tryfrom_option{
-    ($ty: ty) => {
+macro_rules! impl_tryfrom_option {
+    ($ty:ty) => {
         /// try from to Option<T>
         impl<'a> TryFrom<&'a Value> for Option<$ty> {
             type Error = ConvertError;
@@ -212,11 +212,11 @@ macro_rules! impl_tryfrom_option{
             fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
                 match *value {
                     Value::Nil => Ok(None),
-                    _ => TryFrom::try_from(value).map(|v|Some(v)),
+                    _ => TryFrom::try_from(value).map(|v| Some(v)),
                 }
             }
         }
-    }
+    };
 }
 
 /// Char can be casted into String
@@ -270,8 +270,8 @@ impl_tryfrom_option!(DateTime<Utc>);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::mem::size_of;
     use chrono::offset::Utc;
+    use std::mem::size_of;
 
     #[test]
     fn data_sizes() {

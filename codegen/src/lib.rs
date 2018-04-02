@@ -6,9 +6,9 @@ extern crate quote;
 extern crate rustorm_dao as dao;
 extern crate syn;
 
+mod column_derive;
 mod dao_derive;
 mod table_derive;
-mod column_derive;
 
 use proc_macro::TokenStream;
 

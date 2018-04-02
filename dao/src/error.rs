@@ -1,8 +1,8 @@
+use std::convert::TryFrom;
+use std::error::Error;
 use std::fmt;
 use std::fmt::Debug;
-use std::error::Error;
 use value::Value;
-use std::convert::TryFrom;
 
 #[derive(Debug)]
 pub enum ConvertError {

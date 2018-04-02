@@ -1,7 +1,6 @@
 #![deny(warnings)]
 #![allow(dead_code)]
 #![feature(try_from)]
-#![feature(conservative_impl_trait)]
 #![feature(splice)]
 extern crate base64;
 extern crate bigdecimal;

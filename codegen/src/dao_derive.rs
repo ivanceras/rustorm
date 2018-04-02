@@ -1,5 +1,5 @@
-use syn;
 use quote;
+use syn;
 
 pub fn impl_from_dao(ast: &syn::MacroInput) -> quote::Tokens {
     let name = &ast.ident;

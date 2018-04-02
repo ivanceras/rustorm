@@ -1,9 +1,9 @@
+use error::DaoError;
+use serde::ser::{Serialize, Serializer};
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
 use value::Value;
-use error::DaoError;
-use serde::ser::{Serialize, Serializer};
 
 #[derive(Debug, PartialEq)]
 pub struct Dao<'a>(pub BTreeMap<&'a str, Value>);
@@ -69,8 +69,8 @@ pub trait ToDao {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use uuid::Uuid;
     use serde_json;
+    use uuid::Uuid;
 
     #[test]
     fn insert_double() {

@@ -1,6 +1,6 @@
-use value::Value;
 use dao::Dao;
 use std::slice;
+use value::Value;
 
 /// use this to store data retrieved from the database
 /// This is also slimmer than Vec<Dao> when serialized
