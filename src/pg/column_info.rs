@@ -1,15 +1,15 @@
-use error::DbError;
+use column::{Capacity, Column, ColumnConstraint, ColumnSpecification, ColumnStat, Literal};
+use common;
 use dao;
-use dao::TableName;
 use dao::ColumnName;
 use dao::FromDao;
+use dao::TableName;
 use entity::EntityManager;
-use column::{Capacity, Column, ColumnConstraint, ColumnSpecification, ColumnStat, Literal};
-use types::SqlType;
-use uuid::Uuid;
+use error::DbError;
 use types::ArrayType;
+use types::SqlType;
 use util;
-use common;
+use uuid::Uuid;
 
 /// get all the columns of the table
 pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>, DbError> {
@@ -244,7 +244,7 @@ fn get_column_specification(
                     "tinytext" => SqlType::Tinytext,
                     "mediumtext" => SqlType::Mediumtext,
                     "text" => SqlType::Text,
-                    "json" => SqlType::Json,
+                    "json" | "jsonb" => SqlType::Json,
                     "tsvector" => SqlType::TsVector,
                     "text[]" => SqlType::ArrayType(ArrayType::Text),
                     "uuid" => SqlType::Uuid,
@@ -334,12 +334,12 @@ fn get_column_stat(
 mod test {
 
     use super::*;
-    use pool::Pool;
-    use dao::ToDao;
-    use dao::ToColumnNames;
-    use dao::ToTableName;
-    use chrono::offset::Utc;
     use chrono::DateTime;
+    use chrono::offset::Utc;
+    use dao::ToColumnNames;
+    use dao::ToDao;
+    use dao::ToTableName;
+    use pool::Pool;
 
     #[test]
     fn insert_text_array() {
