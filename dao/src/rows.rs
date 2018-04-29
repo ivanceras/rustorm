@@ -4,17 +4,23 @@ use value::Value;
 
 /// use this to store data retrieved from the database
 /// This is also slimmer than Vec<Dao> when serialized
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Rows {
     pub columns: Vec<String>,
     pub data: Vec<Vec<Value>>,
+    /// can be optionally set, indicates how many total rows are there in the table
+    pub count: Option<u64>,
 }
 
 impl Rows {
+    pub fn empty() -> Self {
+        Rows::new(vec![])
+    }
     pub fn new(columns: Vec<String>) -> Self {
         Rows {
             columns,
             data: vec![],
+            count: None,
         }
     }
 

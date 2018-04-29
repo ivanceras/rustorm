@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TableName {
     pub name: String,
     pub schema: Option<String>,

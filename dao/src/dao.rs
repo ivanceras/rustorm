@@ -5,6 +5,7 @@ use std::convert::TryFrom;
 use std::fmt::Debug;
 use value::Value;
 
+//TODO: unify Record and Dao, maybe use Record and Deprecate Dao
 #[derive(Debug, PartialEq)]
 pub struct Dao<'a>(pub BTreeMap<&'a str, Value>);
 

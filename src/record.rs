@@ -1,6 +1,6 @@
 use dao::Dao;
 use dao::Value;
-use serde::ser::{Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::BTreeMap;
 
 #[derive(Debug)]
@@ -26,6 +26,15 @@ impl Serialize for Record {
         S: Serializer,
     {
         self.0.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Record {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        BTreeMap::deserialize(deserializer).map(|result| Record(result))
     }
 }
 

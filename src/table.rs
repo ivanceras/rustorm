@@ -38,6 +38,14 @@ impl Table {
         primary
     }
 
+    pub fn get_non_primary_columns(&self) -> Vec<&Column> {
+        let primary = self.get_primary_columns();
+        self.columns
+            .iter()
+            .filter(|c| !primary.contains(c))
+            .collect()
+    }
+
     fn get_primary_columns(&self) -> Vec<&Column> {
         self.get_primary_column_names()
             .iter()
@@ -214,13 +222,11 @@ mod test {
         println!("rc: {:#?}", rc);
         assert_eq!(
             rc,
-            Some(&vec![
-                ColumnName {
-                    name: "film_id".to_string(),
-                    table: None,
-                    alias: None,
-                },
-            ])
+            Some(&vec![ColumnName {
+                name: "film_id".to_string(),
+                table: None,
+                alias: None,
+            }])
         );
     }
 
@@ -244,13 +250,11 @@ mod test {
         println!("rc: {:#?}", rc);
         assert_eq!(
             rc,
-            Some(&vec![
-                ColumnName {
-                    name: "id".to_string(),
-                    table: None,
-                    alias: None,
-                },
-            ])
+            Some(&vec![ColumnName {
+                name: "id".to_string(),
+                table: None,
+                alias: None,
+            }])
         );
         let foreign_key = hero_ability.get_foreign_key_to_table(&hero.name);
         println!("foreign_key: {:#?}", foreign_key);
@@ -258,25 +262,21 @@ mod test {
             foreign_key,
             Some(&ForeignKey {
                 name: Some("hero_id_fkey".to_string()),
-                columns: vec![
-                    ColumnName {
-                        name: "hero_id".to_string(),
-                        table: None,
-                        alias: None,
-                    },
-                ],
+                columns: vec![ColumnName {
+                    name: "hero_id".to_string(),
+                    table: None,
+                    alias: None,
+                }],
                 foreign_table: TableName {
                     name: "hero".to_string(),
                     schema: Some("public".to_string()),
                     alias: None,
                 },
-                referred_columns: vec![
-                    ColumnName {
-                        name: "id".to_string(),
-                        table: None,
-                        alias: None,
-                    },
-                ],
+                referred_columns: vec![ColumnName {
+                    name: "id".to_string(),
+                    table: None,
+                    alias: None,
+                }],
             })
         );
     }
