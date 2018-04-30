@@ -95,6 +95,7 @@ mod test {
         let rows = Rows {
             columns: columns,
             data: data,
+            count: None,
         };
         assert_eq!(1, rows.iter().count());
     }
@@ -109,6 +110,7 @@ mod test {
         let rows = Rows {
             columns: columns,
             data: data,
+            count: None,
         };
         assert_eq!(2, rows.iter().count());
     }
@@ -120,6 +122,7 @@ mod test {
         let rows = Rows {
             columns: columns,
             data: data,
+            count: None,
         };
         let mut dao = Dao::new();
         dao.insert("id", 1);
@@ -137,6 +140,7 @@ mod test {
         let rows = Rows {
             columns: columns,
             data: data,
+            count: None,
         };
         let mut iter = rows.iter();
         let mut dao = Dao::new();
@@ -160,6 +164,7 @@ mod test {
         let rows = Rows {
             columns: columns,
             data: data,
+            count: None,
         };
         let mut iter = rows.iter();
         let mut dao2 = Dao::new();
@@ -183,6 +188,7 @@ mod test {
         let rows = Rows {
             columns: columns,
             data: data,
+            count: None,
         };
         let mut iter = rows.into_iter();
         let mut dao = Dao::new();
