@@ -11,7 +11,6 @@ extern crate chrono;
 extern crate num_bigint;
 extern crate num_integer;
 extern crate num_traits;
-extern crate openssl;
 extern crate r2d2;
 #[macro_use]
 extern crate rustorm_codegen;

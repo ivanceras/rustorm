@@ -1,5 +1,5 @@
-use dao::Value;
 use dao::value::Array;
+use dao::Value;
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub enum SqlType {
