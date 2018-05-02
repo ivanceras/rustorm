@@ -24,6 +24,7 @@ extern crate uuid;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate r2d2_postgres;
+    extern crate openssl;
     extern crate postgres;
     #[macro_use]
     extern crate postgres_shared;
