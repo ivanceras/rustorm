@@ -93,6 +93,7 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
                     assert!(bigdecimal.is_ok());
                     Value::BigDecimal(bigdecimal.unwrap())
                 }
+                SqlType::Varchar => Value::Text(format!("{}", v)),
                 _ => panic!(
                     "unsupported conversion from {:?} to {:?}",
                     value, required_type
@@ -105,6 +106,7 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
                     let ival = ival.unwrap();
                     Value::Int(ival)
                 }
+                SqlType::Varchar => Value::Text(format!("{}", v)),
                 _ => panic!(
                     "unsupported conversion from {:?} to {:?}",
                     value, required_type

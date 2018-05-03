@@ -36,11 +36,11 @@ base64 = "0.9"
 
 [dependencies.rustorm_dao]
 #path = "dao"
-version = "0.1.0"
+version = "0.1"
 
 [dependencies.rustorm_codegen]
 #path = "codegen"
-version = "0.1.0"
+version = "0.1"
 
 [features]
 #default = ["with-postgres"]
@@ -49,3 +49,8 @@ with-postgres = ["postgres", "r2d2_postgres", "postgres-shared", "openssl"]
 with-sqlite = ["sqlite3","r2d2-sqlite3"]
 #with-oracle = ["oci_rs"]
 #with-mssql = ["tiberius"]
+
+[replace]
+"rustorm_dao:0.1.1" = { path = "dao" }
+"rustorm_codegen:0.1.2" = { path = "codegen" }
+"rustorm:0.10.3" = { path = "rustorm" }
