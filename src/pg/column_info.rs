@@ -334,8 +334,8 @@ fn get_column_stat(
 mod test {
 
     use super::*;
-    use chrono::DateTime;
     use chrono::offset::Utc;
+    use chrono::DateTime;
     use dao::ToColumnNames;
     use dao::ToDao;
     use dao::ToTableName;
@@ -401,9 +401,9 @@ mod test {
                     ]
                 ),
                 capacity: None,
-                constraints: vec![
-                    ColumnConstraint::DefaultValue(Literal::String("'G'::mpaa_rating".into())),
-                ],
+                constraints: vec![ColumnConstraint::DefaultValue(Literal::String(
+                    "'G'::mpaa_rating".into(),
+                ))],
             }
         );
     }

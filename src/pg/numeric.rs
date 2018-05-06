@@ -6,10 +6,10 @@ use postgres::types::{self, FromSql, IsNull, ToSql, Type};
 use bigdecimal::BigDecimal;
 use num_bigint::{BigInt, BigUint, Sign};
 
-use num_traits::Zero;
 use num_integer::Integer;
-use num_traits::ToPrimitive;
 use num_traits::Signed;
+use num_traits::ToPrimitive;
+use num_traits::Zero;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PgNumeric {

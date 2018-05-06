@@ -46,7 +46,7 @@ impl Table {
             .collect()
     }
 
-    fn get_primary_columns(&self) -> Vec<&Column> {
+    pub fn get_primary_columns(&self) -> Vec<&Column> {
         self.get_primary_column_names()
             .iter()
             .filter_map(|column_name| self.get_column(column_name))

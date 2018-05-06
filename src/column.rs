@@ -34,8 +34,34 @@ impl Column {
         })
     }
 
+    pub fn is_not_null(&self) -> bool {
+        self.specification.constraints.iter().any(|c| match *c {
+            ColumnConstraint::NotNull => true,
+            _ => false,
+        })
+    }
+
     pub fn get_sql_type(&self) -> SqlType {
         self.specification.sql_type.clone()
+    }
+
+    pub fn has_generated_default(&self) -> bool {
+        self.specification.constraints.iter().any(|c| match *c {
+            ColumnConstraint::DefaultValue(ref literal) => match *literal {
+                Literal::Bool(_) => true,
+                Literal::Null => false,
+                Literal::Integer(_) => true,
+                Literal::Double(_) => true,
+                Literal::UuidGenerateV4 => true,
+                Literal::Uuid(_) => true,
+                Literal::String(_) => false,
+                Literal::Blob(_) => false,
+                Literal::CurrentTime => true,
+                Literal::CurrentDate => true,
+                Literal::CurrentTimestamp => true,
+            },
+            _ => false,
+        })
     }
 }
 

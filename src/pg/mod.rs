@@ -1,34 +1,34 @@
+use self::numeric::PgNumeric;
+use base64;
+use bigdecimal::BigDecimal;
+use dao::value::Array;
+use dao::Rows;
+use dao::TableName;
+use dao::Value;
+use database::Database;
+use entity::EntityManager;
+use error::DbError;
+use error::PlatformError;
+use openssl::ssl::{SslConnectorBuilder, SslMethod};
+use postgres;
+use postgres::tls::openssl::OpenSsl;
+use postgres::types::{self, FromSql, IsNull, ToSql, Type};
+use postgres_shared::types::Kind;
+use postgres_shared::types::Kind::Enum;
 use r2d2;
+use r2d2::ManageConnection;
 use r2d2_postgres;
 use r2d2_postgres::TlsMode;
-use database::Database;
-use dao::Value;
-use error::DbError;
-use dao::Rows;
-use postgres;
-use postgres::types::{self, FromSql, IsNull, ToSql, Type};
-use error::PlatformError;
 use std::error::Error;
 use std::fmt;
-use bigdecimal::BigDecimal;
-use dao::TableName;
-use table::Table;
-use entity::EntityManager;
-use dao::value::Array;
-use table::SchemaContent;
 use std::string::FromUtf8Error;
-use postgres_shared::types::Kind::Enum;
-use postgres_shared::types::Kind;
-use self::numeric::PgNumeric;
-use r2d2::ManageConnection;
+use table::SchemaContent;
+use table::Table;
 use tree_magic;
-use base64;
-use openssl::ssl::{SslConnectorBuilder, SslMethod};
-use postgres::tls::openssl::OpenSsl;
 
-mod table_info;
 mod column_info;
 mod numeric;
+mod table_info;
 
 pub fn init_pool(
     db_url: &str,
@@ -67,6 +67,7 @@ impl Database for PostgresDB {
                 let pg_values = to_pg_values(param);
                 let sql_types = to_sql_types(&pg_values);
                 let rows = stmt.query(&sql_types);
+                println!("rustorm rows: {:?}", rows);
                 match rows {
                     Ok(rows) => {
                         let columns = rows.columns();
@@ -206,9 +207,9 @@ impl<'a> ToSql for PgValue<'a> {
 impl FromSql for OwnedPgValue {
     fn from_sql(ty: &Type, raw: &[u8]) -> Result<Self, Box<Error + Sync + Send>> {
         macro_rules! match_type {
-            ($variant: ident ) => {
-                FromSql::from_sql(ty, raw).map(|v|OwnedPgValue(Value::$variant(v)))
-            }
+            ($variant:ident) => {
+                FromSql::from_sql(ty, raw).map(|v| OwnedPgValue(Value::$variant(v)))
+            };
         }
         let kind = ty.kind();
         match *kind {
@@ -320,11 +321,11 @@ impl FromSql for OwnedPgValue {
 mod test {
 
     use super::*;
+    use dao::Rows;
+    use dao::Value;
     use pool::{Pool, PooledConn};
     use postgres::Connection;
     use std::ops::Deref;
-    use dao::Value;
-    use dao::Rows;
 
     #[test]
     fn connect_test_query() {
