@@ -18,6 +18,9 @@ extern crate rustorm_dao as dao;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate geo;
+extern crate serde_json;
+extern crate time;
 extern crate tree_magic;
 extern crate url;
 extern crate uuid;

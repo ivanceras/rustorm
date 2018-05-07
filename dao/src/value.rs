@@ -2,6 +2,7 @@ use bigdecimal::BigDecimal;
 use chrono::{DateTime, Utc};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use error::ConvertError;
+use geo::Point;
 use std::convert::TryFrom;
 use uuid::Uuid;
 
@@ -33,6 +34,8 @@ pub enum Value {
     Time(NaiveTime),
     DateTime(NaiveDateTime),
     Timestamp(DateTime<Utc>),
+
+    Point(Point<f64>),
 
     Array(Array),
 }

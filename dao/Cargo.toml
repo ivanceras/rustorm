@@ -15,3 +15,5 @@ serde = "1.0.15"
 serde_derive = "1.0.15"
 serde_json = "1.0.3"
 bigdecimal = {version = "0.0.10", features = ["serde"]}
+geo = "0.4"
+time = "0.1.14"

@@ -9,6 +9,7 @@ use database::Database;
 use entity::EntityManager;
 use error::DbError;
 use error::PlatformError;
+use geo::Point;
 use openssl::ssl::{SslConnectorBuilder, SslMethod};
 use postgres;
 use postgres::tls::openssl::OpenSsl;
@@ -19,11 +20,13 @@ use r2d2;
 use r2d2::ManageConnection;
 use r2d2_postgres;
 use r2d2_postgres::TlsMode;
+use serde_json;
 use std::error::Error;
 use std::fmt;
 use std::string::FromUtf8Error;
 use table::SchemaContent;
 use table::Table;
+use time::Timespec;
 use tree_magic;
 
 mod column_info;
@@ -188,6 +191,7 @@ impl<'a> ToSql for PgValue<'a> {
                 numeric.to_sql(ty, out)
             }
             Value::Json(ref v) => v.to_sql(ty, out),
+            Value::Point(ref v) => v.to_sql(ty, out),
             Value::Array(ref v) => match *v {
                 Array::Text(ref av) => av.to_sql(ty, out),
                 Array::Int(ref av) => av.to_sql(ty, out),
@@ -285,12 +289,20 @@ impl FromSql for OwnedPgValue {
                         let bigdecimal = BigDecimal::from(numeric);
                         Ok(OwnedPgValue(Value::BigDecimal(bigdecimal)))
                     }
-                    types::JSON => {
-                        let text = String::from_utf8(raw.to_owned());
-                        match text {
-                            Ok(text) => Ok(OwnedPgValue(Value::Json(text))),
-                            Err(e) => Err(Box::new(PostgresError::FromUtf8Error(e))),
-                        }
+                    types::JSON | types::JSONB => {
+                        let value: serde_json::Value = FromSql::from_sql(ty, raw)?;
+                        let text = serde_json::to_string(&value).unwrap();
+                        Ok(OwnedPgValue(Value::Json(text)))
+                    }
+                    types::INTERVAL => {
+                        println!("interval raw: {:?}", raw);
+                        let interval: Timespec = FromSql::from_sql(ty, raw)?;
+                        println!("duration: {:?}", interval);
+                        panic!();
+                    }
+                    types::POINT => {
+                        let p: Point<f64> = FromSql::from_sql(ty, raw)?;
+                        Ok(OwnedPgValue(Value::Point(p)))
                     }
                     types::INET => {
                         println!("inet raw:{:?}", raw);

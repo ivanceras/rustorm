@@ -38,6 +38,8 @@ pub enum SqlType {
 
     IpAddress,
 
+    Point,
+
     // enum list with the choices value
     Enum(String, Vec<String>),
     ArrayType(ArrayType),
@@ -93,6 +95,7 @@ impl SqlType {
             SqlType::Char => match_value!(Char),
             SqlType::Text | SqlType::Varchar => match_value!(Text),
             SqlType::Json => match_value!(Json),
+            SqlType::Point => match_value!(Point),
             SqlType::Uuid => match_value!(Uuid),
             SqlType::Date => match_value!(Date),
             SqlType::Timestamp => match_value!(Timestamp),
