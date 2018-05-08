@@ -151,10 +151,14 @@ fn get_column_specification(
                             if default_value.to_lowercase() == "null" {
                                 Literal::Null
                             } else {
-                                match util::eval_f64(default_value){
+                                let trimmed = default_value.trim_matches('\'');
+                                match trimmed.parse::<i64>(){
+                                    Ok(int_value) => Literal::Integer(int_value),
+                                    Err(_) => match util::eval_f64(default_value){
                                         Ok(val) => Literal::Double(val),
                                         Err(e) => panic!("unable to evaluate default value expression: {}, error: {}", default_value, e),
                                     }
+                                }
                             }
                         }
                         SqlType::Uuid => {

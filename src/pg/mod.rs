@@ -70,7 +70,6 @@ impl Database for PostgresDB {
                 let pg_values = to_pg_values(param);
                 let sql_types = to_sql_types(&pg_values);
                 let rows = stmt.query(&sql_types);
-                println!("rustorm rows: {:?}", rows);
                 match rows {
                     Ok(rows) => {
                         let columns = rows.columns();
