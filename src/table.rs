@@ -81,6 +81,26 @@ impl Table {
         None
     }
 
+    /// get the (local_columns, foreign_columns) to the table
+    pub fn get_local_foreign_columns_pair_to_table(
+        &self,
+        table_name: &TableName,
+    ) -> Vec<(&ColumnName, &ColumnName)> {
+        let foreign_keys: Vec<&ForeignKey> = self.get_foreign_keys();
+        for fk in foreign_keys {
+            if fk.foreign_table == *table_name {
+                let mut container = vec![];
+                for (local_column, referred_column) in
+                    fk.columns.iter().zip(fk.referred_columns.iter())
+                {
+                    container.push((local_column, referred_column));
+                }
+                return container;
+            }
+        }
+        vec![]
+    }
+
     fn get_foreign_columns_to_table(&self, table_name: &TableName) -> Vec<&Column> {
         self.get_foreign_column_names_to_table(table_name)
             .iter()
@@ -164,7 +184,7 @@ pub struct UniqueKey {
 #[derive(Debug, PartialEq, Clone)]
 pub struct ForeignKey {
     pub name: Option<String>,
-    // the local columns
+    // the local columns of this table local column = foreign_column
     pub columns: Vec<ColumnName>,
     // referred foreign table
     pub foreign_table: TableName,

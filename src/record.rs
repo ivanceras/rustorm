@@ -3,7 +3,7 @@ use dao::Value;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::BTreeMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Record(pub BTreeMap<String, Value>);
 
 impl Record {
@@ -15,8 +15,8 @@ impl Record {
         self.0.get(s).map(|v| v.clone())
     }
 
-    pub fn insert_value(&mut self, s: String, value: Value) {
-        self.0.insert(s, value);
+    pub fn insert_value(&mut self, s: &str, value: Value) {
+        self.0.insert(s.to_owned(), value);
     }
 }
 
