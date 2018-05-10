@@ -45,6 +45,28 @@ pub enum SqlType {
     ArrayType(ArrayType),
 }
 
+impl SqlType {
+    pub fn is_integer_type(&self) -> bool {
+        match *self {
+            SqlType::Int => true,
+            SqlType::Tinyint => true,
+            SqlType::Smallint => true,
+            SqlType::Bigint => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_decimal_type(&self) -> bool {
+        match *self {
+            SqlType::Real => true,
+            SqlType::Float => true,
+            SqlType::Double => true,
+            SqlType::Numeric => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub enum ArrayType {
     Bool,
