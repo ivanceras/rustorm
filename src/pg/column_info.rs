@@ -263,7 +263,7 @@ fn get_column_specification(
                     "unknown" => SqlType::Text,
                     "\"char\"" => SqlType::Char,
                     "point" => SqlType::Point,
-                    "interval" => SqlType::Float,
+                    "interval" => SqlType::Interval,
                     _ => panic!("not yet handled: {}", dtype),
                 };
                 (sql_type, capacity)

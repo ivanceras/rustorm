@@ -35,6 +35,7 @@ pub enum SqlType {
 
     Time,
     TimeTz,
+    Interval,
 
     IpAddress,
 
@@ -122,9 +123,14 @@ impl SqlType {
             SqlType::Date => match_value!(Date),
             SqlType::Timestamp => match_value!(Timestamp),
             SqlType::TimestampTz => match_value!(Timestamp),
+            SqlType::Interval => match_value!(Interval),
             SqlType::Enum(_, _) => match_value!(Text),
             SqlType::ArrayType(ArrayType::Text) => match *value {
                 Value::Array(Array::Text(_)) => true,
+                _ => false,
+            },
+            SqlType::ArrayType(ArrayType::Int) => match *value {
+                Value::Array(Array::Int(_)) => true,
                 _ => false,
             },
             SqlType::ArrayType(ArrayType::Enum(_, _)) => match *value {

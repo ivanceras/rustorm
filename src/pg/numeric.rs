@@ -1,3 +1,6 @@
+///
+/// Copied from diesel
+///
 use byteorder::{NetworkEndian, ReadBytesExt, WriteBytesExt};
 use std::error::Error;
 

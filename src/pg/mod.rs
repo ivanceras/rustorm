@@ -1,7 +1,9 @@
+use self::interval::PgInterval;
 use self::numeric::PgNumeric;
 use base64;
 use bigdecimal::BigDecimal;
 use dao::value::Array;
+use dao::Interval;
 use dao::Rows;
 use dao::TableName;
 use dao::Value;
@@ -26,10 +28,10 @@ use std::fmt;
 use std::string::FromUtf8Error;
 use table::SchemaContent;
 use table::Table;
-use time::Timespec;
 use tree_magic;
 
 mod column_info;
+mod interval;
 mod numeric;
 mod table_info;
 
@@ -185,6 +187,7 @@ impl<'a> ToSql for PgValue<'a> {
             Value::Timestamp(ref v) => v.to_sql(ty, out),
             Value::DateTime(ref v) => v.to_sql(ty, out),
             Value::Time(ref v) => v.to_sql(ty, out),
+            Value::Interval(ref _v) => panic!("storing interval in DB is not supported"),
             Value::BigDecimal(ref v) => {
                 let numeric: PgNumeric = v.into();
                 numeric.to_sql(ty, out)
@@ -294,10 +297,13 @@ impl FromSql for OwnedPgValue {
                         Ok(OwnedPgValue(Value::Json(text)))
                     }
                     types::INTERVAL => {
-                        println!("interval raw: {:?}", raw);
-                        let interval: Timespec = FromSql::from_sql(ty, raw)?;
-                        println!("duration: {:?}", interval);
-                        panic!();
+                        let pg_interval: PgInterval = FromSql::from_sql(ty, raw)?;
+                        let interval = Interval::new(
+                            pg_interval.microseconds,
+                            pg_interval.days,
+                            pg_interval.months,
+                        );
+                        Ok(OwnedPgValue(Value::Interval(interval)))
                     }
                     types::POINT => {
                         let p: Point<f64> = FromSql::from_sql(ty, raw)?;

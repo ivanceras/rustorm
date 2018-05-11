@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use error::ConvertError;
 use geo::Point;
+use interval::Interval;
 use std::convert::TryFrom;
 use uuid::Uuid;
 
@@ -34,6 +35,7 @@ pub enum Value {
     Time(NaiveTime),
     DateTime(NaiveDateTime),
     Timestamp(DateTime<Utc>),
+    Interval(Interval),
 
     Point(Point<f64>),
 
