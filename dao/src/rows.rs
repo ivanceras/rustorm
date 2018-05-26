@@ -56,29 +56,26 @@ impl<'a> Iterator for Iter<'a> {
     type Item = Dao<'a>;
 
     fn next(&mut self) -> Option<Dao<'a>> {
-        self.iter.next().map(|row| {
-            let mut dao = Dao::new();
-            for (i, column) in self.columns.iter().enumerate() {
-                dao.insert(column, row[i].clone());
+        let next_row = self.iter.next();
+        if let Some(row) = next_row {
+            if row.len() > 0 {
+                let mut dao = Dao::new();
+                for (i, column) in self.columns.iter().enumerate() {
+                    if let Some(value) = row.get(i) {
+                        dao.insert(column, value.clone());
+                    }
+                }
+                Some(dao)
+            } else {
+                None
             }
-            dao
-        })
+        } else {
+            None
+        }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
-    }
-}
-
-impl<'a> DoubleEndedIterator for Iter<'a> {
-    fn next_back(&mut self) -> Option<Dao<'a>> {
-        self.iter.next_back().map(|row| {
-            let mut dao = Dao::new();
-            for (i, column) in self.columns.iter().enumerate() {
-                dao.insert(column, row[i].clone());
-            }
-            dao
-        })
     }
 }
 
