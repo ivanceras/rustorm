@@ -45,6 +45,10 @@ impl Column {
         self.specification.sql_type.clone()
     }
 
+    pub fn cast_as(&self) -> Option<SqlType> {
+        self.get_sql_type().cast_as()
+    }
+
     pub fn has_generated_default(&self) -> bool {
         self.specification.constraints.iter().any(|c| match *c {
             ColumnConstraint::DefaultValue(ref literal) => match *literal {

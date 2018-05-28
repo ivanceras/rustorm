@@ -47,6 +47,12 @@ pub enum SqlType {
 }
 
 impl SqlType {
+    pub fn is_array_type(&self) -> bool {
+        match *self {
+            SqlType::ArrayType(_) => true,
+            _ => false,
+        }
+    }
     pub fn is_integer_type(&self) -> bool {
         match *self {
             SqlType::Int => true,
@@ -64,6 +70,24 @@ impl SqlType {
             SqlType::Double => true,
             SqlType::Numeric => true,
             _ => false,
+        }
+    }
+
+    pub fn cast_as(&self) -> Option<SqlType> {
+        match *self {
+            SqlType::TsVector => Some(SqlType::Text),
+            _ => None,
+        }
+    }
+    pub fn name(&self) -> String {
+        match *self {
+            SqlType::Text => "text".into(),
+            SqlType::TsVector => "tsvector".into(),
+            SqlType::ArrayType(ref ty) => match ty {
+                ArrayType::Text => "text[]".into(),
+                _ => panic!("not yet dealt {:?}", self),
+            },
+            _ => panic!("not yet dealt {:?}", self),
         }
     }
 }
