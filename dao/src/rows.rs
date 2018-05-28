@@ -152,30 +152,6 @@ mod test {
     }
 
     #[test]
-    fn from_back() {
-        let columns = vec!["id".to_string(), "username".to_string()];
-        let data: Vec<Vec<Value>> = vec![
-            vec![1.into(), "ivanceras".into()],
-            vec![2.into(), "lee".into()],
-        ];
-        let rows = Rows {
-            columns: columns,
-            data: data,
-            count: None,
-        };
-        let mut iter = rows.iter();
-        let mut dao2 = Dao::new();
-        dao2.insert("id", 2);
-        dao2.insert("username", "lee");
-        assert_eq!(dao2, iter.next_back().unwrap());
-
-        let mut dao = Dao::new();
-        dao.insert("id", 1);
-        dao.insert("username", "ivanceras");
-        assert_eq!(dao, iter.next_back().unwrap());
-    }
-
-    #[test]
     fn into_iter() {
         let columns = vec!["id".to_string(), "username".to_string()];
         let data: Vec<Vec<Value>> = vec![
