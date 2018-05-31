@@ -35,6 +35,9 @@ pub fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
        WHERE 
              pg_class.relkind IN ('r','v') 
          AND pg_namespace.nspname NOT IN ('information_schema', 'pg_catalog', 'pg_toast') 
+         AND (has_table_privilege(pg_class.oid, 'SELECT') 
+                OR has_any_column_privilege(pg_class.oid, 'SELECT')
+             )
     ORDER BY nspname, relname 
             "#;
     let tablenames_simple: Result<Vec<TableNameSimple>, DbError> =
