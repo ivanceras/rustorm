@@ -19,6 +19,7 @@ use table::{TableKey,ForeignKey,PrimaryKey};
 use column::{Column, ColumnConstraint, Literal, ColumnSpecification, Capacity};
 use util;
 use uuid::Uuid;
+use users::User;
 
 pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_sqlite3::SqliteConnectionManager>, SqliteError> {
     println!("initializing pool: {}", db_url);
@@ -399,6 +400,12 @@ impl Database for SqliteDB{
             views: view_names,
         };
         Ok(vec![schema_content])
+    }
+
+    /// there are no users in sqlite
+    /// TODO: extract from a fix table ie: users which satisfies the username, password combination
+    fn get_users(&self, _em: &EntityManager) -> Result<Vec<User>, DbError> {
+        Ok(vec![])
     }
 }
 

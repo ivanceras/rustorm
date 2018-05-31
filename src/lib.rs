@@ -51,6 +51,7 @@ pub mod record_manager;
 pub mod table;
 pub mod types;
 mod util;
+mod users;
 
 pub use column::Column;
 pub use dao::ColumnName;

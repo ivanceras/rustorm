@@ -8,6 +8,7 @@ use error::{DataError, DbError};
 use platform::DBPlatform;
 use table::SchemaContent;
 use table::Table;
+use users::User;
 
 pub struct EntityManager(pub DBPlatform);
 
@@ -50,6 +51,10 @@ impl EntityManager {
     pub fn get_all_tables(&self) -> Result<Vec<Table>, DbError> {
         println!("EXPENSIVE DB OPERATION: get_all_tables");
         self.0.get_all_tables(self)
+    }
+
+    pub fn get_users(&self) -> Result<Vec<User>, DbError> {
+        self.0.get_users(self)
     }
 
     /// get all table and views grouped per schema

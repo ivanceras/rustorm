@@ -3,6 +3,7 @@ use dao::{Rows, Value};
 use entity::EntityManager;
 use table::SchemaContent;
 use table::Table;
+use users::User;
 
 use error::DbError;
 
@@ -14,4 +15,6 @@ pub trait Database {
     fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError>;
 
     fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError>;
+
+    fn get_users(&self, em: &EntityManager) -> Result<Vec<User>, DbError>;
 }
