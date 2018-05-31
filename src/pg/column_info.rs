@@ -54,6 +54,7 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
              AND pg_namespace.nspname = $2 
              AND pg_attribute.attnum > 0 
              AND pg_attribute.attisdropped = false 
+             AND has_column_privilege($3, attname, 'SELECT')
         ORDER BY number 
     "#;
     let schema = match table_name.schema {
@@ -61,7 +62,7 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
         None => "public".to_string(),
     };
     let columns_simple: Result<Vec<ColumnSimple>, DbError> =
-        em.execute_sql_with_return(&sql, &[&table_name.name, &schema]);
+        em.execute_sql_with_return(&sql, &[&table_name.name, &schema, &table_name.complete_name()]);
 
     match columns_simple {
         Ok(columns_simple) => {
