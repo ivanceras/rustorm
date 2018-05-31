@@ -29,6 +29,7 @@ use std::string::FromUtf8Error;
 use table::SchemaContent;
 use table::Table;
 use tree_magic;
+use users::User;
 
 mod column_info;
 mod interval;
@@ -133,6 +134,31 @@ impl Database for PostgresDB {
 
     fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
         table_info::get_organized_tables(em)
+    }
+
+    /// get the list of database users
+    fn get_users(&self, em: &EntityManager) -> Result<Vec<User>, DbError> {
+        let sql = "SELECT oid::int AS sysid,
+               rolname AS username,
+               rolsuper AS is_superuser,
+               rolinherit AS is_inherit,
+               rolcreaterole AS can_create_role,
+               rolcreatedb AS can_create_db,
+               rolcanlogin AS can_login,
+               rolreplication AS can_do_replication,
+               rolbypassrls AS can_bypass_rls,
+               CASE WHEN rolconnlimit < 0 THEN NULL
+                    ELSE rolconnlimit END AS conn_limit,
+               '*************' AS password,
+               CASE WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
+                   ELSE rolvaliduntil 
+                   END AS valid_until
+               FROM pg_authid
+               ";
+       let users: Result<Vec<User>, DbError> =
+            em.execute_sql_with_return(&sql, &[]);
+       println!("users: {:#?}", users);
+       users    
     }
 }
 
@@ -334,6 +360,44 @@ impl FromSql for OwnedPgValue {
     }
 }
 
+#[derive(Debug)]
+pub enum PostgresError {
+    GenericError(String, postgres::Error),
+    SqlError(postgres::Error, String),
+    ConvertStringToCharError(String),
+    FromUtf8Error(FromUtf8Error),
+    ConvertNumericToBigDecimalError,
+    PoolInitializationError(r2d2::Error),
+}
+
+impl From<postgres::Error> for PostgresError {
+    fn from(e: postgres::Error) -> Self {
+        PostgresError::GenericError("From conversion".into(), e)
+    }
+}
+
+impl From<r2d2::Error> for PostgresError {
+    fn from(e: r2d2::Error) -> Self {
+        PostgresError::PoolInitializationError(e)
+    }
+}
+
+impl Error for PostgresError {
+    fn description(&self) -> &str {
+        "postgres error"
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        None
+    }
+}
+
+impl fmt::Display for PostgresError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:#?}", self)
+    }
+}
+
 #[cfg(test)]
 mod test {
 
@@ -468,42 +532,16 @@ mod test {
         }
     }
 
-}
-
-#[derive(Debug)]
-pub enum PostgresError {
-    GenericError(String, postgres::Error),
-    SqlError(postgres::Error, String),
-    ConvertStringToCharError(String),
-    FromUtf8Error(FromUtf8Error),
-    ConvertNumericToBigDecimalError,
-    PoolInitializationError(r2d2::Error),
-}
-
-impl From<postgres::Error> for PostgresError {
-    fn from(e: postgres::Error) -> Self {
-        PostgresError::GenericError("From conversion".into(), e)
-    }
-}
-
-impl From<r2d2::Error> for PostgresError {
-    fn from(e: r2d2::Error) -> Self {
-        PostgresError::PoolInitializationError(e)
-    }
-}
-
-impl Error for PostgresError {
-    fn description(&self) -> &str {
-        "postgres error"
+    #[test]
+    fn test_get_users() {
+        let mut pool = Pool::new();
+        let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+        let em = pool.em(db_url).unwrap();
+        let users = em.get_users();
+        println!("users: {:#?}", users);
+        assert!(users.is_ok());
+        panic!();
     }
 
-    fn cause(&self) -> Option<&Error> {
-        None
-    }
 }
 
-impl fmt::Display for PostgresError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:#?}", self)
-    }
-}
