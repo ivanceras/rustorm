@@ -546,7 +546,6 @@ mod test {
         let users = em.get_users();
         println!("users: {:#?}", users);
         assert!(users.is_ok());
-        panic!();
     }
 
 }
