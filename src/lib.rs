@@ -68,6 +68,7 @@ pub use pool::Pool;
 pub use record::Record;
 pub use record_manager::RecordManager;
 pub use table::Table;
+pub use database::DatabaseName;
 
 #[cfg(test)]
 mod test {

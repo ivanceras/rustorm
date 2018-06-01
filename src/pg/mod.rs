@@ -30,6 +30,7 @@ use table::SchemaContent;
 use table::Table;
 use tree_magic;
 use users::User;
+use database::DatabaseName;
 
 mod column_info;
 mod interval;
@@ -153,12 +154,17 @@ impl Database for PostgresDB {
                CASE WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
                    ELSE rolvaliduntil 
                    END AS valid_until
-               FROM pg_authid
-               ";
-       let users: Result<Vec<User>, DbError> =
-            em.execute_sql_with_return(&sql, &[]);
-       println!("users: {:#?}", users);
-       users    
+               FROM pg_authid";
+        em.execute_sql_with_return(&sql, &[])
+    }
+
+    fn get_database_name(&self, em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {
+        let sql = "SELECT current_database() AS name,
+                        description FROM pg_database
+                        LEFT JOIN pg_shdescription ON objoid = pg_database.oid
+                        WHERE datname = current_database()";
+        em.execute_sql_with_one_return(&sql, &[])
+            .map(|dn|Some(dn))
     }
 }
 

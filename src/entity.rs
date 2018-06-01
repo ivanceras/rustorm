@@ -9,6 +9,7 @@ use platform::DBPlatform;
 use table::SchemaContent;
 use table::Table;
 use users::User;
+use database::DatabaseName;
 
 pub struct EntityManager(pub DBPlatform);
 
@@ -55,6 +56,10 @@ impl EntityManager {
 
     pub fn get_users(&self) -> Result<Vec<User>, DbError> {
         self.0.get_users(self)
+    }
+
+    pub fn get_database_name(&self) -> Result<Option<DatabaseName>, DbError> {
+        self.0.get_database_name(self)
     }
 
     /// get all table and views grouped per schema
