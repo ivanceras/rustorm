@@ -1,6 +1,6 @@
 [package]
 name = "rustorm"
-version = "0.10.4"
+version = "0.10.5"
 authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
 license = "MIT"
 description = "A complete rewrite of rustorm"
@@ -38,11 +38,9 @@ geo = "0.4"
 time = "0.1.14"
 
 [dependencies.rustorm_dao]
-#path = "dao"
 version = "0.1"
 
 [dependencies.rustorm_codegen]
-#path = "codegen"
 version = "0.1"
 
 [features]
