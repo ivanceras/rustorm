@@ -210,12 +210,16 @@ fn get_column_specification(
                                 let splinters:Vec<&str> = default.split("::").collect();
                                 let int_values = splinters[0];
                                 let trimmed_values = int_values.trim_matches('\'').trim_left_matches('{').trim_right_matches('}');
-                                let int_array_result:Vec<Result<i64,_>> = trimmed_values.split(',').map(|i|i.parse::<i64>()).collect();
-                                let int_array:Vec<i64> = int_array_result.iter().map(|r|match r {
-                                    Ok(r) => r.clone(),
-                                    Err(e) => panic!("unable to parse integer value: {:?}, Error:{:?}", r, e)
-                                }).collect();
-                                Literal::ArrayInt(int_array)
+                                if trimmed_values.is_empty(){
+                                    Literal::ArrayInt(vec![])
+                                }else{
+                                    let int_array_result:Vec<Result<i64,_>> = trimmed_values.split(',').map(|i|i.parse::<i64>()).collect();
+                                    let int_array:Vec<i64> = int_array_result.iter().map(|r|match r {
+                                        Ok(r) => r.clone(),
+                                        Err(e) => panic!("unable to parse integer value: {:?}, Error:{:?}", r, e)
+                                    }).collect();
+                                    Literal::ArrayInt(int_array)
+                                }
                             },
                             ArrayType::Real 
                               | ArrayType::Float 
@@ -226,11 +230,15 @@ fn get_column_specification(
                                 let values = splinters[0];
                                 let trimmed_values = values.trim_matches('\'').trim_left_matches('{').trim_right_matches('}');
                                 let array_result:Vec<Result<f64,_>> = trimmed_values.split(',').map(|i|i.parse::<f64>()).collect();
-                                let array:Vec<f64> = array_result.iter().map(|r|match r {
-                                    Ok(r) => r.clone(),
-                                    Err(e) => panic!("unable to parse float value: {:?}, Error:{:?}", r, e)
-                                }).collect();
-                                Literal::ArrayFloat(array)
+                                if trimmed_values.is_empty(){
+                                    Literal::ArrayInt(vec![])
+                                }else{
+                                    let array:Vec<f64> = array_result.iter().map(|r|match r {
+                                        Ok(r) => r.clone(),
+                                        Err(e) => panic!("unable to parse float value: {:?}, Error:{:?}", r, e)
+                                    }).collect();
+                                    Literal::ArrayFloat(array)
+                                }
                             },
                             ArrayType::Text
                              | ArrayType::Varchar 
