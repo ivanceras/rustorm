@@ -107,16 +107,16 @@ fn get_column_specification(
     }
 
     impl ColumnConstraintSimple {
-        fn to_column_specification(&self) -> ColumnSpecification {
+        fn to_column_specification(&self, table_name: &TableName, column_name: &str) -> ColumnSpecification {
             let (sql_type, capacity) = self.get_sql_type_capacity();
             ColumnSpecification {
                 sql_type: sql_type,
                 capacity: capacity,
-                constraints: self.to_column_constraints(),
+                constraints: self.to_column_constraints(table_name, column_name),
             }
         }
 
-        fn to_column_constraints(&self) -> Vec<ColumnConstraint> {
+        fn to_column_constraints(&self, table_name: &TableName, column_name: &str) -> Vec<ColumnConstraint> {
             let (sql_type, _) = self.get_sql_type_capacity();
             let mut constraints = vec![];
             if self.not_null {
@@ -200,7 +200,51 @@ fn get_column_specification(
                         | SqlType::Mediumtext
                         | SqlType::Text => Literal::String(default.to_owned()),
                         SqlType::Enum(_name, _choices) => Literal::String(default.to_owned()),
-                        _ => panic!("not convered: {:?}", sql_type),
+
+                        SqlType::ArrayType(ref at) => match at{
+                            ArrayType::Int 
+                              | ArrayType::Tinyint 
+                              | ArrayType::Smallint 
+                              | ArrayType::Bigint => {
+                                // default = '{2,1,2}'::integer[]
+                                let splinters:Vec<&str> = default.split("::").collect();
+                                let int_values = splinters[0];
+                                let trimmed_values = int_values.trim_matches('\'').trim_left_matches('{').trim_right_matches('}');
+                                let int_array_result:Vec<Result<i64,_>> = trimmed_values.split(',').map(|i|i.parse::<i64>()).collect();
+                                let int_array:Vec<i64> = int_array_result.iter().map(|r|match r {
+                                    Ok(r) => r.clone(),
+                                    Err(e) => panic!("unable to parse integer value: {:?}, Error:{:?}", r, e)
+                                }).collect();
+                                Literal::ArrayInt(int_array)
+                            },
+                            ArrayType::Real 
+                              | ArrayType::Float 
+                              | ArrayType::Double 
+                              | ArrayType::Numeric => {
+                                // default = '{2,1,2}'::integer[]
+                                let splinters:Vec<&str> = default.split("::").collect();
+                                let values = splinters[0];
+                                let trimmed_values = values.trim_matches('\'').trim_left_matches('{').trim_right_matches('}');
+                                let array_result:Vec<Result<f64,_>> = trimmed_values.split(',').map(|i|i.parse::<f64>()).collect();
+                                let array:Vec<f64> = array_result.iter().map(|r|match r {
+                                    Ok(r) => r.clone(),
+                                    Err(e) => panic!("unable to parse float value: {:?}, Error:{:?}", r, e)
+                                }).collect();
+                                Literal::ArrayFloat(array)
+                            },
+                            ArrayType::Text
+                             | ArrayType::Varchar 
+                             | ArrayType::Tinytext
+                             | ArrayType::Mediumtext => {
+                              // default = '{Mon,Wed,Fri}'::character varying[],
+                                let splinters:Vec<&str> = default.split("::").collect();
+                                let string_values = splinters[0];
+                                let trimmed_values = string_values.trim_matches('\'').trim_left_matches('{').trim_right_matches('}').split(',').map(|s|s.to_owned()).collect();
+                                Literal::ArrayString(trimmed_values)
+                            }
+                            _ => panic!("ArrayType not convered: {:?} in {}.{}", sql_type, table_name.complete_name(), column_name),
+                        }
+                        _ => panic!("not convered: {:?} in {}.{}", sql_type, table_name.complete_name(), column_name),
                     };
                     ColumnConstraint::DefaultValue(literal)
                 };
@@ -242,8 +286,8 @@ fn get_column_specification(
                     "longblob" => SqlType::Longblob,
                     "varbinary" => SqlType::Varbinary,
                     "char" | "bpchar" => SqlType::Char,
-                    "varchar" | "character varying" | "character" => SqlType::Varchar,
-                    "varchar[]" | "character varying[]" | "name" => {
+                    "varchar" | "character varying" | "character" | "name" => SqlType::Varchar,
+                    "varchar[]" | "character varying[]" | "name[]" => {
                         SqlType::ArrayType(ArrayType::Text)
                     }
                     "tinytext" => SqlType::Tinytext,
@@ -311,7 +355,7 @@ fn get_column_specification(
     //println!("sql: {} column_name: {}, table_name: {}", sql, column_name, table_name.name);
     let column_constraint: Result<ColumnConstraintSimple, DbError> =
         em.execute_sql_with_one_return(&sql, &[&column_name, &table_name.name, &schema]);
-    column_constraint.map(|c| c.to_column_specification())
+    column_constraint.map(|c| c.to_column_specification(table_name, column_name))
 }
 
 fn get_column_stat(

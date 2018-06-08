@@ -63,6 +63,9 @@ impl Column {
                 Literal::CurrentTime => true,
                 Literal::CurrentDate => true,
                 Literal::CurrentTimestamp => true,
+                Literal::ArrayInt(_) => false,
+                Literal::ArrayFloat(_) => false,
+                Literal::ArrayString(_) => false,
             },
             _ => false,
         })
@@ -120,6 +123,9 @@ pub enum Literal {
     CurrentTime,      // pg: now()
     CurrentDate,      //pg: today()
     CurrentTimestamp, // pg: now()
+    ArrayInt(Vec<i64>),
+    ArrayFloat(Vec<f64>),
+    ArrayString(Vec<String>),
 }
 
 /// column stat, derive from pg_stats
