@@ -1,7 +1,7 @@
 # rustorm
 
 
-High level usage
+Selecting records
 
 ```rust
 #[macro_use]
@@ -36,7 +36,7 @@ fn main(){
     }
 }
 ```
-Insert records
+Inserting and displaying the inserted records
 
 ```rust
 #[macro_use]
