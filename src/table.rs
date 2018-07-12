@@ -20,8 +20,17 @@ pub struct Table {
 }
 
 impl Table {
+
     pub fn complete_name(&self) -> String {
         self.name.complete_name()
+    }
+
+    pub fn safe_name(&self) -> String {
+        self.name.safe_name()
+    }
+    
+    pub fn safe_complete_name(&self) -> String {
+        self.name.safe_complete_name()
     }
 
     pub fn get_primary_column_names(&self) -> Vec<&ColumnName> {

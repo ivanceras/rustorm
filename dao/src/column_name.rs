@@ -1,3 +1,5 @@
+use common;
+
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub struct ColumnName {
     pub name: String,
@@ -35,6 +37,13 @@ impl ColumnName {
     pub fn complete_name(&self) -> String {
         match self.table {
             Some(ref table) => format!("{}.{}", table, self.name),
+            None => self.name.to_owned(),
+        }
+    }
+
+    pub fn safe_complete_name(&self) -> String {
+        match self.table {
+            Some(ref table) => format!("{}.{}", common::keywords_safe(table), self.name),
             None => self.name.to_owned(),
         }
     }

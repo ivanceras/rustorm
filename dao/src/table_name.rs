@@ -1,3 +1,5 @@
+use common;
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TableName {
     pub name: String,
@@ -27,6 +29,10 @@ impl TableName {
         }
     }
 
+    pub fn safe_name(&self) -> String {
+        common::keywords_safe(&self.name)
+    }
+
     /// return the long name of the table using schema.table_name
     pub fn complete_name(&self) -> String {
         match self.schema {
@@ -34,7 +40,16 @@ impl TableName {
             None => self.name.to_owned(),
         }
     }
+
+    pub fn safe_complete_name(&self) -> String {
+        match self.schema {
+            Some(ref schema) => format!("{}.{}", schema, self.safe_name()),
+            None => self.name.to_owned()
+        }
+    }
 }
+
+
 
 pub trait ToTableName {
     /// extract the table name from a struct
