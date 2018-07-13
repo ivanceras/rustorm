@@ -1,4 +1,7 @@
 //! 
+//! Rustorm is an SQL-centered ORM with focus on ease of use on conversion of database types to
+//! their appropriate rust type.
+//!
 //! Selecting records
 //!
 //! ```rust
@@ -100,6 +103,7 @@
 //!       assert_eq!(today, actors[1].last_update.date());
 //!   }
 //! ```
+//! Rustorm is wholly used by [diwata](https://github.com/ivanceras/diwata)
 //!
 #![feature(external_doc)]
 #![deny(warnings)]
