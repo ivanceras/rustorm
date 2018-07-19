@@ -31,6 +31,7 @@ use table::Table;
 use tree_magic;
 use users::User;
 use database::DatabaseName;
+use users::Role;
 
 mod column_info;
 mod interval;
@@ -156,6 +157,18 @@ impl Database for PostgresDB {
                    END AS valid_until
                FROM pg_authid";
         em.execute_sql_with_return(&sql, &[])
+    }
+
+    /// get the list of roles for this user
+    fn get_roles(&self, em: &EntityManager, username: &str) -> Result<Vec<Role>, DbError> {
+        let sql = "SELECT 
+            (SELECT rolname FROM pg_roles WHERE oid = m.roleid) AS role_name 
+            FROM pg_auth_members m
+            LEFT JOIN pg_roles
+            ON m.member = pg_roles.oid
+            WHERE pg_roles.rolname = $1
+        ";
+        em.execute_sql_with_return(&sql, &[&username.to_owned()])
     }
 
     fn get_database_name(&self, em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {

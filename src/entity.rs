@@ -9,11 +9,29 @@ use platform::DBPlatform;
 use table::SchemaContent;
 use table::Table;
 use users::User;
+use users::Role;
 use database::DatabaseName;
 
 pub struct EntityManager(pub DBPlatform);
 
 impl EntityManager {
+
+    pub fn set_session_user(&self, username: &str) -> Result<(), DbError> {
+        let sql = format!("SET SESSION AUTHORIZATION '{}'", username);
+        self.0.execute_sql_with_return(&sql, &[])?;
+        Ok(())
+    }
+    pub fn get_role(&self, username: &str) -> Result<Option<Role>, DbError> {
+        let result = self.0.get_roles(&self, username);
+        match result {
+            Ok(mut result) => match result.len() {
+                0 => Ok(None),
+                1 => Ok(Some(result.remove(0))),
+                _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+            },
+            Err(e) => Err(e),
+        }
+    }
     pub fn db(&self) -> &Database {
         &*self.0
     }

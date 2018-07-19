@@ -4,6 +4,7 @@ use entity::EntityManager;
 use table::SchemaContent;
 use table::Table;
 use users::User;
+use users::Role;
 
 use error::DbError;
 use dao;
@@ -26,6 +27,8 @@ pub trait Database {
     fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError>;
 
     fn get_users(&self, em: &EntityManager) -> Result<Vec<User>, DbError>;
+
+    fn get_roles(&self, em: &EntityManager, username: &str) -> Result<Vec<Role>, DbError>;
 
     fn get_database_name(&self, em: &EntityManager) -> Result<Option<DatabaseName>, DbError>;
 }

@@ -23,3 +23,9 @@ pub struct User{
 }
 
 
+#[derive(Debug,Serialize,Deserialize, FromDao)]
+pub struct Role{
+    pub role_name: String,
+}
+
+
