@@ -17,7 +17,8 @@ pub struct EntityManager(pub DBPlatform);
 impl EntityManager {
 
     pub fn set_session_user(&self, username: &str) -> Result<(), DbError> {
-        let sql = format!("SET SESSION AUTHORIZATION '{}'", username);
+        //let sql = format!("SET SESSION AUTHORIZATION '{}'", username);
+        let sql = format!("SET SESSION ROLE '{}'", username);
         self.0.execute_sql_with_return(&sql, &[])?;
         Ok(())
     }
