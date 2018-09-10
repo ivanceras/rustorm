@@ -2,7 +2,7 @@ use dao::TableName;
 use dao::ToColumnNames;
 use dao::ToTableName;
 use dao::{FromDao, ToDao};
-use dao::{ToValue, Value};
+use dao::{Value};
 use database::Database;
 use error::{DataError, DbError};
 use platform::DBPlatform;
@@ -11,6 +11,7 @@ use table::Table;
 use users::User;
 use users::Role;
 use database::DatabaseName;
+use dao::ToValue;
 
 pub struct EntityManager(pub DBPlatform);
 
@@ -136,14 +137,15 @@ impl EntityManager {
         for entity in entities {
             let mut dao = entity.to_dao();
             for col in columns.iter() {
-                let value = dao.remove(&col.name);
+                let value = dao.get_value(&col.name);
                 match value {
-                    Some(value) => values.push(value),
+                    Some(value) => values.push(value.clone()),
                     None => values.push(Value::Nil),
                 }
             }
         }
-        let rows = self.0.execute_sql_with_return(&sql, &values)?;
+        let bvalues:Vec<&Value> = values.iter().collect();
+        let rows = self.0.execute_sql_with_return(&sql, &bvalues)?;
         let mut retrieved_entities = vec![];
         for dao in rows.iter() {
             let retrieved = R::from_dao(&dao);
@@ -155,28 +157,26 @@ impl EntityManager {
     pub fn execute_sql_with_return<'a, R>(
         &self,
         sql: &str,
-        params: &'a [&'a ToValue],
+        params: &[&'a ToValue],
     ) -> Result<Vec<R>, DbError>
     where
         R: FromDao,
     {
-        let values: Vec<Value> = params
-            .iter()
-            .map(|param| param.to_value())
-            .collect::<Vec<Value>>();
-        let rows = self.0.execute_sql_with_return(sql, &values)?;
+        let values:Vec<Value> = params.iter().map(|p|p.to_value()).collect();
+        let bvalues: Vec<&Value> = values.iter().collect();
+        let rows = self.0.execute_sql_with_return(sql, &bvalues)?;
         Ok(rows.iter().map(|dao| R::from_dao(&dao)).collect::<Vec<R>>())
     }
 
     pub fn execute_sql_with_one_return<'a, R>(
         &self,
         sql: &str,
-        params: &'a [&'a ToValue],
+        params: &[&'a ToValue],
     ) -> Result<R, DbError>
     where
         R: FromDao,
     {
-        let result: Result<Vec<R>, DbError> = self.execute_sql_with_return(sql, params);
+        let result: Result<Vec<R>, DbError> = self.execute_sql_with_return(sql, &params);
         match result {
             Ok(mut result) => match result.len() {
                 0 => Err(DbError::DataError(DataError::ZeroRecordReturned)),
@@ -190,12 +190,12 @@ impl EntityManager {
     pub fn execute_sql_with_maybe_one_return<'a, R>(
         &self,
         sql: &str,
-        params: &'a [&'a ToValue],
+        params: &[&'a ToValue],
     ) -> Result<Option<R>, DbError>
     where
         R: FromDao,
     {
-        let result: Result<Vec<R>, DbError> = self.execute_sql_with_return(sql, params);
+        let result: Result<Vec<R>, DbError> = self.execute_sql_with_return(sql, &params);
         match result {
             Ok(mut result) => match result.len() {
                 0 => Ok(None),

@@ -29,33 +29,35 @@ impl Rows {
     }
 
     /// Returns an iterator over the `Row`s.
-    pub fn iter<'a>(&'a self) -> Iter<'a> {
+    pub fn iter(&self) -> Iter {
         Iter {
-            columns: &self.columns,
+            columns: self.columns.clone(),
             iter: self.data.iter(),
         }
     }
 }
 
-impl<'a> IntoIterator for &'a Rows {
-    type Item = Dao<'a>;
+/*
+impl <'a>IntoIterator for Rows {
+    type Item = Dao;
     type IntoIter = Iter<'a>;
 
-    fn into_iter(self) -> Iter<'a> {
+    fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
 }
+*/
 
 /// An iterator over `Row`s.
 pub struct Iter<'a> {
-    columns: &'a Vec<String>,
+    columns: Vec<String>,
     iter: slice::Iter<'a, Vec<Value>>,
 }
 
-impl<'a> Iterator for Iter<'a> {
-    type Item = Dao<'a>;
+impl <'a>Iterator for Iter<'a> {
+    type Item = Dao;
 
-    fn next(&mut self) -> Option<Dao<'a>> {
+    fn next(&mut self) -> Option<Dao> {
         let next_row = self.iter.next();
         if let Some(row) = next_row {
             if row.len() > 0 {
@@ -79,7 +81,7 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
-impl<'a> ExactSizeIterator for Iter<'a> {}
+impl <'a>ExactSizeIterator for Iter<'a> {}
 
 #[cfg(test)]
 mod test {

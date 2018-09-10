@@ -42,6 +42,13 @@ pub enum Value {
     Array(Array),
 }
 
+impl Value{
+
+    pub fn is_nil(&self) -> bool {
+        *self == Value::Nil
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Array {
     /*
@@ -163,11 +170,17 @@ impl_from!(f64, Double);
 impl_from!(Vec<u8>, Blob);
 impl_from!(char, Char);
 impl_from!(String, Text);
-impl_from!(&'static str, Text, to_string);
 impl_from!(Uuid, Uuid);
 impl_from!(NaiveDate, Date);
 impl_from!(NaiveTime, Time);
 impl_from!(DateTime<Utc>, Timestamp);
+
+impl<'a> From<&'a str> for Value {
+    fn from(f: &'a str) -> Value{
+        Value::Text(f.to_string())
+    }
+}
+
 
 impl From<Vec<String>> for Value {
     fn from(f: Vec<String>) -> Value {

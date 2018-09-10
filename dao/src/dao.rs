@@ -4,28 +4,33 @@ use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
 use value::Value;
+use serde::Deserialize;
+use serde::Deserializer;
 
-//TODO: unify Record and Dao, maybe use Record and Deprecate Dao
-#[derive(Debug, PartialEq)]
-pub struct Dao<'a>(pub BTreeMap<&'a str, Value>);
+#[derive(Debug, PartialEq, Clone)]
+pub struct Dao(pub BTreeMap<String, Value>);
 
-impl<'a> Dao<'a> {
+impl Dao {
     pub fn new() -> Self {
         Dao(BTreeMap::new())
     }
 
-    pub fn insert<V>(&mut self, s: &'a str, v: V)
+    pub fn insert<K,V>(&mut self, k: K, v: V)
     where
+        K: ToString,
         V: Into<Value>,
     {
-        self.0.insert(s, v.into());
+        self.0.insert(k.to_string(), v.into());
     }
 
-    pub fn insert_value(&mut self, s: &'a str, value: Value) {
-        self.0.insert(s, value);
+    pub fn insert_value<K>(&mut self, k: K, value: &Value) 
+        where K: ToString
+    {
+        self.0.insert(k.to_string(), value.clone());
     }
 
-    pub fn get<T>(&'a self, s: &str) -> Result<T, DaoError<T>>
+
+    pub fn get<'a, T>(&'a self, s: &str) -> Result<T, DaoError<T>>
     where
         T: TryFrom<&'a Value>,
         T::Error: Debug,
@@ -46,7 +51,7 @@ impl<'a> Dao<'a> {
     }
 }
 
-impl<'a> Serialize for Dao<'a> {
+impl<'a> Serialize for Dao {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -54,6 +59,17 @@ impl<'a> Serialize for Dao<'a> {
         self.0.serialize(serializer)
     }
 }
+
+
+impl<'de> Deserialize<'de> for Dao {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        BTreeMap::deserialize(deserializer).map(|result| Dao(result))
+    }
+}
+
 
 pub trait FromDao {
     /// convert dao to an instance of the corresponding struct of the model

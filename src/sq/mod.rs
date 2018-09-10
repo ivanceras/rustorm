@@ -82,7 +82,7 @@ fn to_sq_value(val: &Value) -> sqlite3::Value {
     }
 }
 
-fn to_sq_values(params: &[Value]) -> Vec<sqlite3::Value> {
+fn to_sq_values(params: &[&Value]) -> Vec<sqlite3::Value> {
     let mut sql_values = Vec::with_capacity(params.len());
     for param in params{
         let sq_val = to_sq_value(param);
@@ -93,7 +93,7 @@ fn to_sq_values(params: &[Value]) -> Vec<sqlite3::Value> {
 
 impl Database for SqliteDB{
 
-    fn execute_sql_with_return(&self, sql: &str, params: &[Value]) -> Result<Rows, DbError> {
+    fn execute_sql_with_return(&self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
         println!("executing sql: {}", sql);
         println!("params: {:?}", params);
         let stmt = self.0.prepare(&sql);
@@ -420,13 +420,13 @@ impl Database for SqliteDB{
     }
 }
 
-fn get_table_names(em: &EntityManager, kind: &String) -> Result<Vec<TableName>, DbError> {
+fn get_table_names(em: &EntityManager, kind: &str) -> Result<Vec<TableName>, DbError> {
     #[derive(Debug,FromDao)]
     struct TableNameSimple{
         tbl_name: String,
     }
     let sql = "SELECT tbl_name FROM sqlite_master WHERE type = ?";
-    let result: Vec<TableNameSimple> = em.execute_sql_with_return(sql, &[kind])?;
+    let result: Vec<TableNameSimple> = em.execute_sql_with_return(sql, &[&kind.to_string()])?;
     let mut table_names = vec![];
     for r in result{
         let table_name = TableName::from(&r.tbl_name);

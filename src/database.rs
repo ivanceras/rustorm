@@ -18,7 +18,7 @@ pub struct DatabaseName{
 }
 
 pub trait Database {
-    fn execute_sql_with_return(&self, sql: &str, param: &[Value]) -> Result<Rows, DbError>;
+    fn execute_sql_with_return(&self, sql: &str, param: &[&Value]) -> Result<Rows, DbError>;
 
     fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError>;
 

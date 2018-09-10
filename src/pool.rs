@@ -15,7 +15,7 @@ use error::DbError;
 use error::{ConnectError, ParseError};
 use platform::DBPlatform;
 use platform::Platform;
-use record_manager::RecordManager;
+use dao_manager::DaoManager;
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 
@@ -144,9 +144,9 @@ impl Pool {
         Ok(EntityManager(db))
     }
 
-    pub fn dm(&mut self, db_url: &str) -> Result<RecordManager, DbError> {
+    pub fn dm(&mut self, db_url: &str) -> Result<DaoManager, DbError> {
         let db = self.db(db_url)?;
-        Ok(RecordManager(db))
+        Ok(DaoManager(db))
     }
 }
 

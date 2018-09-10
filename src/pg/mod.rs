@@ -68,7 +68,7 @@ pub fn test_connection(db_url: &str) -> Result<(), PostgresError> {
 pub struct PostgresDB(pub r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>);
 
 impl Database for PostgresDB {
-    fn execute_sql_with_return(&self, sql: &str, param: &[Value]) -> Result<Rows, DbError> {
+    fn execute_sql_with_return(&self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
         let stmt = self.0.prepare(&sql);
         match stmt {
             Ok(stmt) => {
@@ -181,7 +181,7 @@ impl Database for PostgresDB {
     }
 }
 
-fn to_pg_values(values: &[Value]) -> Vec<PgValue> {
+fn to_pg_values<'a>(values: &[&'a Value]) -> Vec<PgValue<'a>> {
     values.iter().map(|v| PgValue(v)).collect()
 }
 
@@ -476,9 +476,10 @@ mod test {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let db = pool.db(db_url).unwrap();
         let values: Vec<Value> = vec!["hi".into(), true.into(), 42.into(), 1.0.into()];
+        let bvalues: Vec<&Value> = values.iter().collect();
         let rows: Result<Rows, DbError> = (&db).execute_sql_with_return(
             "select 'Hello', $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT",
-            &values,
+            &bvalues,
         );
         println!("rows: {:#?}", rows);
         assert!(rows.is_ok());
@@ -490,7 +491,8 @@ mod test {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let db = pool.db(db_url).unwrap();
         let values: Vec<Value> = vec![42.into(), 1.0.into()];
-        let rows: Result<Rows, DbError> = (&db).execute_sql_with_return("select $1, $2", &values);
+        let bvalues: Vec<&Value> = values.iter().collect();
+        let rows: Result<Rows, DbError> = (&db).execute_sql_with_return("select $1, $2", &bvalues);
         println!("rows: {:#?}", rows);
         assert!(!rows.is_ok());
     }
@@ -501,9 +503,10 @@ mod test {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let db = pool.db(db_url).unwrap();
         let values: Vec<Value> = vec!["hi".into(), true.into(), 42.into(), 1.0.into()];
+        let bvalues: Vec<&Value> = values.iter().collect();
         let rows: Result<Rows, DbError> = (&db).execute_sql_with_return(
             "select 'Hello'::TEXT, $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT",
-            &values,
+            &bvalues,
         );
         println!("columns: {:#?}", rows);
         assert!(rows.is_ok());

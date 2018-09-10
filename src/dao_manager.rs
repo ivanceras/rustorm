@@ -3,12 +3,12 @@ use dao::Value;
 use error::DataError;
 use error::DbError;
 use platform::DBPlatform;
-use record::Record;
+use dao::Dao;
 
-pub struct RecordManager(pub DBPlatform);
+pub struct DaoManager(pub DBPlatform);
 
-impl RecordManager {
-    pub fn execute_sql_with_return(&self, sql: &str, params: &[Value]) -> Result<Rows, DbError> {
+impl DaoManager {
+    pub fn execute_sql_with_return(&self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
         let rows = self.0.execute_sql_with_return(sql, params)?;
         Ok(rows)
     }
@@ -16,20 +16,19 @@ impl RecordManager {
     pub fn execute_sql_with_records_return(
         &self,
         sql: &str,
-        params: &[Value],
-    ) -> Result<Vec<Record>, DbError> {
+        params: &[&Value],
+    ) -> Result<Vec<Dao>, DbError> {
         let rows = self.0.execute_sql_with_return(sql, params)?;
-        Ok(rows.iter()
-            .map(|dao| Record::from(&dao))
-            .collect::<Vec<Record>>())
+        let daos:Vec<Dao> = rows.iter().collect();
+        Ok(daos)
     }
 
     pub fn execute_sql_with_one_return(
         &self,
         sql: &str,
-        params: &[Value],
-    ) -> Result<Record, DbError> {
-        let record: Result<Option<Record>, DbError> =
+        params: &[&Value],
+    ) -> Result<Dao, DbError> {
+        let record: Result<Option<Dao>, DbError> =
             self.execute_sql_with_maybe_one_return(sql, params);
         match record {
             Ok(record) => match record {
@@ -43,9 +42,9 @@ impl RecordManager {
     pub fn execute_sql_with_maybe_one_return(
         &self,
         sql: &str,
-        params: &[Value],
-    ) -> Result<Option<Record>, DbError> {
-        let result: Result<Vec<Record>, DbError> =
+        params: &[&Value],
+    ) -> Result<Option<Dao>, DbError> {
+        let result: Result<Vec<Dao>, DbError> =
             self.execute_sql_with_records_return(sql, params);
         match result {
             Ok(mut result) => match result.len() {

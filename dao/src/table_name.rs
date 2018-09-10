@@ -29,6 +29,10 @@ impl TableName {
         }
     }
 
+    pub fn name(&self) -> String {
+        self.name.to_owned()
+    }
+
     pub fn safe_name(&self) -> String {
         common::keywords_safe(&self.name)
     }
