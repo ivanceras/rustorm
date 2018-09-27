@@ -88,6 +88,7 @@ impl EntityManager {
     }
 
     /// insert to table the values of this struct
+    /// TODO: sqlite3 doesn't support the RETURNING keyword
     pub fn insert<T, R>(&self, entities: &[&T]) -> Result<Vec<R>, DbError>
     where
         T: ToTableName + ToColumnNames + ToDao,
@@ -375,7 +376,7 @@ mod test_pg {
 
         let sample: Result<Vec<Sample>, DbError> = em.execute_sql_with_return(
             r#"
-            SELECT 
+            SELECT
                 'c'::CHAR as VCHAR
         "#,
             &[],
@@ -400,7 +401,7 @@ mod test_pg {
 
         let sample: Result<Vec<Sample>, DbError> = em.execute_sql_with_return(
             r#"
-            SELECT 
+            SELECT
                 'c'::CHAR as VCHAR
         "#,
             &[],
