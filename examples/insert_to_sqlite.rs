@@ -12,7 +12,7 @@ use rustorm_dao::{FromDao, ToDao};
 use rustorm::Pool;
 use rustorm::DbError;
 use chrono::offset::Utc;
-use chrono::{DateTime, NaiveDate};
+use chrono::{DateTime, NaiveDate,NaiveDateTime};
 use rustorm::Value;
 
   fn main() {
@@ -32,7 +32,7 @@ use rustorm::Value;
               pub actor_id: i64,
               pub first_name: String,
               pub last_name: String,
-              pub last_update: String,
+              pub last_update: NaiveDateTime,
           }
       }
       let create_sql = "CREATE TABLE actor(

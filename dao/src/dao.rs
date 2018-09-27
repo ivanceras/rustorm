@@ -23,7 +23,7 @@ impl Dao {
         self.0.insert(k.to_string(), v.into());
     }
 
-    pub fn insert_value<K>(&mut self, k: K, value: &Value) 
+    pub fn insert_value<K>(&mut self, k: K, value: &Value)
         where K: ToString
     {
         self.0.insert(k.to_string(), value.clone());

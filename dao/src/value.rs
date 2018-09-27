@@ -252,7 +252,7 @@ impl<'a> TryFrom<&'a Value> for String {
             }
             _ => Err(ConvertError::NotSupported(
                 format!("{:?}", value),
-                "String".into(),
+                "String".to_string(),
             )),
         }
     }
@@ -271,6 +271,30 @@ impl_tryfrom!(Uuid, "Uuid", Uuid);
 impl_tryfrom!(NaiveDate, "NaiveDate", Date);
 impl_tryfrom!(DateTime<Utc>, "DateTime<Utc>", Timestamp);
 
+impl<'a> TryFrom<&'a Value> for NaiveDateTime{
+    type Error = ConvertError;
+
+    fn try_from(value: &Value) -> Result<Self, Self::Error> {
+        match *value{
+            Value::Text(ref v) => {
+                let ts = NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S");
+                let ts = if let Ok(ts) = ts {
+                    ts
+                } else {
+                    let ts = NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S.%f");
+                    if let Ok(ts) = ts {
+                        ts
+                    } else {
+                        panic!("unable to parse timestamp: {}", v);
+                    }
+                };
+                Ok(ts)
+            }
+            _ => Err(ConvertError::NotSupported(format!("{:?}",value), "NaiveDateTime".to_string())),
+        }
+    }
+}
+
 impl_tryfrom_option!(bool);
 impl_tryfrom_option!(i8);
 impl_tryfrom_option!(i16);
@@ -283,6 +307,7 @@ impl_tryfrom_option!(char);
 impl_tryfrom_option!(String);
 impl_tryfrom_option!(Uuid);
 impl_tryfrom_option!(NaiveDate);
+impl_tryfrom_option!(NaiveDateTime);
 impl_tryfrom_option!(DateTime<Utc>);
 
 #[cfg(test)]
