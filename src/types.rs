@@ -43,13 +43,13 @@ pub enum SqlType {
 
     // enum list with the choices value
     Enum(String, Vec<String>),
-    ArrayType(ArrayType),
+    Array(Box<SqlType>),
 }
 
 impl SqlType {
     pub fn is_array_type(&self) -> bool {
         match *self {
-            SqlType::ArrayType(_) => true,
+            SqlType::Array(_) => true,
             _ => false,
         }
     }
@@ -83,8 +83,8 @@ impl SqlType {
         match *self {
             SqlType::Text => "text".into(),
             SqlType::TsVector => "tsvector".into(),
-            SqlType::ArrayType(ref ty) => match ty {
-                ArrayType::Text => "text[]".into(),
+            SqlType::Array(ref ty) => match ty.as_ref() {
+                SqlType::Text => "text[]".into(),
                 _ => panic!("not yet dealt {:?}", self),
             },
             _ => panic!("not yet dealt {:?}", self),
@@ -149,23 +149,19 @@ impl SqlType {
             SqlType::TimestampTz => match_value!(Timestamp),
             SqlType::Interval => match_value!(Interval),
             SqlType::Enum(_, _) => match_value!(Text),
-            SqlType::ArrayType(ArrayType::Text) => match *value {
+            SqlType::Array(ref r) if SqlType::Text == *r.as_ref() => match *value {
                 Value::Array(Array::Text(_)) => true,
                 _ => false,
             },
-            SqlType::ArrayType(ArrayType::Int) => match *value {
+            SqlType::Array(ref r) if SqlType::Int == *r.as_ref() => match *value {
                 Value::Array(Array::Int(_)) => true,
-                _ => false,
-            },
-            SqlType::ArrayType(ArrayType::Enum(_, _)) => match *value {
-                Value::Array(Array::Text(_)) => true,
                 _ => false,
             },
             SqlType::Real => match *value {
                 Value::Float(_) => true,
                 _ => false,
             },
-            SqlType::ArrayType(ArrayType::Float) => match *value {
+            SqlType::Array(ref r) if SqlType::Float == *r.as_ref() => match *value {
                 Value::Array(Array::Float(_)) => true,
                 _ => false,
             },

@@ -109,7 +109,6 @@
 #![deny(warnings)]
 #![allow(dead_code)]
 #![feature(try_from)]
-#![feature(splice)]
 extern crate base64;
 extern crate bigdecimal;
 extern crate byteorder;

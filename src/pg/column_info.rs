@@ -6,7 +6,6 @@ use dao::FromDao;
 use dao::TableName;
 use entity::EntityManager;
 use error::DbError;
-use types::ArrayType;
 use types::SqlType;
 use util;
 use uuid::Uuid;
@@ -201,11 +200,11 @@ fn get_column_specification(
                         | SqlType::Text => Literal::String(default.to_owned()),
                         SqlType::Enum(_name, _choices) => Literal::String(default.to_owned()),
 
-                        SqlType::ArrayType(ref at) => match at{
-                            ArrayType::Int 
-                              | ArrayType::Tinyint 
-                              | ArrayType::Smallint 
-                              | ArrayType::Bigint => {
+                        SqlType::Array(ref at) => match at.as_ref(){
+                            SqlType::Int 
+                              | SqlType::Tinyint 
+                              | SqlType::Smallint 
+                              | SqlType::Bigint => {
                                 // default = '{2,1,2}'::integer[]
                                 let splinters:Vec<&str> = default.split("::").collect();
                                 let int_values = splinters[0];
@@ -221,10 +220,10 @@ fn get_column_specification(
                                     Literal::ArrayInt(int_array)
                                 }
                             },
-                            ArrayType::Real 
-                              | ArrayType::Float 
-                              | ArrayType::Double 
-                              | ArrayType::Numeric => {
+                            SqlType::Real 
+                              | SqlType::Float 
+                              | SqlType::Double 
+                              | SqlType::Numeric => {
                                 // default = '{2,1,2}'::integer[]
                                 let splinters:Vec<&str> = default.split("::").collect();
                                 let values = splinters[0];
@@ -240,10 +239,10 @@ fn get_column_specification(
                                     Literal::ArrayFloat(array)
                                 }
                             },
-                            ArrayType::Text
-                             | ArrayType::Varchar 
-                             | ArrayType::Tinytext
-                             | ArrayType::Mediumtext => {
+                            SqlType::Text
+                             | SqlType::Varchar 
+                             | SqlType::Tinytext
+                             | SqlType::Mediumtext => {
                               // default = '{Mon,Wed,Fri}'::character varying[],
                                 let splinters:Vec<&str> = default.split("::").collect();
                                 let string_values = splinters[0];
@@ -270,10 +269,10 @@ fn get_column_specification(
                 let enum_type = SqlType::Enum(data_type.to_owned(), self.enum_choices.to_owned());
                 (enum_type, None)
             } else if self.is_array_enum && self.array_enum_choices.len() > 0 {
-                let array_enum = SqlType::ArrayType(ArrayType::Enum(
+                let array_enum = SqlType::Array(Box::new(SqlType::Enum(
                     data_type.to_owned(),
                     self.array_enum_choices.to_owned(),
-                ));
+                )));
                 (array_enum, None)
             } else {
                 let sql_type = match &*dtype {
@@ -281,7 +280,7 @@ fn get_column_specification(
                     "tinyint" => SqlType::Tinyint,
                     "smallint" | "year" => SqlType::Smallint,
                     "int" | "integer" => SqlType::Int,
-                    "int[]" | "integer[]" => SqlType::ArrayType(ArrayType::Int),
+                    "int[]" | "integer[]" => SqlType::Array(Box::new(SqlType::Int)),
                     "bigint" => SqlType::Bigint,
                     "real" => SqlType::Real,
                     "float" => SqlType::Float,
@@ -296,14 +295,14 @@ fn get_column_specification(
                     "char" | "bpchar" => SqlType::Char,
                     "varchar" | "character varying" | "character" | "name" => SqlType::Varchar,
                     "varchar[]" | "character varying[]" | "name[]" => {
-                        SqlType::ArrayType(ArrayType::Text)
+                        SqlType::Array(Box::new(SqlType::Text))
                     }
                     "tinytext" => SqlType::Tinytext,
                     "mediumtext" => SqlType::Mediumtext,
                     "text" => SqlType::Text,
                     "json" | "jsonb" => SqlType::Json,
                     "tsvector" => SqlType::TsVector,
-                    "text[]" => SqlType::ArrayType(ArrayType::Text),
+                    "text[]" => SqlType::Array(Box::new(SqlType::Text)),
                     "uuid" => SqlType::Uuid,
                     "date" => SqlType::Date,
                     "timestamp" | "timestamp without time zone" => SqlType::Timestamp,
@@ -311,7 +310,7 @@ fn get_column_specification(
                     "time with time zone" => SqlType::TimeTz,
                     "time without time zone" => SqlType::Time,
                     "inet" => SqlType::IpAddress,
-                    "real[]" => SqlType::ArrayType(ArrayType::Float),
+                    "real[]" => SqlType::Array(Box::new(SqlType::Float)),
                     "oid" => SqlType::Int,
                     "unknown" => SqlType::Text,
                     "\"char\"" => SqlType::Char,
