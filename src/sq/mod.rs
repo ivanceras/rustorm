@@ -11,7 +11,7 @@ use entity::EntityManager;
 use dao::TableName;
 use table::SchemaContent;
 use r2d2::ManageConnection;
-use dao::{self,FromDao};
+use dao::FromDao;
 use types::SqlType;
 use common;
 use dao::ColumnName;

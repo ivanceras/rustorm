@@ -10,6 +10,9 @@
 //! extern crate rustorm_dao as dao;
 //! extern crate rustorm_dao;
 //! extern crate rustorm;
+//! #[macro_use]
+//! extern crate log;
+//!
 //! use rustorm::TableName;
 //! use rustorm_dao::ToColumnNames;
 //! use rustorm_dao::ToTableName;
@@ -46,6 +49,8 @@
 //! extern crate rustorm_dao;
 //! extern crate rustorm;
 //! extern crate chrono;
+//! #[macro_use]
+//! extern crate log;
 //!
 //! use rustorm::TableName;
 //! use rustorm_dao::ToColumnNames;
@@ -180,7 +185,6 @@ pub use database::DatabaseName;
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use dao::{Dao, FromDao, ToDao};
 
     #[test]
