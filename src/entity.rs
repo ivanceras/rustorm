@@ -70,7 +70,7 @@ impl EntityManager {
 
     /// get all the user table and views from the database
     pub fn get_all_tables(&self) -> Result<Vec<Table>, DbError> {
-        println!("EXPENSIVE DB OPERATION: get_all_tables");
+        info!("EXPENSIVE DB OPERATION: get_all_tables");
         self.0.get_all_tables(self)
     }
 
@@ -233,10 +233,10 @@ mod test_pg {
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
         let actors: Result<Vec<Actor>, DbError> = em.get_all();
-        println!("Actor: {:#?}", actors);
+        info!("Actor: {:#?}", actors);
         let actors = actors.unwrap();
         for actor in actors {
-            println!("actor: {:?}", actor);
+            info!("actor: {:?}", actor);
         }
     }
 
@@ -281,7 +281,7 @@ mod test_pg {
         "#,
             &[],
         );
-        println!("{:#?}", sample);
+        info!("{:#?}", sample);
         assert!(sample.is_ok());
 
         let sample = sample.unwrap();
@@ -345,7 +345,7 @@ mod test_pg {
         "#,
             &[],
         );
-        println!("{:#?}", sample);
+        info!("{:#?}", sample);
         assert!(sample.is_ok());
 
         let sample = sample.unwrap();
@@ -381,7 +381,7 @@ mod test_pg {
         "#,
             &[],
         );
-        println!("{:#?}", sample);
+        info!("{:#?}", sample);
         assert!(sample.is_ok());
 
         let sample = sample.unwrap();
@@ -406,7 +406,7 @@ mod test_pg {
         "#,
             &[],
         );
-        println!("{:#?}", sample);
+        info!("{:#?}", sample);
         assert!(sample.is_ok());
 
         let sample = sample.unwrap();
@@ -434,7 +434,7 @@ mod test_pg {
         };
 
         let actors: Result<Vec<Actor>, DbError> = em.insert(&[&tom_cruise, &tom_hanks]);
-        println!("Actor: {:#?}", actors);
+        info!("Actor: {:#?}", actors);
         assert!(actors.is_ok());
         let actors = actors.unwrap();
         assert_eq!(tom_cruise, actors[0]);
@@ -477,7 +477,7 @@ mod test_pg {
 
         let actors: Result<Vec<for_retrieve::Actor>, DbError> =
             em.insert(&[&tom_cruise, &tom_hanks]);
-        println!("Actor: {:#?}", actors);
+        info!("Actor: {:#?}", actors);
         assert!(actors.is_ok());
         let actors = actors.unwrap();
         let today = Utc::now().date();
@@ -507,7 +507,7 @@ mod test_pg {
             "SELECT $1::INT as id, $2::TEXT as name, $3::TIMESTAMP WITH TIME ZONE as created",
             &[&id, &name, &created],
         );
-        println!("events: {:#?}", events);
+        info!("events: {:#?}", events);
         assert!(events.is_ok());
         for event in events.unwrap().iter() {
             assert_eq!(event.id, id);

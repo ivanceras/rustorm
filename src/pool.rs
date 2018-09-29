@@ -41,7 +41,7 @@ impl Pool {
 
     /// ensure that a connection pool for this db_url exist
     fn ensure(&mut self, db_url: &str) -> Result<(), DbError> {
-        println!("ensure db_url: {}", db_url);
+        info!("ensure db_url: {}", db_url);
         let platform: Result<Platform, _> = TryFrom::try_from(db_url);
         match platform {
             Ok(platform) => match platform {
@@ -55,7 +55,7 @@ impl Pool {
                 }
                 #[cfg(feature = "with-sqlite")]
                 Platform::Sqlite(path) => {
-                    println!("matched sqlite");
+                    info!("matched sqlite");
                     let pool_sq = sq::init_pool(&path)?;
                     if self.0.get(db_url).is_none() {
                         self.0.insert(db_url.to_string(), ConnPool::PoolSq(pool_sq));
@@ -63,7 +63,7 @@ impl Pool {
                     Ok(())
                 }
                 Platform::Unsupported(scheme) => {
-                    println!("unsupported");
+                    info!("unsupported");
                     Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
                 }
             },
@@ -88,7 +88,7 @@ impl Pool {
                 }
                 #[cfg(feature = "with-sqlite")]
                 Platform::Sqlite(_path) => {
-                    println!("getting sqlite pool");
+                    info!("getting sqlite pool");
                     let conn: Option<&ConnPool> = self.0.get(db_url);
                     if let Some(conn) = conn {
                         Ok(conn)
@@ -161,7 +161,7 @@ pub fn test_connection(db_url: &str) -> Result<(), DbError> {
             }
             #[cfg(feature = "with-sqlite")]
             Platform::Sqlite(path) => {
-                println!("testing connection: {}", path);
+                info!("testing connection: {}", path);
                 sq::test_connection(&path)?;
                 Ok(())
             }
@@ -185,8 +185,8 @@ mod tests_pg {
         pool.ensure(db_url).is_ok();
         let pooled = pool.get_pool(db_url);
         match pooled {
-            Ok(_) => println!("ok"),
-            Err(ref e) => eprintln!("error: {:?}", e),
+            Ok(_) => info!("ok"),
+            Err(ref e) => info!("error: {:?}", e),
         }
         assert!(pooled.is_ok());
     }

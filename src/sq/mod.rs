@@ -24,7 +24,7 @@ use database::DatabaseName;
 use users::Role;
 
 pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_sqlite3::SqliteConnectionManager>, SqliteError> {
-    println!("initializing pool: {}", db_url);
+    info!("initializing pool: {}", db_url);
     let manager = r2d2_sqlite3::SqliteConnectionManager::file(db_url);
     let pool = r2d2::Pool::new(manager)?;
     Ok(pool)
@@ -94,8 +94,8 @@ fn to_sq_values(params: &[&Value]) -> Vec<sqlite3::Value> {
 impl Database for SqliteDB{
 
     fn execute_sql_with_return(&self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
-        println!("executing sql: {}", sql);
-        println!("params: {:?}", params);
+        info!("executing sql: {}", sql);
+        info!("params: {:?}", params);
         let stmt = self.0.prepare(&sql);
         match stmt{
             Ok(mut stmt) => {
@@ -359,7 +359,7 @@ impl Database for SqliteDB{
             name: None,
             columns: primary_columns
         };
-        println!("primary key: {:#?}", primary_key);
+        info!("primary key: {:#?}", primary_key);
         let foreign_keys = get_foreign_keys(em, table_name)?;
         let table_key_foreign:Vec<TableKey> = foreign_keys.into_iter()
                 .map(|fk| TableKey::ForeignKey(fk))
@@ -522,14 +522,14 @@ mod test{
         let schema_content = &schema_content[0];
         assert_eq!(schema_content.tablenames.len(), 17);
         assert_eq!(schema_content.views.len(), 5);
-        println!("schema_content: {:#?}", schema_content);
+        info!("schema_content: {:#?}", schema_content);
     }
 
     #[test]
     fn test_conn(){
         let db_url = "sqlite://sakila.db";
         let result = pool::test_connection(db_url);
-        println!("result: {:?}", result);
+        info!("result: {:?}", result);
         assert!(result.is_ok());
     }
 
@@ -546,7 +546,7 @@ mod test{
         let table = em.get_table(&film_table);
         assert!(table.is_ok());
         let table = table.unwrap();
-        println!("table: {:#?}", table);
+        info!("table: {:#?}", table);
         assert_eq!(table,
             Table {
                 name: TableName::from("film"),
@@ -820,7 +820,7 @@ mod test{
         let table = em.get_table(&table_name);
         assert!(table.is_ok());
         let table = table.unwrap();
-        println!("table: {:#?}", table);
+        info!("table: {:#?}", table);
         assert_eq!(table,
 
             Table {
@@ -967,7 +967,7 @@ mod test{
         let table = em.get_table(&table_name);
         assert!(table.is_ok());
         let table = table.unwrap();
-        println!("table: {:#?}", table);
+        info!("table: {:#?}", table);
         assert_eq!(table,
                     Table {
                         name: TableName {

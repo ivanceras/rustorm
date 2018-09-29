@@ -92,8 +92,8 @@ impl Database for PostgresDB {
                                         match value {
                                             Ok(value) => record.push(value.0),
                                             Err(e) => {
-                                                //println!("Row {:?}", r);
-                                                println!("column {:?} index: {}", column, i);
+                                                //info!("Row {:?}", r);
+                                                info!("column {:?} index: {}", column, i);
                                                 let msg = format!(
                                                     "Error converting column {:?} at index {}",
                                                     column, i
@@ -320,7 +320,7 @@ impl FromSql for OwnedPgValue {
                     types::TIME | types::TIMETZ => match_type!(Time),
                     types::BYTEA => {
                         let mime_type = tree_magic::from_u8(raw);
-                        println!("mime_type: {}", mime_type);
+                        info!("mime_type: {}", mime_type);
                         let bytes: Vec<u8> = FromSql::from_sql(ty, raw).unwrap();
                         //assert_eq!(raw, &*bytes);
                         let base64 = base64::encode_config(&bytes, base64::MIME);
@@ -355,7 +355,7 @@ impl FromSql for OwnedPgValue {
                         Ok(OwnedPgValue(Value::Point(p)))
                     }
                     types::INET => {
-                        println!("inet raw:{:?}", raw);
+                        info!("inet raw:{:?}", raw);
                         match_type!(Text)
                     }
                     _ => panic!("unable to convert from {:?}", ty),
@@ -481,7 +481,7 @@ mod test {
             "select 'Hello', $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT",
             &bvalues,
         );
-        println!("rows: {:#?}", rows);
+        info!("rows: {:#?}", rows);
         assert!(rows.is_ok());
     }
     #[test]
@@ -493,7 +493,7 @@ mod test {
         let values: Vec<Value> = vec![42.into(), 1.0.into()];
         let bvalues: Vec<&Value> = values.iter().collect();
         let rows: Result<Rows, DbError> = (&db).execute_sql_with_return("select $1, $2", &bvalues);
-        println!("rows: {:#?}", rows);
+        info!("rows: {:#?}", rows);
         assert!(!rows.is_ok());
     }
 
@@ -508,11 +508,11 @@ mod test {
             "select 'Hello'::TEXT, $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT",
             &bvalues,
         );
-        println!("columns: {:#?}", rows);
+        info!("columns: {:#?}", rows);
         assert!(rows.is_ok());
         if let Ok(rows) = rows {
             for row in rows.iter() {
-                println!("row {:?}", row);
+                info!("row {:?}", row);
                 let v4: Result<f64, _> = row.get("float8");
                 assert_eq!(v4.unwrap(), 1.0f64);
 
@@ -534,21 +534,21 @@ mod test {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let db = pool.db(db_url).unwrap();
         let rows:Result<Rows, DbError> = (&db).execute_sql_with_return("select 'rust'::TEXT AS name, NULL::TEXT AS schedule, NULL::TEXT AS specialty from actor", &[]);
-        println!("columns: {:#?}", rows);
+        info!("columns: {:#?}", rows);
         assert!(rows.is_ok());
         if let Ok(rows) = rows {
             for row in rows.iter() {
-                println!("row {:?}", row);
+                info!("row {:?}", row);
                 let name: Result<Option<String>, _> = row.get("name");
-                println!("name: {:?}", name);
+                info!("name: {:?}", name);
                 assert_eq!(name.unwrap().unwrap(), "rust");
 
                 let schedule: Result<Option<String>, _> = row.get("schedule");
-                println!("schedule: {:?}", schedule);
+                info!("schedule: {:?}", schedule);
                 assert_eq!(schedule.unwrap(), None);
 
                 let specialty: Result<Option<String>, _> = row.get("specialty");
-                println!("specialty: {:?}", specialty);
+                info!("specialty: {:?}", specialty);
                 assert_eq!(specialty.unwrap(), None);
             }
         }
@@ -560,7 +560,7 @@ mod test {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let em = pool.em(db_url).unwrap();
         let users = em.get_users();
-        println!("users: {:#?}", users);
+        info!("users: {:#?}", users);
         assert!(users.is_ok());
     }
 

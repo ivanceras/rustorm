@@ -265,7 +265,7 @@ fn get_column_specification(
             let (dtype, capacity) = common::extract_datatype_with_capacity(data_type);
 
             if self.is_enum {
-                println!("enum: {}", data_type);
+                info!("enum: {}", data_type);
                 let enum_type = SqlType::Enum(data_type.to_owned(), self.enum_choices.to_owned());
                 (enum_type, None)
             } else if self.is_array_enum && self.array_enum_choices.len() > 0 {
@@ -359,7 +359,7 @@ fn get_column_specification(
         Some(ref schema) => schema.to_string(),
         None => "public".to_string(),
     };
-    //println!("sql: {} column_name: {}, table_name: {}", sql, column_name, table_name.name);
+    //info!("sql: {} column_name: {}, table_name: {}", sql, column_name, table_name.name);
     let column_constraint: Result<ColumnConstraintSimple, DbError> =
         em.execute_sql_with_one_return(&sql, &[&column_name, &table_name.name, &schema]);
     column_constraint.map(|c| c.to_column_specification(table_name, column_name))
@@ -428,7 +428,7 @@ mod test {
         assert!(em.is_ok());
         let em = em.unwrap();
         let result: Result<Vec<RetrieveFilm>, DbError> = em.insert(&[&film1]);
-        println!("result: {:#?}", result);
+        info!("result: {:#?}", result);
         assert!(result.is_ok());
     }
 
@@ -442,7 +442,7 @@ mod test {
         let table = TableName::from("film");
         let column = ColumnName::from("rating");
         let specification = get_column_specification(&em, &table, &column.name);
-        println!("specification: {:#?}", specification);
+        info!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
         assert_eq!(
@@ -476,7 +476,7 @@ mod test {
         let actor_table = TableName::from("actor");
         let actor_id_column = ColumnName::from("actor_id");
         let specification = get_column_specification(&em, &actor_table, &actor_id_column.name);
-        println!("specification: {:#?}", specification);
+        info!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
         assert_eq!(
@@ -498,7 +498,7 @@ mod test {
         let actor_table = TableName::from("actor");
         let column = ColumnName::from("last_update");
         let specification = get_column_specification(&em, &actor_table, &column.name);
-        println!("specification: {:#?}", specification);
+        info!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
         assert_eq!(
@@ -523,7 +523,7 @@ mod test {
         let em = em.unwrap();
         let actor_table = TableName::from("actor");
         let columns = get_columns(&em, &actor_table);
-        println!("columns: {:#?}", columns);
+        info!("columns: {:#?}", columns);
         assert!(columns.is_ok());
         let columns = columns.unwrap();
         assert_eq!(columns.len(), 4);
@@ -554,7 +554,7 @@ mod test {
         let em = em.unwrap();
         let table = TableName::from("film");
         let columns = get_columns(&em, &table);
-        println!("columns: {:#?}", columns);
+        info!("columns: {:#?}", columns);
         assert!(columns.is_ok());
         let columns = columns.unwrap();
         assert_eq!(columns.len(), 14);

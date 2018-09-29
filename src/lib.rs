@@ -29,11 +29,11 @@
 //!     let em = pool.em(db_url).unwrap();
 //!     let sql = "SELECT * FROM actor LIMIT 10";
 //!     let actors: Result<Vec<Actor>, DbError> = em.execute_sql_with_return(sql, &[]);
-//!     println!("Actor: {:#?}", actors);
+//!     info!("Actor: {:#?}", actors);
 //!     let actors = actors.unwrap();
 //!     assert_eq!(actors.len(), 10);
 //!     for actor in actors {
-//!         println!("actor: {:?}", actor);
+//!         info!("actor: {:?}", actor);
 //!     }
 //! }
 //! ```
@@ -91,7 +91,7 @@
 //!
 //!       let actors: Result<Vec<for_retrieve::Actor>, DbError> =
 //!           em.insert(&[&tom_cruise, &tom_hanks]);
-//!       println!("Actor: {:#?}", actors);
+//!       info!("Actor: {:#?}", actors);
 //!       assert!(actors.is_ok());
 //!       let actors = actors.unwrap();
 //!       let today = Utc::now().date();
@@ -195,7 +195,7 @@ mod test {
             username: "ivanceras".into(),
             active: Some(true),
         };
-        println!("user: {:#?}", user);
+        info!("user: {:#?}", user);
         let dao = user.to_dao();
         let mut expected_dao = Dao::new();
         expected_dao.insert("id", 1);
@@ -204,9 +204,9 @@ mod test {
 
         assert_eq!(expected_dao, dao);
 
-        println!("dao: {:#?}", dao);
+        info!("dao: {:#?}", dao);
         let from_dao = User::from_dao(&dao);
-        println!("from_dao: {:#?}", from_dao);
+        info!("from_dao: {:#?}", from_dao);
         assert_eq!(from_dao, user);
     }
 }
