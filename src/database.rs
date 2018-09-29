@@ -7,7 +7,6 @@ use users::User;
 use users::Role;
 
 use error::DbError;
-use dao;
 use dao::FromDao;
 
 /// The current database name and its comment

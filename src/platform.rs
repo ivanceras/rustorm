@@ -47,9 +47,9 @@ impl<'a> TryFrom<&'a str> for Platform {
         let url = Url::parse(s);
         match url {
             Ok(url) => {
-                println!("url: {:#?}", url);
-                println!("host: {:?}", url.host_str());
-                println!("path: {:?}", url.path());
+                info!("url: {:#?}", url);
+                info!("host: {:?}", url.host_str());
+                info!("path: {:?}", url.path());
                 let scheme = url.scheme();
                 match scheme {
                     #[cfg(feature = "with-postgres")]

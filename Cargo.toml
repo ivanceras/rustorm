@@ -9,6 +9,7 @@ documentation = "https://docs.rs/rustorm"
 keywords = ["orm", "postgresql", "sqlite"]
 
 [dependencies]
+log = "0.4"
 postgres = {version = "0.15.1",features = ["with-uuid","with-chrono","with-time","with-openssl","with-geo","with-bit-vec", "with-serde_json"], optional = true}
 r2d2_postgres = {version = "0.14.0", optional = true}
 postgres-shared = {version = "0.4.0", optional = true}

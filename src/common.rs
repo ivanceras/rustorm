@@ -22,7 +22,7 @@ pub fn extract_datatype_with_capacity(data_type: &str) -> (String, Option<Capaci
                     Ok(r1) => match range2 {
                         Ok(r2) => Some(Capacity::Range(r1, r2)),
                         Err(e) => {
-                            println!(
+                            info!(
                                 "error: {} when parsing range2 for data_type: {:?}",
                                 e, data_type
                             );
@@ -30,7 +30,7 @@ pub fn extract_datatype_with_capacity(data_type: &str) -> (String, Option<Capaci
                         }
                     },
                     Err(e) => {
-                        println!(
+                        info!(
                             "error: {} when parsing range1 for data_type: {:?}",
                             e, data_type
                         );
@@ -42,7 +42,7 @@ pub fn extract_datatype_with_capacity(data_type: &str) -> (String, Option<Capaci
                 match limit {
                     Ok(limit) => Some(Capacity::Limit(limit)),
                     Err(e) => {
-                        println!(
+                        info!(
                             "error: {} when parsing limit for data_type: {:?}",
                             e, data_type
                         );
@@ -137,7 +137,7 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
                 ),
             },
             Value::ImageUri(_) => {
-                println!("passing ImageUri as is");
+                info!("passing ImageUri as is");
                 value.clone()
             }
             Value::Char(v) => match *required_type {

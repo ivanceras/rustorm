@@ -1,4 +1,3 @@
-use dao;
 use dao::ColumnName;
 use dao::FromDao;
 use dao::TableName;
