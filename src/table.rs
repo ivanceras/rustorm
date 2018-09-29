@@ -167,6 +167,7 @@ impl Table {
     }
 }
 
+/*
 #[derive(Debug, PartialEq, Clone)]
 pub struct PrimaryKey {
     pub name: Option<String>,
@@ -178,6 +179,7 @@ pub struct UniqueKey {
     pub name: Option<String>,
     pub columns: Vec<ColumnName>,
 }
+*/
 
 /// example:
 ///     category { id, name }
@@ -210,8 +212,8 @@ pub struct Key {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TableKey {
-    PrimaryKey(PrimaryKey),
-    UniqueKey(UniqueKey),
+    PrimaryKey(Key),
+    UniqueKey(Key),
     Key(Key),
     ForeignKey(ForeignKey),
 }

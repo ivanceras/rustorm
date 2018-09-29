@@ -15,7 +15,7 @@ use dao::{self,FromDao};
 use types::SqlType;
 use common;
 use dao::ColumnName;
-use table::{TableKey,ForeignKey,PrimaryKey};
+use table::{TableKey,ForeignKey, Key};
 use column::{Column, ColumnConstraint, Literal, ColumnSpecification, Capacity};
 use util;
 use uuid::Uuid;
@@ -355,7 +355,7 @@ impl Database for SqliteDB{
             };
             columns.push(simple.to_column(table_name));
         }
-        let primary_key = PrimaryKey{
+        let primary_key = Key{
             name: None,
             columns: primary_columns
         };
@@ -772,7 +772,7 @@ mod test{
                 is_view: false,
                 table_key: vec![
                     TableKey::PrimaryKey(
-                        PrimaryKey {
+                        Key {
                             name: None,
                             columns: vec![
                                 ColumnName::from("film_id")
@@ -939,7 +939,7 @@ mod test{
                 is_view: false,
                 table_key: vec![
                     TableKey::PrimaryKey(
-                        PrimaryKey {
+                        Key {
                             name: None,
                             columns: vec![
                                 ColumnName {
@@ -1053,7 +1053,7 @@ mod test{
                         is_view: false,
                         table_key: vec![
                             TableKey::PrimaryKey(
-                                PrimaryKey {
+                                Key {
                                     name: None,
                                     columns: vec![
                                         ColumnName {

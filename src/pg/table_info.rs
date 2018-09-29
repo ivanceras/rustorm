@@ -8,7 +8,7 @@ use dao::TableName;
 use entity::EntityManager;
 use error::DbError;
 use pg::column_info;
-use table::{self, ForeignKey, PrimaryKey, SchemaContent, Table, TableKey, UniqueKey};
+use table::{self, Key, ForeignKey, SchemaContent, Table, TableKey};
 
 /// get all database tables and views except from special schema
 pub fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
@@ -302,13 +302,13 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
     impl TableKeySimple {
         fn to_table_key(self, em: &EntityManager, table_name: &TableName) -> TableKey {
             if self.is_primary_key {
-                let primary = PrimaryKey {
+                let primary = Key {
                     name: Some(self.key_name.to_owned()),
                     columns: get_columnname_from_key(em, &self.key_name, table_name).unwrap(),
                 };
                 TableKey::PrimaryKey(primary)
             } else if self.is_unique_key {
-                let unique = UniqueKey {
+                let unique = Key {
                     name: Some(self.key_name.to_owned()),
                     columns: get_columnname_from_key(em, &self.key_name, table_name).unwrap(),
                 };
@@ -491,7 +491,7 @@ mod test {
         assert!(table.is_ok());
         assert_eq!(
             table.unwrap().table_key,
-            vec![TableKey::PrimaryKey(PrimaryKey {
+            vec![TableKey::PrimaryKey(Key {
                 name: Some("actor_pkey".to_string()),
                 columns: vec![ColumnName {
                     name: "actor_id".to_string(),
@@ -516,7 +516,7 @@ mod test {
         assert_eq!(
             table.unwrap().table_key,
             vec![
-                TableKey::PrimaryKey(PrimaryKey {
+                TableKey::PrimaryKey(Key {
                     name: Some("store_pkey".into()),
                     columns: vec![ColumnName {
                         name: "store_id".into(),
@@ -578,7 +578,7 @@ mod test {
         assert_eq!(
             table.unwrap().table_key,
             vec![
-                TableKey::PrimaryKey(PrimaryKey {
+                TableKey::PrimaryKey(Key {
                     name: Some("film_actor_pkey".into()),
                     columns: vec![
                         ColumnName {
@@ -647,7 +647,7 @@ mod test {
         assert_eq!(
             table.unwrap().table_key,
             vec![
-                TableKey::PrimaryKey(PrimaryKey {
+                TableKey::PrimaryKey(Key {
                     name: Some("film_actor_awards_pkey".into()),
                     columns: vec![
                         ColumnName {
