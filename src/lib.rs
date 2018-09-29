@@ -131,6 +131,8 @@ extern crate time;
 extern crate tree_magic;
 extern crate url;
 extern crate uuid;
+#[macro_use]
+extern crate log;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate r2d2_postgres;

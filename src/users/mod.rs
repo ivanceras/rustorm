@@ -1,7 +1,6 @@
 use chrono::DateTime;
 use chrono::Utc;
 use dao::FromDao;
-use dao;
 
 mod previlege;
 
