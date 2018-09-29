@@ -38,10 +38,12 @@ geo = "0.4"
 time = "0.1.14"
 
 [dependencies.rustorm_dao]
-version = "0.1"
+#version = "0.1"
+path = "./dao"
 
 [dependencies.rustorm_codegen]
-version = "0.1"
+#version = "0.1"
+path = "./codegen"
 
 [features]
 #default = ["with-postgres"]
