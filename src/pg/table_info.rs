@@ -1,7 +1,6 @@
 //! module table_info extract the table meta data using SQL queries on pg_catalog.
 //! This is not using information_schema since there is a performance issue with it.
 use column::Column;
-use dao;
 use dao::ColumnName;
 use dao::FromDao;
 use dao::TableName;
@@ -47,7 +46,7 @@ pub fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
             let mut tables = Vec::with_capacity(simples.len());
             for simple in simples {
                 let tablename = simple.to_tablename();
-                println!("  {}", tablename.complete_name());
+                info!("  {}", tablename.complete_name());
                 let table: Result<Table, DbError> = get_table(em, &tablename);
                 match table {
                     Ok(table) => {
@@ -152,7 +151,7 @@ pub fn get_organized_tables(em: &EntityManager) -> Result<Vec<SchemaContent>, Db
             for schema in schemas {
                 let tables = get_schema_tables(em, &schema, &TableKind::Table)?;
                 let views = get_schema_tables(em, &schema, &TableKind::View)?;
-                println!("views: {:#?}", views);
+                info!("views: {:#?}", views);
                 contents.push(SchemaContent {
                     schema: schema.to_string(),
                     tablenames: tables,
@@ -459,7 +458,7 @@ mod test {
         assert!(em.is_ok());
         let em = em.unwrap();
         let schemas = get_schemas(&em);
-        println!("schemas: {:#?}", schemas);
+        info!("schemas: {:#?}", schemas);
         assert!(schemas.is_ok());
         let schemas = schemas.unwrap();
         assert_eq!(schemas, vec!["public"]);
@@ -473,7 +472,7 @@ mod test {
         assert!(em.is_ok());
         let em = em.unwrap();
         let tables = get_all_tables(&em);
-        println!("tables: {:#?}", tables);
+        info!("tables: {:#?}", tables);
         assert!(tables.is_ok());
         assert_eq!(30, tables.unwrap().len());
     }
@@ -487,7 +486,7 @@ mod test {
         let em = em.unwrap();
         let table = TableName::from("actor");
         let table = get_table(&em, &table);
-        println!("table: {:#?}", table);
+        info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(
             table.unwrap().table_key,
@@ -511,7 +510,7 @@ mod test {
         let em = em.unwrap();
         let table = TableName::from("store");
         let table = get_table(&em, &table);
-        println!("table: {:#?}", table);
+        info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(
             table.unwrap().table_key,
@@ -573,7 +572,7 @@ mod test {
         let em = em.unwrap();
         let table = TableName::from("film_actor");
         let table = get_table(&em, &table);
-        println!("table: {:#?}", table);
+        info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(
             table.unwrap().table_key,
@@ -642,7 +641,7 @@ mod test {
         let em = em.unwrap();
         let table = TableName::from("film_actor_awards");
         let table = get_table(&em, &table);
-        println!("table: {:#?}", table);
+        info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(
             table.unwrap().table_key,
@@ -711,7 +710,7 @@ mod test {
         assert!(em.is_ok());
         let em = em.unwrap();
         let organized = get_organized_tables(&em);
-        //println!("organized: {:#?}", organized);
+        //info!("organized: {:#?}", organized);
         assert!(organized.is_ok());
         let organized = organized.unwrap();
         assert_eq!(organized.len(), 1);

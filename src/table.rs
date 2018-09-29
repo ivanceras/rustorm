@@ -245,12 +245,12 @@ mod test {
         let film_actor_tablename = TableName::from("public.film_actor");
         let film_actor = em.get_table(&film_actor_tablename);
         assert!(film.is_ok());
-        println!("film: {:#?}", film);
-        println!("FILM ACTOR {:#?}", film_actor);
+        info!("film: {:#?}", film);
+        info!("FILM ACTOR {:#?}", film_actor);
         let film = film.unwrap();
         let film_actor = film_actor.unwrap();
         let rc = film_actor.get_referred_columns_to_table(&film.name);
-        println!("rc: {:#?}", rc);
+        info!("rc: {:#?}", rc);
         assert_eq!(
             rc,
             Some(&vec![ColumnName {
@@ -273,12 +273,12 @@ mod test {
         let hero_ability_tablename = TableName::from("public.hero_ability");
         let hero_ability = em.get_table(&hero_ability_tablename);
         assert!(hero.is_ok());
-        println!("hero {:#?}", hero);
-        println!("hero ability {:#?}", hero_ability);
+        info!("hero {:#?}", hero);
+        info!("hero ability {:#?}", hero_ability);
         let hero = hero.unwrap();
         let hero_ability = hero_ability.unwrap();
         let rc = hero_ability.get_referred_columns_to_table(&hero.name);
-        println!("rc: {:#?}", rc);
+        info!("rc: {:#?}", rc);
         assert_eq!(
             rc,
             Some(&vec![ColumnName {
@@ -288,7 +288,7 @@ mod test {
             }])
         );
         let foreign_key = hero_ability.get_foreign_key_to_table(&hero.name);
-        println!("foreign_key: {:#?}", foreign_key);
+        info!("foreign_key: {:#?}", foreign_key);
         assert_eq!(
             foreign_key,
             Some(&ForeignKey {

@@ -27,7 +27,7 @@ pub fn impl_from_dao(ast: &syn::MacroInput) -> quote::Tokens {
     quote! {
         impl FromDao for  #name {
 
-            fn from_dao(dao: &dao::Dao) -> Self {
+            fn from_dao(dao: &rustorm_dao::Dao) -> Self {
                 #name {
                     #(#from_fields)*
                 }
@@ -63,8 +63,8 @@ pub fn impl_to_dao(ast: &syn::MacroInput) -> quote::Tokens {
     quote! {
         impl ToDao for  #name {
 
-            fn to_dao(&self) -> dao::Dao {
-                let mut dao = dao::Dao::new();
+            fn to_dao(&self) -> rustorm_dao::Dao {
+                let mut dao = rustorm_dao::Dao::new();
                 #(#from_fields)*
                 dao
             }
