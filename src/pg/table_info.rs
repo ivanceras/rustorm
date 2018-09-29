@@ -1,7 +1,6 @@
 //! module table_info extract the table meta data using SQL queries on pg_catalog.
 //! This is not using information_schema since there is a performance issue with it.
 use column::Column;
-use dao;
 use dao::ColumnName;
 use dao::FromDao;
 use dao::TableName;

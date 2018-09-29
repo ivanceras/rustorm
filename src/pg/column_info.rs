@@ -1,6 +1,5 @@
 use column::{Capacity, Column, ColumnConstraint, ColumnSpecification, ColumnStat, Literal};
 use common;
-use dao;
 use dao::ColumnName;
 use dao::FromDao;
 use dao::TableName;
