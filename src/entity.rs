@@ -238,6 +238,26 @@ impl EntityManager {
         Ok(retrieved_entities)
     }
 
+    pub fn delete<R>(&self, rest_clause: &str) -> Result<Vec<R>, DbError>
+    where
+        R: FromDao + ToTableName + ToColumnNames,
+    {
+        let table = R::to_table_name();
+        let mut sql = String::new();
+        sql += "DELETE FROM ";
+        sql += &table.complete_name();
+        sql += " ";
+        sql += rest_clause;
+
+        let rows = self.0.execute_sql_with_return(&sql, &[])?;
+        let mut retrieved_entities = vec![];
+        for dao in rows.iter() {
+            let retrieved = R::from_dao(&dao);
+            retrieved_entities.push(retrieved);
+        }
+        Ok(retrieved_entities)
+    }
+
     pub fn execute_sql_with_return<'a, R>(
         &self,
         sql: &str,
