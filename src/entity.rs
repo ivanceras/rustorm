@@ -87,6 +87,89 @@ impl EntityManager {
         self.0.get_grouped_tables(self)
     }
 
+    pub fn select<R>(&self, head_clause: &str, from_clause: &str, rest_clause: &str) -> Result<Vec<R>, DbError>
+    where
+        R: FromDao + ToTableName + ToColumnNames,
+    {
+        let table = R::to_table_name();
+        let columns = R::to_column_names();
+        let mut sql = String::new();
+        sql += "SELECT ";
+        sql += head_clause;
+        sql += &format!(
+            " {}\n",
+            columns
+                .iter()
+                .map(|c| c.name.to_owned())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        if from_clause == "" {
+            sql += &format!("FROM {} ", table.complete_name());
+        }
+        else {
+            sql += &format!("FROM {} ", from_clause);
+        }
+        sql += rest_clause;
+
+        let rows = self.0.execute_sql_with_return(&sql, &[])?;
+        let mut retrieved_entities = vec![];
+        for dao in rows.iter() {
+            let retrieved = R::from_dao(&dao);
+            retrieved_entities.push(retrieved);
+        }
+        Ok(retrieved_entities)
+    }
+
+    pub fn update<T, R>(&self, entity: &T, rest_clause: &str) -> Result<Vec<R>, DbError>
+    where
+        T: ToTableName + ToColumnNames + ToDao,
+        R: FromDao + ToColumnNames,
+    {
+        let table = T::to_table_name();
+        let columns = T::to_column_names();
+        let mut sql = String::new();
+        sql += &format!("UPDATE {} ", table.complete_name());
+        sql += &format!(
+            "SET {}\n",
+            columns
+                .iter()
+                .enumerate()
+                .map(|(i, c)| format!("{}=${}", c.name.to_owned(), i+1))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        sql += rest_clause;
+        let return_columns = R::to_column_names();
+        sql += &format!(
+            "\nRETURNING \n{}",
+            return_columns
+                .iter()
+                .map(|rc| rc.name.to_owned())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+
+        let mut values: Vec<Value> = Vec::with_capacity(columns.len());
+        let dao = entity.to_dao();
+        for col in columns.iter() {
+            let value = dao.get_value(&col.name);
+            match value {
+                Some(value) => values.push(value.clone()),
+                None => values.push(Value::Nil),
+            }
+        }
+
+        let bvalues:Vec<&Value> = values.iter().collect();
+        let rows = self.0.execute_sql_with_return(&sql, &bvalues)?;
+        let mut retrieved_entities = vec![];
+        for dao in rows.iter() {
+            let retrieved = R::from_dao(&dao);
+            retrieved_entities.push(retrieved);
+        }
+        Ok(retrieved_entities)
+    }
+
     /// insert to table the values of this struct
     /// TODO: sqlite3 doesn't support the RETURNING keyword
     pub fn insert<T, R>(&self, entities: &[&T]) -> Result<Vec<R>, DbError>
