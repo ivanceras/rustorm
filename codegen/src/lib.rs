@@ -3,7 +3,6 @@
 extern crate proc_macro;
 #[macro_use]
 extern crate quote;
-//extern crate rustorm_dao as dao;
 extern crate rustorm_dao;
 extern crate syn;
 
