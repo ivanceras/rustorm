@@ -1,7 +1,7 @@
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use column::Capacity;
-use dao::Value;
+use rustorm_dao::Value;
 use num_traits::ToPrimitive;
 use std::str::FromStr;
 use types::SqlType;

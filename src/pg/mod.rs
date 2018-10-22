@@ -2,11 +2,11 @@ use self::interval::PgInterval;
 use self::numeric::PgNumeric;
 use base64;
 use bigdecimal::BigDecimal;
-use dao::value::Array;
-use dao::Interval;
-use dao::Rows;
-use dao::TableName;
-use dao::Value;
+use rustorm_dao::value::Array;
+use rustorm_dao::Interval;
+use rustorm_dao::Rows;
+use rustorm_dao::TableName;
+use rustorm_dao::Value;
 use database::Database;
 use entity::EntityManager;
 use error::DbError;
@@ -153,7 +153,7 @@ impl Database for PostgresDB {
                     ELSE rolconnlimit END AS conn_limit,
                '*************' AS password,
                CASE WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
-                   ELSE rolvaliduntil 
+                   ELSE rolvaliduntil
                    END AS valid_until
                FROM pg_authid";
         em.execute_sql_with_return(&sql, &[])
@@ -161,8 +161,8 @@ impl Database for PostgresDB {
 
     /// get the list of roles for this user
     fn get_roles(&self, em: &EntityManager, username: &str) -> Result<Vec<Role>, DbError> {
-        let sql = "SELECT 
-            (SELECT rolname FROM pg_roles WHERE oid = m.roleid) AS role_name 
+        let sql = "SELECT
+            (SELECT rolname FROM pg_roles WHERE oid = m.roleid) AS role_name
             FROM pg_auth_members m
             LEFT JOIN pg_roles
             ON m.member = pg_roles.oid
@@ -421,8 +421,8 @@ impl fmt::Display for PostgresError {
 mod test {
 
     use super::*;
-    use dao::Rows;
-    use dao::Value;
+    use rustorm_dao::Rows;
+    use rustorm_dao::Value;
     use pool::{Pool, PooledConn};
     use postgres::Connection;
     use std::ops::Deref;

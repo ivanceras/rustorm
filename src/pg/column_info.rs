@@ -1,8 +1,8 @@
 use column::{Capacity, Column, ColumnConstraint, ColumnSpecification, ColumnStat, Literal};
 use common;
-use dao::ColumnName;
-use dao::FromDao;
-use dao::TableName;
+use rustorm_dao::ColumnName;
+use rustorm_dao::FromDao;
+use rustorm_dao::TableName;
 use entity::EntityManager;
 use error::DbError;
 use types::SqlType;
@@ -35,25 +35,25 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
             }
         }
     }
-    let sql = r#"SELECT 
-                 pg_attribute.attnum AS number, 
-                 pg_attribute.attname AS name, 
-                 pg_description.description AS comment 
-            FROM pg_attribute 
-       LEFT JOIN pg_class 
-              ON pg_class.oid = pg_attribute.attrelid 
-       LEFT JOIN pg_namespace 
-              ON pg_namespace.oid = pg_class.relnamespace 
-       LEFT JOIN pg_description 
-              ON pg_description.objoid = pg_class.oid 
-             AND pg_description.objsubid = pg_attribute.attnum 
-           WHERE 
-                 pg_class.relname = $1 
-             AND pg_namespace.nspname = $2 
-             AND pg_attribute.attnum > 0 
-             AND pg_attribute.attisdropped = false 
+    let sql = r#"SELECT
+                 pg_attribute.attnum AS number,
+                 pg_attribute.attname AS name,
+                 pg_description.description AS comment
+            FROM pg_attribute
+       LEFT JOIN pg_class
+              ON pg_class.oid = pg_attribute.attrelid
+       LEFT JOIN pg_namespace
+              ON pg_namespace.oid = pg_class.relnamespace
+       LEFT JOIN pg_description
+              ON pg_description.objoid = pg_class.oid
+             AND pg_description.objsubid = pg_attribute.attnum
+           WHERE
+                 pg_class.relname = $1
+             AND pg_namespace.nspname = $2
+             AND pg_attribute.attnum > 0
+             AND pg_attribute.attisdropped = false
              AND has_column_privilege($3, attname, 'SELECT')
-        ORDER BY number 
+        ORDER BY number
     "#;
     let schema = match table_name.schema {
         Some(ref schema) => schema.to_string(),
@@ -200,9 +200,9 @@ fn get_column_specification(
                         SqlType::Enum(_name, _choices) => Literal::String(default.to_owned()),
 
                         SqlType::Array(ref at) => match at.as_ref(){
-                            SqlType::Int 
-                              | SqlType::Tinyint 
-                              | SqlType::Smallint 
+                            SqlType::Int
+                              | SqlType::Tinyint
+                              | SqlType::Smallint
                               | SqlType::Bigint => {
                                 // default = '{2,1,2}'::integer[]
                                 let splinters:Vec<&str> = default.split("::").collect();
@@ -219,9 +219,9 @@ fn get_column_specification(
                                     Literal::ArrayInt(int_array)
                                 }
                             },
-                            SqlType::Real 
-                              | SqlType::Float 
-                              | SqlType::Double 
+                            SqlType::Real
+                              | SqlType::Float
+                              | SqlType::Double
                               | SqlType::Numeric => {
                                 // default = '{2,1,2}'::integer[]
                                 let splinters:Vec<&str> = default.split("::").collect();
@@ -239,7 +239,7 @@ fn get_column_specification(
                                 }
                             },
                             SqlType::Text
-                             | SqlType::Varchar 
+                             | SqlType::Varchar
                              | SqlType::Tinytext
                              | SqlType::Mediumtext => {
                               // default = '{Mon,Wed,Fri}'::character varying[],
@@ -322,10 +322,10 @@ fn get_column_specification(
         }
     }
 
-    let sql = r#"SELECT DISTINCT 
-               pg_attribute.attnotnull AS not_null, 
-               pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type, 
-     CASE WHEN pg_attribute.atthasdef THEN pg_attrdef.adsrc 
+    let sql = r#"SELECT DISTINCT
+               pg_attribute.attnotnull AS not_null,
+               pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type,
+     CASE WHEN pg_attribute.atthasdef THEN pg_attrdef.adsrc
            END AS default ,
                pg_type.typtype = 'e'::character AS is_enum,
                pg_type.typcategory = 'A'::character AS is_array_enum,
@@ -335,24 +335,24 @@ fn get_column_specification(
                ARRAY(SELECT enumlabel FROM pg_enum
                         WHERE pg_enum.enumtypid = pg_type.typelem)
                AS array_enum_choices
-          FROM pg_attribute 
-     LEFT JOIN pg_class 
-            ON pg_class.oid = pg_attribute.attrelid 
-     LEFT JOIN pg_type 
-            ON pg_type.oid = pg_attribute.atttypid 
-     LEFT JOIN pg_attrdef 
-            ON pg_attrdef.adrelid = pg_class.oid 
-           AND pg_attrdef.adnum = pg_attribute.attnum 
-     LEFT JOIN pg_namespace 
-            ON pg_namespace.oid = pg_class.relnamespace 
-     LEFT JOIN pg_constraint 
-            ON pg_constraint.conrelid = pg_class.oid 
-           AND pg_attribute.attnum = ANY (pg_constraint.conkey) 
-         WHERE  
-               pg_attribute.attname = $1 
-           AND pg_class.relname = $2 
-           AND pg_namespace.nspname = $3 
-           AND pg_attribute.attisdropped = false 
+          FROM pg_attribute
+     LEFT JOIN pg_class
+            ON pg_class.oid = pg_attribute.attrelid
+     LEFT JOIN pg_type
+            ON pg_type.oid = pg_attribute.atttypid
+     LEFT JOIN pg_attrdef
+            ON pg_attrdef.adrelid = pg_class.oid
+           AND pg_attrdef.adnum = pg_attribute.attnum
+     LEFT JOIN pg_namespace
+            ON pg_namespace.oid = pg_class.relnamespace
+     LEFT JOIN pg_constraint
+            ON pg_constraint.conrelid = pg_class.oid
+           AND pg_attribute.attnum = ANY (pg_constraint.conkey)
+         WHERE
+               pg_attribute.attname = $1
+           AND pg_class.relname = $2
+           AND pg_namespace.nspname = $3
+           AND pg_attribute.attisdropped = false
     "#;
     let schema = match table_name.schema {
         Some(ref schema) => schema.to_string(),
@@ -373,7 +373,7 @@ fn get_column_stat(
             SELECT avg_width,
                 n_distinct
             FROM pg_stats
-           WHERE 
+           WHERE
                 pg_stats.schemaname = $3
             AND pg_stats.tablename = $2
             AND pg_stats.attname = $1
@@ -393,9 +393,9 @@ mod test {
     use super::*;
     use chrono::offset::Utc;
     use chrono::DateTime;
-    use dao::ToColumnNames;
-    use dao::ToDao;
-    use dao::ToTableName;
+    use rustorm_dao::ToColumnNames;
+    use rustorm_dao::ToDao;
+    use rustorm_dao::ToTableName;
     use pool::Pool;
 
     #[test]

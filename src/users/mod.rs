@@ -1,6 +1,6 @@
 use chrono::DateTime;
 use chrono::Utc;
-use dao::FromDao;
+use rustorm_dao::FromDao;
 
 mod previlege;
 
@@ -13,7 +13,7 @@ pub struct User{
     is_superuser: bool,
     is_inherit: bool,
     can_create_db: bool,
-    can_create_role: bool,    
+    can_create_role: bool,
     can_login: bool,
     can_do_replication: bool,
     can_bypass_rls: bool,

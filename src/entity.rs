@@ -1,8 +1,8 @@
-use dao::TableName;
-use dao::ToColumnNames;
-use dao::ToTableName;
-use dao::{FromDao, ToDao};
-use dao::{Value};
+use rustorm_dao::TableName;
+use rustorm_dao::ToColumnNames;
+use rustorm_dao::ToTableName;
+use rustorm_dao::{FromDao, ToDao};
+use rustorm_dao::{Value};
 use database::Database;
 use error::{DataError, DbError};
 use platform::DBPlatform;
@@ -11,7 +11,7 @@ use table::Table;
 use users::User;
 use users::Role;
 use database::DatabaseName;
-use dao::ToValue;
+use rustorm_dao::ToValue;
 
 pub struct EntityManager(pub DBPlatform);
 
@@ -211,14 +211,14 @@ impl EntityManager {
 #[cfg(test)]
 #[cfg(feature = "with-postgres")]
 mod test_pg {
-    extern crate rustorm_dao as dao;
+    extern crate rustorm_dao;
     use super::*;
     use chrono::offset::Utc;
     use chrono::{DateTime, NaiveDate};
-    use dao::TableName;
-    use dao::ToColumnNames;
-    use dao::ToTableName;
-    use dao::{FromDao, ToDao};
+    use rustorm_dao::TableName;
+    use rustorm_dao::ToColumnNames;
+    use rustorm_dao::ToTableName;
+    use rustorm_dao::{FromDao, ToDao};
     use pool::Pool;
     use uuid::Uuid;
 

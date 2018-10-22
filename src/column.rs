@@ -1,6 +1,6 @@
-use dao::ColumnName;
-use dao::FromDao;
-use dao::TableName;
+use rustorm_dao::ColumnName;
+use rustorm_dao::FromDao;
+use rustorm_dao::TableName;
 use types::SqlType;
 use uuid::Uuid;
 

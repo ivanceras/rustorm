@@ -1,9 +1,9 @@
-use dao::Rows;
-use dao::Value;
+use rustorm_dao::Rows;
+use rustorm_dao::Value;
 use error::DataError;
 use error::DbError;
 use platform::DBPlatform;
-use dao::Dao;
+use rustorm_dao::Dao;
 
 pub struct DaoManager(pub DBPlatform);
 
