@@ -1,6 +1,6 @@
 [package]
 name = "rustorm_codegen"
-version = "0.1.2"
+version = "0.1.3"
 authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
 license = "MIT"
 description = "code gen provides macro for generating code on data access objects on table metadata"
