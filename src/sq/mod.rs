@@ -4,17 +4,17 @@ use sqlite3;
 use error::DbError;
 use error::PlatformError;
 use database::Database;
-use dao::{Value,Rows}; 
+use rustorm_dao::{Value,Rows};
 use sqlite3::Type;
 use table::Table;
 use entity::EntityManager;
-use dao::TableName;
+use rustorm_dao::TableName;
 use table::SchemaContent;
 use r2d2::ManageConnection;
-use dao::FromDao;
+use rustorm_dao::FromDao;
 use types::SqlType;
 use common;
-use dao::ColumnName;
+use rustorm_dao::ColumnName;
 use table::{TableKey,ForeignKey, Key};
 use column::{Column, ColumnConstraint, Literal, ColumnSpecification, Capacity};
 use util;
@@ -68,7 +68,7 @@ fn to_sq_value(val: &Value) -> sqlite3::Value {
         Value::BigDecimal(ref v) => {
             match v.to_f64(){
                 Some(v) => sqlite3::Value::Float(v as f64),
-                None => panic!("unable to convert bigdecimal"), 
+                None => panic!("unable to convert bigdecimal"),
             }
         }
         Value::Blob(ref v) => sqlite3::Value::Binary(v.clone()),
@@ -104,7 +104,7 @@ impl Database for SqliteDB{
                     stmt.bind(i + 1, sq_val)?;
                 }
                 let column_names = stmt.column_names()
-                    .map_err(|e| 
+                    .map_err(|e|
                             DbError::PlatformError(
                                 PlatformError::SqliteError(
                                     SqliteError::GenericError(e))))?;
@@ -130,7 +130,7 @@ impl Database for SqliteDB{
                              }
                          }
                          let ty = stmt.kind(i);
-                         let value:Result<Value,DbError> = 
+                         let value:Result<Value,DbError> =
                              match ty{
                                 Type::Binary => match_type!(Vec<u8>, Blob),
                                 Type::Float => match_type!(f64, Double),
@@ -160,7 +160,7 @@ impl Database for SqliteDB{
             data_type: String,
             not_null: bool,
             default: Option<String>,
-            pk: bool 
+            pk: bool
         }
         impl ColumnSimple{
 
@@ -203,9 +203,9 @@ impl Database for SqliteDB{
                                 let v: bool = default.parse().unwrap();
                                 Literal::Bool(v)
                             }
-                            SqlType::Int 
-                                | SqlType::Smallint 
-                                | SqlType::Tinyint 
+                            SqlType::Int
+                                | SqlType::Smallint
+                                | SqlType::Tinyint
                                 | SqlType::Bigint => {
                                     let v: Result<i64,_> = default.parse();
                                     match v{
@@ -255,7 +255,7 @@ impl Database for SqliteDB{
                                     }
                                 }
                             SqlType::Date => {
-                                // timestamp converted to text then converted to date 
+                                // timestamp converted to text then converted to date
                                 // is equivalent to today()
                                 if default == "today()" || default == "now()" || default =="('now'::text)::date" {
                                     Literal::CurrentDate
@@ -264,7 +264,7 @@ impl Database for SqliteDB{
                                     panic!("date other than today is not covered in {:?}", self)
                                 }
                             }
-                            SqlType::Varchar 
+                            SqlType::Varchar
                                 | SqlType::Char
                                 | SqlType::Tinytext
                                 | SqlType::Mediumtext
@@ -276,7 +276,7 @@ impl Database for SqliteDB{
                         ColumnConstraint::DefaultValue(literal)
                     };
                     constraints.push(constraint);
-                    
+
                 }
                 constraints
             }
@@ -340,7 +340,7 @@ impl Database for SqliteDB{
                 primary_columns.push(ColumnName::from(&name));
             }
             let default = dao.0.get("dflt_value")
-                    .map(|v| 
+                    .map(|v|
                          match *v{
                              Value::Text(ref v) => v.to_owned(),
                              Value::Nil => "null".to_string(),
@@ -533,7 +533,7 @@ mod test{
         assert!(result.is_ok());
     }
 
-    
+
     #[test]
     fn test_get_table(){
         let db_url = "sqlite://sakila.db";

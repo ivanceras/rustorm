@@ -1,6 +1,6 @@
 use column::Column;
-use dao::ColumnName;
-use dao::TableName;
+use rustorm_dao::ColumnName;
+use rustorm_dao::TableName;
 use types::SqlType;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -28,7 +28,7 @@ impl Table {
     pub fn safe_name(&self) -> String {
         self.name.safe_name()
     }
-    
+
     pub fn safe_complete_name(&self) -> String {
         self.name.safe_complete_name()
     }
@@ -228,8 +228,8 @@ pub struct SchemaContent {
 #[cfg(test)]
 #[cfg(feature = "with-postgres")]
 mod test {
-    use dao::ColumnName;
-    use dao::TableName;
+    use rustorm_dao::ColumnName;
+    use rustorm_dao::TableName;
     use pool::Pool;
     use table::ForeignKey;
 

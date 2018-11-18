@@ -1,5 +1,5 @@
-use dao::TableName;
-use dao::{Rows, Value};
+use rustorm_dao::TableName;
+use rustorm_dao::{Rows, Value};
 use entity::EntityManager;
 use table::SchemaContent;
 use table::Table;
@@ -7,7 +7,7 @@ use users::User;
 use users::Role;
 
 use error::DbError;
-use dao::FromDao;
+use rustorm_dao::FromDao;
 
 /// The current database name and its comment
 #[derive(Serialize, FromDao)]

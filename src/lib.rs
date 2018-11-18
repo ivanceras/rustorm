@@ -1,4 +1,4 @@
-//! 
+//!
 //! Rustorm is an SQL-centered ORM with focus on ease of use on conversion of database types to
 //! their appropriate rust type.
 //!
@@ -7,7 +7,6 @@
 //! ```rust
 //! #[macro_use]
 //! extern crate rustorm_codegen;
-//! extern crate rustorm_dao as dao;
 //! extern crate rustorm_dao;
 //! extern crate rustorm;
 //! #[macro_use]
@@ -19,13 +18,13 @@
 //! use rustorm_dao::{FromDao, ToDao};
 //! use rustorm::Pool;
 //! use rustorm::DbError;
-//! 
+//!
 //! #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
 //! struct Actor {
 //!     actor_id: i32,
 //!     first_name: String,
 //! }
-//! 
+//!
 //! fn main(){
 //!     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
 //!     let mut pool = Pool::new();
@@ -45,7 +44,6 @@
 //! ```rust
 //! #[macro_use]
 //! extern crate rustorm_codegen;
-//! extern crate rustorm_dao as dao;
 //! extern crate rustorm_dao;
 //! extern crate rustorm;
 //! extern crate chrono;
@@ -126,7 +124,7 @@ extern crate num_traits;
 extern crate r2d2;
 #[macro_use]
 extern crate rustorm_codegen;
-extern crate rustorm_dao as dao;
+extern crate rustorm_dao;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -167,25 +165,25 @@ mod util;
 mod users;
 
 pub use column::Column;
-pub use dao::ColumnName;
-pub use dao::Rows;
-pub use dao::TableName;
-pub use dao::ToColumnNames;
-pub use dao::ToTableName;
-pub use dao::Value;
-pub use dao::{FromDao, ToDao};
+pub use rustorm_dao::ColumnName;
+pub use rustorm_dao::Rows;
+pub use rustorm_dao::TableName;
+pub use rustorm_dao::ToColumnNames;
+pub use rustorm_dao::ToTableName;
+pub use rustorm_dao::Value;
+pub use rustorm_dao::{FromDao, ToDao};
 pub use database::Database;
 pub use entity::EntityManager;
 pub use error::DbError;
 pub use pool::Pool;
-pub use dao::Dao;
+pub use rustorm_dao::Dao;
 pub use dao_manager::DaoManager;
 pub use table::Table;
 pub use database::DatabaseName;
 
 #[cfg(test)]
 mod test {
-    use dao::{Dao, FromDao, ToDao};
+    use rustorm_dao::{Dao, FromDao, ToDao};
 
     #[test]
     fn derive_fromdao_and_todao() {

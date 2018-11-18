@@ -1,5 +1,5 @@
-use dao::value::Array;
-use dao::Value;
+use rustorm_dao::value::Array;
+use rustorm_dao::Value;
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub enum SqlType {
