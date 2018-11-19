@@ -131,6 +131,13 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
                     assert_eq!(v.len(), 1);
                     Value::Char(v.chars().next().unwrap())
                 }
+                SqlType::Int => {
+                    if let Ok(v) = v.parse::<i32>(){
+                        Value::Int(v)
+                    }else{
+                        panic!("unsupported conversion from {:?} to {:?}", value, required_type);
+                    }
+                }
                 _ => panic!(
                     "unsupported conversion from {:?} to {:?}",
                     value, required_type
