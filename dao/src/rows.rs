@@ -153,6 +153,7 @@ mod test {
         assert_eq!(dao2, iter.next().unwrap());
     }
 
+    /*
     #[test]
     fn into_iter() {
         let columns = vec!["id".to_string(), "username".to_string()];
@@ -178,4 +179,5 @@ mod test {
 
         assert_eq!(2, rows.iter().count());
     }
+    */
 }

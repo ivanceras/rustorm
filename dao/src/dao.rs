@@ -139,7 +139,7 @@ mod tests {
         let v = 42;
         let s = "lemonade";
         dao.insert("life", &v);
-        dao.insert("lemons", &s);
+        dao.insert("lemons", s);
         let life: Result<Option<i32>, _> = dao.get("life");
         assert!(life.is_ok());
         let life = life.unwrap();
