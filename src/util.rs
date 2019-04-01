@@ -1,7 +1,7 @@
 extern crate meval;
 
 fn trim_parenthesis(arg: &str) -> &str {
-    arg.trim_left_matches('(').trim_right_matches(')')
+    arg.trim_start_matches('(').trim_end_matches(')')
 }
 
 pub fn maybe_trim_parenthesis(arg: &str) -> &str {

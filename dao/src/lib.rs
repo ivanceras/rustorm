@@ -1,5 +1,4 @@
 #![deny(warnings)]
-#![feature(try_from)]
 
 extern crate bigdecimal;
 extern crate chrono;

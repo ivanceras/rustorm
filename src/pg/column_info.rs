@@ -207,7 +207,7 @@ fn get_column_specification(
                                 // default = '{2,1,2}'::integer[]
                                 let splinters:Vec<&str> = default.split("::").collect();
                                 let int_values = splinters[0];
-                                let trimmed_values = int_values.trim_matches('\'').trim_left_matches('{').trim_right_matches('}');
+                                let trimmed_values = int_values.trim_matches('\'').trim_start_matches('{').trim_end_matches('}');
                                 if trimmed_values.is_empty(){
                                     Literal::ArrayInt(vec![])
                                 }else{
@@ -226,7 +226,7 @@ fn get_column_specification(
                                 // default = '{2,1,2}'::integer[]
                                 let splinters:Vec<&str> = default.split("::").collect();
                                 let values = splinters[0];
-                                let trimmed_values = values.trim_matches('\'').trim_left_matches('{').trim_right_matches('}');
+                                let trimmed_values = values.trim_matches('\'').trim_start_matches('{').trim_end_matches('}');
                                 let array_result:Vec<Result<f64,_>> = trimmed_values.split(',').map(|i|i.parse::<f64>()).collect();
                                 if trimmed_values.is_empty(){
                                     Literal::ArrayInt(vec![])
@@ -245,7 +245,7 @@ fn get_column_specification(
                               // default = '{Mon,Wed,Fri}'::character varying[],
                                 let splinters:Vec<&str> = default.split("::").collect();
                                 let string_values = splinters[0];
-                                let trimmed_values = string_values.trim_matches('\'').trim_left_matches('{').trim_right_matches('}').split(',').map(|s|s.to_owned()).collect();
+                                let trimmed_values = string_values.trim_matches('\'').trim_start_matches('{').trim_end_matches('}').split(',').map(|s|s.to_owned()).collect();
                                 Literal::ArrayString(trimmed_values)
                             }
                             _ => panic!("ArrayType not convered: {:?} in {}.{}", sql_type, table_name.complete_name(), column_name),
