@@ -6,7 +6,7 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
     use pg::{self, PostgresDB};
 }}
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
-    use r2d2_sqlite3::SqliteConnectionManager;
+    use r2d2_sqlite::SqliteConnectionManager;
     use sq::{self, SqliteDB};
 }}
 

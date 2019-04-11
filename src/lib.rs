@@ -11,6 +11,8 @@
 //! extern crate rustorm;
 //! #[macro_use]
 //! extern crate log;
+//! #[macro_use]
+//! extern crate cfg_if;
 //!
 //! use rustorm::TableName;
 //! use rustorm_dao::ToColumnNames;
@@ -25,10 +27,27 @@
 //!     first_name: String,
 //! }
 //!
+//!
+//!cfg_if! {
+//!      if #[cfg(feature="with-postgres")] {
+//!        fn db_url() -> &'static str {
+//!            "postgres://postgres:p0stgr3s@localhost/sakila"
+//!        }
+//!      }
+//!      else if #[cfg(feature = "with-sqlite")] {
+//!        fn db_url() -> &'static str{
+//!            "sqlite://sakila.db"
+//!        }
+//!      }
+//!      else {
+//!        fn db_url() -> &'static str {
+//!            panic!("add --features flag, ie: --features=\"with-postgres\" ");
+//!        }
+//!      }
+//!}
 //! fn main(){
-//!     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
 //!     let mut pool = Pool::new();
-//!     let em = pool.em(db_url).unwrap();
+//!     let em = pool.em(db_url()).unwrap();
 //!     let sql = "SELECT * FROM actor LIMIT 10";
 //!     let actors: Result<Vec<Actor>, DbError> = em.execute_sql_with_return(sql, &[]);
 //!     info!("Actor: {:#?}", actors);
@@ -49,6 +68,8 @@
 //! extern crate chrono;
 //! #[macro_use]
 //! extern crate log;
+//! #[macro_use]
+//! extern crate cfg_if;
 //!
 //! use rustorm::TableName;
 //! use rustorm_dao::ToColumnNames;
@@ -58,6 +79,24 @@
 //! use rustorm::DbError;
 //! use chrono::offset::Utc;
 //! use chrono::{DateTime, NaiveDate};
+//!
+//!cfg_if! {
+//!      if #[cfg(feature="with-postgres")] {
+//!        fn db_url() -> &'static str {
+//!            "postgres://postgres:p0stgr3s@localhost/sakila"
+//!        }
+//!      }
+//!      else if #[cfg(feature = "with-sqlite")] {
+//!        fn db_url() -> &'static str {
+//!            "sqlite://sakila.db"
+//!        }
+//!      }
+//!      else {
+//!        fn db_url() -> &'static str {
+//!            panic!("add --features flag, ie: --features=\"with-postgres\" ");
+//!        }
+//!      }
+//!}
 //!
 //!   fn main() {
 //!       mod for_insert {
@@ -80,18 +119,8 @@
 //!           }
 //!       }
 //!
-//!       let db_url = cfg_if! {
-//!       if #[cfg(feature="with-postgres")] {
-//!         "postgres://postgres:p0stgr3s@localhost/sakila"
-//!         } else if #[cfg(feature = "with-sqlite")] {
-//!         "sqlite://sakila.db"
-//!         }
-//!         else {
-//!         panic!("add --features flag, ie: --features=\"with-postgres\" ");
-//!         }
-//!       };
 //!       let mut pool = Pool::new();
-//!       let em = pool.em(db_url).unwrap();
+//!       let em = pool.em(db_url()).unwrap();
 //!       let tom_cruise = for_insert::Actor {
 //!           first_name: "TOM".into(),
 //!           last_name: "CRUISE".to_string(),
@@ -103,13 +132,14 @@
 //!
 //!       let actors: Result<Vec<for_retrieve::Actor>, DbError> =
 //!           em.insert(&[&tom_cruise, &tom_hanks]);
-//!       info!("Actor: {:#?}", actors);
+//!       println!("Actor: {:#?}", actors);
 //!       assert!(actors.is_ok());
 //!       let actors = actors.unwrap();
 //!       let today = Utc::now().date();
 //!       assert_eq!(tom_cruise.first_name, actors[0].first_name);
 //!       assert_eq!(tom_cruise.last_name, actors[0].last_name);
 //!       assert_eq!(today, actors[0].last_update.date());
+//!
 //!       assert_eq!(tom_hanks.first_name, actors[1].first_name);
 //!       assert_eq!(tom_hanks.last_name, actors[1].last_name);
 //!       assert_eq!(today, actors[1].last_update.date());
@@ -154,8 +184,8 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
     mod pg;
 }}
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
-    extern crate r2d2_sqlite3;
-    extern crate sqlite3;
+    extern crate r2d2_sqlite;
+    extern crate rusqlite;
     mod sq;
 }}
 

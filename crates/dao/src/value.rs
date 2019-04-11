@@ -221,6 +221,7 @@ macro_rules! impl_tryfrom {
     }
 }
 
+
 macro_rules! impl_tryfrom_option {
     ($ty:ty) => {
         /// try from to Option<T>
@@ -261,7 +262,7 @@ impl<'a> TryFrom<&'a Value> for String {
 impl_tryfrom!(bool, "bool", Bool);
 impl_tryfrom!(i8, "i8", Tinyint);
 impl_tryfrom!(i16, "i16", Tinyint, Smallint);
-impl_tryfrom!(i32, "i32", Tinyint, Smallint, Int);
+impl_tryfrom!(i32, "i32", Tinyint, Smallint, Int, Bigint);
 impl_tryfrom!(i64, "i64", Tinyint, Smallint, Int, Bigint);
 impl_tryfrom!(f32, "f32", Float);
 impl_tryfrom!(f64, "f64", Float, Double);
@@ -269,28 +270,43 @@ impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
 impl_tryfrom!(char, "char", Char);
 impl_tryfrom!(Uuid, "Uuid", Uuid);
 impl_tryfrom!(NaiveDate, "NaiveDate", Date);
-impl_tryfrom!(DateTime<Utc>, "DateTime<Utc>", Timestamp);
 
 impl<'a> TryFrom<&'a Value> for NaiveDateTime{
     type Error = ConvertError;
 
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match *value{
-            Value::Text(ref v) => {
-                let ts = NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S");
-                let ts = if let Ok(ts) = ts {
-                    ts
-                } else {
-                    let ts = NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S.%f");
-                    if let Ok(ts) = ts {
-                        ts
-                    } else {
-                        panic!("unable to parse timestamp: {}", v);
-                    }
-                };
-                Ok(ts)
-            }
+            Value::Text(ref v) => Ok(parse_naive_date_time(v)),
             _ => Err(ConvertError::NotSupported(format!("{:?}",value), "NaiveDateTime".to_string())),
+        }
+    }
+}
+
+fn parse_naive_date_time(v: &str) -> NaiveDateTime {
+    let ts = NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S");
+    if let Ok(ts) = ts {
+        ts
+    } else {
+        let ts = NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S.%f");
+        if let Ok(ts) = ts {
+            ts
+        } else {
+            panic!("unable to parse timestamp: {}", v);
+        }
+    }
+}
+
+
+impl<'a> TryFrom<&'a Value> for DateTime<Utc>{
+    type Error = ConvertError;
+
+    fn try_from(value: &Value) -> Result<Self, Self::Error> {
+        match *value{
+            Value::Text(ref v) => {
+                Ok(DateTime::<Utc>::from_utc(parse_naive_date_time(v), Utc))
+            }
+            Value::Timestamp(v) => Ok(v),
+            _ => Err(ConvertError::NotSupported(format!("{:?}",value), "DateTime".to_string())),
         }
     }
 }
@@ -339,5 +355,30 @@ mod tests {
         let _v4: Value = "hello world!".into();
         let _v5: Value = "hello world!".to_string().into();
         let _v6: Value = vec![1u8, 2, 255, 3].into();
+    }
+
+    #[test]
+    fn naive_date_parse(){
+        let v = "2018-01-29";
+        let ts = NaiveDate::parse_from_str(v,"%Y-%m-%d");
+        println!("{:?}", ts);
+        assert!(ts.is_ok());
+    }
+
+    #[test]
+    fn naive_date_time_parse(){
+        let v = "2018-01-29 09:58:20";
+        let ts = NaiveDateTime::parse_from_str(v,"%Y-%m-%d %H:%M:%S");
+        println!("{:?}", ts);
+        assert!(ts.is_ok());
+    }
+
+    #[test]
+    fn date_time_conversion(){
+        let v = "2018-01-29 09:58:20";
+        let ts = NaiveDateTime::parse_from_str(v,"%Y-%m-%d %H:%M:%S");
+        println!("{:?}", ts);
+        assert!(ts.is_ok());
+        DateTime::<Utc>::from_utc(ts.unwrap(), Utc);
     }
 }

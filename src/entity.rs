@@ -86,12 +86,134 @@ impl EntityManager {
         self.0.get_grouped_tables(self)
     }
 
-    /// insert to table the values of this struct
-    /// TODO: sqlite3 doesn't support the RETURNING keyword
     pub fn insert<T, R>(&self, entities: &[&T]) -> Result<Vec<R>, DbError>
     where
         T: ToTableName + ToColumnNames + ToDao,
         R: FromDao + ToColumnNames,
+    {
+        match self.0 {
+            DBPlatform::Sqlite(_) => self.insert_simple(entities),
+            DBPlatform::Postgres(_) => self.insert_bulk_with_returning_support(entities),
+        }
+    }
+
+    pub fn insert_bulk_with_returning_support<T, R>(
+        &self,
+        entities: &[&T],
+    ) -> Result<Vec<R>, DbError>
+    where
+        T: ToTableName + ToColumnNames + ToDao,
+        R: FromDao + ToColumnNames,
+    {
+        let columns = T::to_column_names();
+        let mut sql = self.build_insert_clause(entities);
+        let return_columns = R::to_column_names();
+        sql += &self.build_returning_clause(return_columns);
+
+        let mut values: Vec<Value> = Vec::with_capacity(entities.len() * columns.len());
+        for entity in entities {
+            let mut dao = entity.to_dao();
+            for col in columns.iter() {
+                let value = dao.get_value(&col.name);
+                match value {
+                    Some(value) => values.push(value.clone()),
+                    None => values.push(Value::Nil),
+                }
+            }
+        }
+        let bvalues: Vec<&Value> = values.iter().collect();
+        let rows = self.0.execute_sql_with_return(&sql, &bvalues)?;
+        let mut retrieved_entities = vec![];
+        for dao in rows.iter() {
+            let retrieved = R::from_dao(&dao);
+            retrieved_entities.push(retrieved);
+        }
+        Ok(retrieved_entities)
+    }
+
+    pub fn single_insert<T>(&self, entity: &T) -> Result<(), DbError>
+    where
+        T: ToTableName + ToColumnNames + ToDao,
+    {
+        let columns = T::to_column_names();
+        let sql = self.build_insert_clause(&[entity]);
+        let dao = entity.to_dao();
+        let mut values: Vec<Value> = Vec::with_capacity(columns.len());
+        for col in columns.iter() {
+            let value = dao.get_value(&col.name);
+            match value {
+                Some(value) => values.push(value.clone()),
+                None => values.push(Value::Nil),
+            }
+        }
+        let bvalues: Vec<&Value> = values.iter().collect();
+        self.0.execute_sql_with_return(&sql, &bvalues)?;
+        Ok(())
+    }
+
+    pub fn insert_simple<T, R>(&self, entities: &[&T]) -> Result<Vec<R>, DbError>
+    where
+        T: ToTableName + ToColumnNames + ToDao,
+        R: FromDao + ToColumnNames,
+    {
+        let return_columns = R::to_column_names();
+        let return_column_names = return_columns
+            .iter()
+            .map(|rc| rc.name.to_owned())
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let table = T::to_table_name();
+        //TODO: last_insert_rowid() doesn't seem to return value
+        let last_insert_sql = format!(
+            "\
+             SELECT {} \
+             FROM {} \
+             WHERE ROWID = (\
+             SELECT LAST_INSERT_ROWID() FROM {})",
+            return_column_names,
+            table.complete_name(),
+            table.complete_name()
+        );
+        //TODO: This is using a hack by getting the MAX(ROWID)
+        /*
+        let last_insert_sql = format!(
+            "\
+             SELECT {} \
+             FROM {} \
+             WHERE ROWID = (\
+             SELECT MAX(ROWID) FROM {})",
+            return_column_names,
+            table.complete_name(),
+            table.complete_name()
+        );
+        */
+        let mut retrieved_entities = vec![];
+        println!("sql: {}", last_insert_sql);
+        for entity in entities {
+            self.single_insert(*entity)?;
+            let retrieved = self.execute_sql_with_return(&last_insert_sql, &[])?;
+            retrieved_entities.extend(retrieved);
+        }
+        Ok(retrieved_entities)
+    }
+
+    fn build_returning_clause(&self, return_columns: Vec<rustorm_dao::ColumnName>) -> String {
+        format!(
+            "\nRETURNING \n{}",
+            return_columns
+                .iter()
+                .map(|rc| rc.name.to_owned())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    }
+
+    /// insert to table the values of this struct
+    /// TODO: sqlite3 doesn't support the RETURNING keyword
+    fn build_insert_clause<T>(&self, entities: &[&T]) -> String
+    where
+        T: ToTableName + ToColumnNames + ToDao,
     {
         let table = T::to_table_name();
         let columns = T::to_column_names();
@@ -123,35 +245,7 @@ impl EntityManager {
             })
             .collect::<Vec<_>>()
             .join(", ");
-        let return_columns = R::to_column_names();
-        sql += &format!(
-            "\nRETURNING \n{}",
-            return_columns
-                .iter()
-                .map(|rc| rc.name.to_owned())
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-
-        let mut values: Vec<Value> = Vec::with_capacity(entities.len() * columns.len());
-        for entity in entities {
-            let mut dao = entity.to_dao();
-            for col in columns.iter() {
-                let value = dao.get_value(&col.name);
-                match value {
-                    Some(value) => values.push(value.clone()),
-                    None => values.push(Value::Nil),
-                }
-            }
-        }
-        let bvalues: Vec<&Value> = values.iter().collect();
-        let rows = self.0.execute_sql_with_return(&sql, &bvalues)?;
-        let mut retrieved_entities = vec![];
-        for dao in rows.iter() {
-            let retrieved = R::from_dao(&dao);
-            retrieved_entities.push(retrieved);
-        }
-        Ok(retrieved_entities)
+        sql
     }
 
     pub fn execute_sql_with_return<'a, R>(

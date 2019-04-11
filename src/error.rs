@@ -8,7 +8,7 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use sq::SqliteError;
-    use sqlite3;
+    use rusqlite;
 }}
 
 #[derive(Debug)]
@@ -63,8 +63,8 @@ impl From<PostgresError> for DbError {
 }
 
 #[cfg(feature = "with-sqlite")]
-impl From<sqlite3::Error> for DbError {
-    fn from(e: sqlite3::Error) -> Self {
+impl From<rusqlite::Error> for DbError {
+    fn from(e: rusqlite::Error) -> Self {
         DbError::PlatformError(PlatformError::SqliteError(SqliteError::from(e)))
     }
 }

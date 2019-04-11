@@ -1,11 +1,10 @@
 use r2d2;
-use r2d2_sqlite3;
-use sqlite3;
+use r2d2_sqlite;
+use rusqlite;
 use error::DbError;
 use error::PlatformError;
 use database::Database;
 use rustorm_dao::{Value,Rows};
-use sqlite3::Type;
 use table::Table;
 use entity::EntityManager;
 use rustorm_dao::TableName;
@@ -23,66 +22,66 @@ use users::User;
 use database::DatabaseName;
 use users::Role;
 
-pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_sqlite3::SqliteConnectionManager>, SqliteError> {
+pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>, SqliteError> {
     info!("initializing pool: {}", db_url);
-    let manager = r2d2_sqlite3::SqliteConnectionManager::file(db_url);
+    let manager = r2d2_sqlite::SqliteConnectionManager::file(db_url);
     let pool = r2d2::Pool::new(manager)?;
     Ok(pool)
 }
 
 pub fn test_connection(db_url: &str) -> Result<(), SqliteError> {
-    let manager = r2d2_sqlite3::SqliteConnectionManager::file(db_url);
+    let manager = r2d2_sqlite::SqliteConnectionManager::file(db_url);
     let mut conn = manager.connect()?;
     manager.is_valid(&mut conn)?;
     Ok(())
 }
 
-pub struct SqliteDB(pub r2d2::PooledConnection<r2d2_sqlite3::SqliteConnectionManager>);
+pub struct SqliteDB(pub r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>);
 
-fn to_sq_value(val: &Value) -> sqlite3::Value {
+fn to_sq_value(val: &Value) -> rusqlite::types::Value {
     use num_traits::ToPrimitive;
     match *val{
-        Value::Text(ref v) => sqlite3::Value::String(v.to_owned()),
+        Value::Text(ref v) => rusqlite::types::Value::Text(v.to_owned()),
         Value::Bool(v) => {
-            sqlite3::Value::Integer(if v{1}else{0})
+            rusqlite::types::Value::Integer(if v{1}else{0})
         }
         Value::Tinyint(v) => {
-            sqlite3::Value::Integer(v as i64)
+            rusqlite::types::Value::Integer(v as i64)
         }
         Value::Smallint(v) => {
-            sqlite3::Value::Integer(v as i64)
+            rusqlite::types::Value::Integer(v as i64)
         }
         Value::Int(v) => {
-            sqlite3::Value::Integer(v as i64)
+            rusqlite::types::Value::Integer(v as i64)
         }
         Value::Bigint(v) => {
-            sqlite3::Value::Integer(v as i64)
+            rusqlite::types::Value::Integer(v as i64)
         }
 
         Value::Float(v) => {
-            sqlite3::Value::Float(v as f64)
+            rusqlite::types::Value::Real(v as f64)
         }
         Value::Double(v) => {
-            sqlite3::Value::Float(v as f64)
+            rusqlite::types::Value::Real(v as f64)
         }
         Value::BigDecimal(ref v) => {
             match v.to_f64(){
-                Some(v) => sqlite3::Value::Float(v as f64),
+                Some(v) => rusqlite::types::Value::Real(v as f64),
                 None => panic!("unable to convert bigdecimal"),
             }
         }
-        Value::Blob(ref v) => sqlite3::Value::Binary(v.clone()),
-        Value::ImageUri(ref v) => sqlite3::Value::String(v.clone()),
-        Value::Char(v) => sqlite3::Value::String(format!("{}", v)),
-        Value::Json(ref v) => sqlite3::Value::String(v.clone()),
-        Value::Uuid(ref v) => sqlite3::Value::String(v.to_string()),
-        Value::Date(ref v) =>  sqlite3::Value::String(v.to_string()),
-        Value::Nil => sqlite3::Value::Null,
+        Value::Blob(ref v) => rusqlite::types::Value::Blob(v.clone()),
+        Value::ImageUri(ref v) => rusqlite::types::Value::Text(v.clone()),
+        Value::Char(v) => rusqlite::types::Value::Text(format!("{}", v)),
+        Value::Json(ref v) => rusqlite::types::Value::Text(v.clone()),
+        Value::Uuid(ref v) => rusqlite::types::Value::Text(v.to_string()),
+        Value::Date(ref v) =>  rusqlite::types::Value::Text(v.to_string()),
+        Value::Nil => rusqlite::types::Value::Null,
         _ => panic!("not yet handled: {:?}", val),
     }
 }
 
-fn to_sq_values(params: &[&Value]) -> Vec<sqlite3::Value> {
+fn to_sq_values(params: &[&Value]) -> Vec<rusqlite::types::Value> {
     let mut sql_values = Vec::with_capacity(params.len());
     for param in params{
         let sq_val = to_sq_value(param);
@@ -91,56 +90,45 @@ fn to_sq_values(params: &[&Value]) -> Vec<sqlite3::Value> {
     sql_values
 }
 
+
 impl Database for SqliteDB{
 
     fn execute_sql_with_return(&self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
         info!("executing sql: {}", sql);
         info!("params: {:?}", params);
         let stmt = self.0.prepare(&sql);
+                let column_names = if let Ok(ref stmt) = stmt {
+                    stmt.column_names()
+                }else{
+                    vec![]
+                };
         match stmt{
             Ok(mut stmt) => {
                 let sq_values = to_sq_values(params);
-                for (i,sq_val) in sq_values.iter().enumerate(){
-                    stmt.bind(i + 1, sq_val)?;
-                }
-                let column_names = stmt.column_names()
-                    .map_err(|e|
-                            DbError::PlatformError(
-                                PlatformError::SqliteError(
-                                    SqliteError::GenericError(e))))?;
                 let column_names: Vec<String> = column_names
                     .iter()
                     .map(|c| c.to_string())
                     .collect();
+                let column_count = stmt.column_count();
                  let mut records = Rows::new(column_names);
-                 while let Ok(sqlite3::State::Row) = stmt.next(){
-                     let mut record: Vec<Value>  = vec![];
-                     for i in 0..stmt.columns(){
-                         macro_rules! match_type {
-                             ($ty: ty, $variant: ident) => {
-                                     {
-                                      let raw: Result<$ty,sqlite3::Error> = stmt.read(i);
-                                      match raw{
-                                          Ok(raw) => Ok(Value::$variant(raw)),
-                                          Err(e) => Err(DbError::PlatformError(
-                                                     PlatformError::SqliteError(
-                                                         SqliteError::GenericError(e)))),
-                                     }
-                                 }
+                 if let Ok(mut rows) = stmt.query(sq_values){
+                     while let Some(row) = rows.next()?{
+                         let mut record: Vec<Value>  = vec![];
+                         for i in 0..column_count{
+                             let raw = row.get(i);
+                             if let Ok(raw) = raw{
+                                 let value = match raw{
+                                    rusqlite::types::Value::Blob(v) => Value::Blob(v),
+                                    rusqlite::types::Value::Real(v) => Value::Double(v),
+                                    rusqlite::types::Value::Integer(v) => Value::Bigint(v),
+                                    rusqlite::types::Value::Text(v) => Value::Text(v),
+                                    rusqlite::types::Value::Null => Value::Nil,
+                                };
+                                record.push(value);
                              }
                          }
-                         let ty = stmt.kind(i);
-                         let value:Result<Value,DbError> =
-                             match ty{
-                                Type::Binary => match_type!(Vec<u8>, Blob),
-                                Type::Float => match_type!(f64, Double),
-                                Type::Integer => match_type!(i64, Bigint),
-                                Type::String => match_type!(String, Text),
-                                Type::Null => Ok(Value::Nil),
-                            };
-                         record.push(value?);
+                        records.push(record);
                      }
-                     records.push(record);
                  }
                  Ok(records)
             },
@@ -151,6 +139,7 @@ impl Database for SqliteDB{
             }
         }
     }
+
 
     #[allow(unused_variables)]
     fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
@@ -232,7 +221,7 @@ impl Database for SqliteDB{
 
                                 }
                             SqlType::Uuid => {
-                                if default == "uuid_generate_v4()"{
+                                if ic_default == "uuid_generate_v4()"{
                                    Literal::UuidGenerateV4
                                 }
                                 else{
@@ -246,22 +235,23 @@ impl Database for SqliteDB{
                             SqlType::Timestamp
                                 | SqlType::TimestampTz
                                 => {
-                                    if default == "now()" || default == "timezone('utc'::text, now())"
+                                    if ic_default == "now()" || ic_default == "timezone('utc'::text, now())"
+                                        || ic_default == "current_timestamp"
                                     {
                                         Literal::CurrentTimestamp
                                     }
                                     else{
-                                        panic!("timestamp other than now is not covered")
+                                        panic!("timestamp other than now is not covered, got: {}", ic_default)
                                     }
                                 }
                             SqlType::Date => {
                                 // timestamp converted to text then converted to date
                                 // is equivalent to today()
-                                if default == "today()" || default == "now()" || default =="('now'::text)::date" {
+                                if ic_default == "today()" || ic_default == "now()" || ic_default =="('now'::text)::date" {
                                     Literal::CurrentDate
                                 }
                                 else{
-                                    panic!("date other than today is not covered in {:?}", self)
+                                    panic!("date other than today, now is not covered in {:?}", self)
                                 }
                             }
                             SqlType::Varchar
@@ -284,7 +274,7 @@ impl Database for SqliteDB{
             fn get_sql_type_capacity(&self) -> (SqlType, Option<Capacity>) {
                 let (dtype,capacity) = common::extract_datatype_with_capacity(&self.data_type);
                 let sql_type = match &*dtype{
-                    "int" => SqlType::Int,
+                    "int" | "integer" => SqlType::Int,
                     "smallint" => SqlType::Smallint,
                     "varchar" => SqlType::Text,
                     "character varying" => SqlType::Text,
@@ -467,8 +457,8 @@ fn get_foreign_keys(em: &EntityManager, table: &TableName) -> Result<Vec<Foreign
 
 #[derive(Debug)]
 pub enum SqliteError{
-    GenericError(sqlite3::Error),
-    SqlError(sqlite3::Error, String),
+    GenericError(rusqlite::Error),
+    SqlError(rusqlite::Error, String),
     PoolInitializationError(r2d2::Error),
 }
 
@@ -478,8 +468,8 @@ impl From<r2d2::Error> for SqliteError{
     }
 }
 
-impl From<sqlite3::Error> for SqliteError {
-    fn from(e: sqlite3::Error) -> Self {
+impl From<rusqlite::Error> for SqliteError {
+    fn from(e: rusqlite::Error) -> Self {
         SqliteError::GenericError(e)
     }
 }
@@ -493,7 +483,7 @@ mod test{
 
     use column::Literal::Null;
     use column::ColumnConstraint::{NotNull,DefaultValue};
-    use types::SqlType::{Numeric,Text,Int,Timestamp};
+    use types::SqlType::{Text,Int,Timestamp};
     use column::Capacity::Limit;
 
     #[test]
@@ -844,7 +834,7 @@ mod test{
                         },
                         comment: None,
                         specification: ColumnSpecification {
-                            sql_type: Numeric,
+                            sql_type: Int,
                             capacity: None,
                             constraints: vec![
                                 NotNull,
@@ -929,7 +919,7 @@ mod test{
                             constraints: vec![
                                 NotNull,
                                 DefaultValue(
-                                    Null
+                                    Literal::CurrentTimestamp
                                 )
                             ]
                         },
