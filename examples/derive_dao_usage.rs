@@ -1,3 +1,4 @@
+#![deny(warning)]
 use rustorm::FromDao;
 use rustorm_dao::ToDao;
 use rustorm_dao::ToTableName;

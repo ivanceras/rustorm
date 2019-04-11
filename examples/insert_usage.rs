@@ -1,18 +1,12 @@
-#[macro_use]
-extern crate rustorm_codegen;
-extern crate chrono;
-extern crate rustorm;
-extern crate rustorm_dao;
-extern crate rustorm_dao as dao;
 
+#![deny(warnings)]
 use chrono::offset::Utc;
-use chrono::{DateTime, NaiveDate};
+use chrono::{DateTime};
 use rustorm::DbError;
 use rustorm::Pool;
-use rustorm::TableName;
-use rustorm_dao::ToColumnNames;
-use rustorm_dao::ToTableName;
-use rustorm_dao::{FromDao, ToDao};
+use rustorm::ToColumnNames;
+use rustorm::ToTableName;
+use rustorm::{FromDao, ToDao};
 
 fn main() {
     mod for_insert {

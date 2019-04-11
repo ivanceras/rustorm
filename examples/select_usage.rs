@@ -1,14 +1,7 @@
-#[macro_use]
-extern crate rustorm_codegen;
-extern crate rustorm;
-extern crate rustorm_dao;
-extern crate rustorm_dao as dao;
+#![deny(warnings)]
 use rustorm::DbError;
 use rustorm::Pool;
-use rustorm::TableName;
-use rustorm_dao::ToColumnNames;
-use rustorm_dao::ToTableName;
-use rustorm_dao::{FromDao, ToDao};
+use rustorm::{FromDao, ToTableName, ToColumnNames};
 
 #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
 struct Actor {

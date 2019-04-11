@@ -1,15 +1,7 @@
-#[macro_use]
-extern crate rustorm_codegen;
-extern crate rustorm;
-extern crate rustorm_dao;
-extern crate rustorm_dao as dao;
+#![deny(warnings)]
 use rustorm::DbError;
-use rustorm::Pool;
 use rustorm::Rows;
-use rustorm::TableName;
-use rustorm_dao::ToColumnNames;
-use rustorm_dao::ToTableName;
-use rustorm_dao::{FromDao, ToDao};
+use rustorm::Pool;
 
 fn main() {
     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
