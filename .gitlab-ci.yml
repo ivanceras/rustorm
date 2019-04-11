@@ -1,0 +1,27 @@
+image: rustlang/rust:nightly
+
+services:
+  - postgres:latest
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+before_script:
+  - cd .. && git clone https://github.com/ivanceras/bazaar && cd -
+  - cd .. && git clone https://github.com/ivanceras/sakila && cd -
+  - cd .. && git clone https://github.com/ivanceras/dota-sql && cd -
+  - cd ../dota-sql/data/ && sh reimport.sh && cd -
+  - cd ../bazaar/scripts && sh setup.sh && cd -
+  - apt update
+  - apt install -y postgresql-client
+  - cp ../sakila/sqlite-sakila-db/sakila.db .
+
+stages:
+  - test
+
+test:
+  script:
+    - cargo test --features "with-postgres with-sqlite"
+    - cargo test --features "with-postgres"
+    - cargo test --features "with-sqlite"
+
