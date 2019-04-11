@@ -86,16 +86,16 @@ impl EntityManager {
         self.0.get_grouped_tables(self)
     }
 
-    pub fn insert<T, R>(&self, entities: &[&T]) -> Result<Vec<R>, DbError>
+    pub fn insert<T, R>(&self, _entities: &[&T]) -> Result<Vec<R>, DbError>
     where
         T: ToTableName + ToColumnNames + ToDao,
         R: FromDao + ToColumnNames,
     {
         match self.0 {
             #[cfg(feature = "with-sqlite")]
-            DBPlatform::Sqlite(_) => self.insert_simple(entities),
+            DBPlatform::Sqlite(_) => self.insert_simple(_entities),
             #[cfg(feature = "with-postgres")]
-            DBPlatform::Postgres(_) => self.insert_bulk_with_returning_support(entities),
+            DBPlatform::Postgres(_) => self.insert_bulk_with_returning_support(_entities),
         }
     }
 
