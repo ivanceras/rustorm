@@ -10,12 +10,12 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use sq::{self, SqliteDB};
 }}
 
+use dao_manager::DaoManager;
 use entity::EntityManager;
 use error::DbError;
 use error::{ConnectError, ParseError};
 use platform::DBPlatform;
 use platform::Platform;
-use dao_manager::DaoManager;
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 

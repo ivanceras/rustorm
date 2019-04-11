@@ -20,7 +20,6 @@ pub struct Table {
 }
 
 impl Table {
-
     pub fn complete_name(&self) -> String {
         self.name.complete_name()
     }
@@ -37,9 +36,11 @@ impl Table {
         let mut primary: Vec<&ColumnName> = vec![];
         for key in &self.table_key {
             match *key {
-                TableKey::PrimaryKey(ref pk) => for col in &pk.columns {
-                    primary.push(col)
-                },
+                TableKey::PrimaryKey(ref pk) => {
+                    for col in &pk.columns {
+                        primary.push(col)
+                    }
+                }
                 _ => (),
             }
         }
@@ -228,9 +229,9 @@ pub struct SchemaContent {
 #[cfg(test)]
 #[cfg(feature = "with-postgres")]
 mod test {
+    use pool::Pool;
     use rustorm_dao::ColumnName;
     use rustorm_dao::TableName;
-    use pool::Pool;
     use table::ForeignKey;
 
     #[test]

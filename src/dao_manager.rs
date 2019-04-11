@@ -1,9 +1,9 @@
-use rustorm_dao::Rows;
-use rustorm_dao::Value;
 use error::DataError;
 use error::DbError;
 use platform::DBPlatform;
 use rustorm_dao::Dao;
+use rustorm_dao::Rows;
+use rustorm_dao::Value;
 
 pub struct DaoManager(pub DBPlatform);
 
@@ -19,7 +19,7 @@ impl DaoManager {
         params: &[&Value],
     ) -> Result<Vec<Dao>, DbError> {
         let rows = self.0.execute_sql_with_return(sql, params)?;
-        let daos:Vec<Dao> = rows.iter().collect();
+        let daos: Vec<Dao> = rows.iter().collect();
         Ok(daos)
     }
 
@@ -44,8 +44,7 @@ impl DaoManager {
         sql: &str,
         params: &[&Value],
     ) -> Result<Option<Dao>, DbError> {
-        let result: Result<Vec<Dao>, DbError> =
-            self.execute_sql_with_records_return(sql, params);
+        let result: Result<Vec<Dao>, DbError> = self.execute_sql_with_records_return(sql, params);
         match result {
             Ok(mut result) => match result.len() {
                 0 => Ok(None),

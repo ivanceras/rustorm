@@ -1,14 +1,14 @@
 #[macro_use]
 extern crate rustorm_codegen;
-extern crate rustorm_dao as dao;
-extern crate rustorm_dao;
 extern crate rustorm;
+extern crate rustorm_dao;
+extern crate rustorm_dao as dao;
+use rustorm::DbError;
+use rustorm::Pool;
 use rustorm::TableName;
 use rustorm_dao::ToColumnNames;
 use rustorm_dao::ToTableName;
 use rustorm_dao::{FromDao, ToDao};
-use rustorm::Pool;
-use rustorm::DbError;
 
 #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
 struct Actor {
@@ -16,7 +16,7 @@ struct Actor {
     first_name: String,
 }
 
-fn main(){
+fn main() {
     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
     let mut pool = Pool::new();
     let em = pool.em(db_url).unwrap();

@@ -1,8 +1,8 @@
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use column::Capacity;
-use rustorm_dao::Value;
 use num_traits::ToPrimitive;
+use rustorm_dao::Value;
 use std::str::FromStr;
 use types::SqlType;
 
@@ -132,10 +132,13 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
                     Value::Char(v.chars().next().unwrap())
                 }
                 SqlType::Int => {
-                    if let Ok(v) = v.parse::<i32>(){
+                    if let Ok(v) = v.parse::<i32>() {
                         Value::Int(v)
-                    }else{
-                        panic!("unsupported conversion from {:?} to {:?}", value, required_type);
+                    } else {
+                        panic!(
+                            "unsupported conversion from {:?} to {:?}",
+                            value, required_type
+                        );
                     }
                 }
                 _ => panic!(

@@ -5,8 +5,8 @@ use rustorm_dao::FromDao;
 mod previlege;
 
 /// This is the user object mapped from pg_authid
-#[derive(Debug,Serialize,Deserialize, FromDao)]
-pub struct User{
+#[derive(Debug, Serialize, Deserialize, FromDao)]
+pub struct User {
     sysid: i32,
     username: String,
     password: String,
@@ -21,10 +21,7 @@ pub struct User{
     conn_limit: Option<i32>,
 }
 
-
-#[derive(Debug,Serialize,Deserialize, FromDao)]
-pub struct Role{
+#[derive(Debug, Serialize, Deserialize, FromDao)]
+pub struct Role {
     pub role_name: String,
 }
-
-

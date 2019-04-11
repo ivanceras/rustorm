@@ -1,22 +1,21 @@
+use database::Database;
+use database::DatabaseName;
+use error::{DataError, DbError};
+use platform::DBPlatform;
 use rustorm_dao::TableName;
 use rustorm_dao::ToColumnNames;
 use rustorm_dao::ToTableName;
+use rustorm_dao::ToValue;
+use rustorm_dao::Value;
 use rustorm_dao::{FromDao, ToDao};
-use rustorm_dao::{Value};
-use database::Database;
-use error::{DataError, DbError};
-use platform::DBPlatform;
 use table::SchemaContent;
 use table::Table;
-use users::User;
 use users::Role;
-use database::DatabaseName;
-use rustorm_dao::ToValue;
+use users::User;
 
 pub struct EntityManager(pub DBPlatform);
 
 impl EntityManager {
-
     pub fn set_session_user(&self, username: &str) -> Result<(), DbError> {
         //let sql = format!("SET SESSION AUTHORIZATION '{}'", username);
         let sql = format!("SET SESSION ROLE '{}'", username);
@@ -145,7 +144,7 @@ impl EntityManager {
                 }
             }
         }
-        let bvalues:Vec<&Value> = values.iter().collect();
+        let bvalues: Vec<&Value> = values.iter().collect();
         let rows = self.0.execute_sql_with_return(&sql, &bvalues)?;
         let mut retrieved_entities = vec![];
         for dao in rows.iter() {
@@ -163,7 +162,7 @@ impl EntityManager {
     where
         R: FromDao,
     {
-        let values:Vec<Value> = params.iter().map(|p|p.to_value()).collect();
+        let values: Vec<Value> = params.iter().map(|p| p.to_value()).collect();
         let bvalues: Vec<&Value> = values.iter().collect();
         let rows = self.0.execute_sql_with_return(sql, &bvalues)?;
         Ok(rows.iter().map(|dao| R::from_dao(&dao)).collect::<Vec<R>>())
@@ -215,11 +214,11 @@ mod test_pg {
     use super::*;
     use chrono::offset::Utc;
     use chrono::{DateTime, NaiveDate};
+    use pool::Pool;
     use rustorm_dao::TableName;
     use rustorm_dao::ToColumnNames;
     use rustorm_dao::ToTableName;
     use rustorm_dao::{FromDao, ToDao};
-    use pool::Pool;
     use uuid::Uuid;
 
     #[test]

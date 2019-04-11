@@ -80,7 +80,16 @@
 //!           }
 //!       }
 //!
-//!       let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+//!       let db_url = cfg_if! {
+//!       if #[cfg(feature="with-postgres")] {
+//!         "postgres://postgres:p0stgr3s@localhost/sakila"
+//!         } else if #[cfg(feature = "with-sqlite")] {
+//!         "sqlite://sakila.db"
+//!         }
+//!         else {
+//!         panic!("add --features flag, ie: --features=\"with-postgres\" ");
+//!         }
+//!       };
 //!       let mut pool = Pool::new();
 //!       let em = pool.em(db_url).unwrap();
 //!       let tom_cruise = for_insert::Actor {
@@ -152,33 +161,33 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
 
 pub mod column;
 pub mod common;
+mod dao_manager;
 mod database;
 mod entity;
 pub mod error;
 mod platform;
 pub mod pool;
-mod dao_manager;
 pub mod table;
 pub mod types;
-mod util;
 mod users;
+mod util;
 
 pub use column::Column;
+pub use dao_manager::DaoManager;
+pub use database::Database;
+pub use database::DatabaseName;
+pub use entity::EntityManager;
+pub use error::DbError;
+pub use pool::Pool;
 pub use rustorm_dao::ColumnName;
+pub use rustorm_dao::Dao;
 pub use rustorm_dao::Rows;
 pub use rustorm_dao::TableName;
 pub use rustorm_dao::ToColumnNames;
 pub use rustorm_dao::ToTableName;
 pub use rustorm_dao::Value;
 pub use rustorm_dao::{FromDao, ToDao};
-pub use database::Database;
-pub use entity::EntityManager;
-pub use error::DbError;
-pub use pool::Pool;
-pub use rustorm_dao::Dao;
-pub use dao_manager::DaoManager;
 pub use table::Table;
-pub use database::DatabaseName;
 
 #[cfg(test)]
 mod test {

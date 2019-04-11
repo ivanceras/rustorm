@@ -1,11 +1,11 @@
-use ::ColumnName;
-use ::TableName;
 use users::User;
+use ColumnName;
+use TableName;
 
 /// User can have previlege to tables, to columns
 /// The table models can be filtered depending on how much
 ///  and which columns it has privilege
-enum Privilege{
+enum Privilege {
     Select,
     Insert,
     Update,
@@ -26,10 +26,9 @@ enum Privilege{
 ///     privilege text[],
 ///  )
 /// User privileges for each tables
-struct UserPrivilege{
+struct UserPrivilege {
     user: User,
     table_name: TableName,
     column_names: Vec<ColumnName>,
     privilege: Vec<Privilege>,
 }
-
