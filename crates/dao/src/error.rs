@@ -1,8 +1,8 @@
+use crate::Value;
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt;
 use std::fmt::Debug;
-use crate::Value;
 
 #[derive(Debug)]
 pub enum ConvertError {

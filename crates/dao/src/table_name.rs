@@ -1,5 +1,5 @@
-use serde_derive::{Serialize, Deserialize};
 use crate::common;
+use serde_derive::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TableName {
@@ -49,12 +49,10 @@ impl TableName {
     pub fn safe_complete_name(&self) -> String {
         match self.schema {
             Some(ref schema) => format!("{}.{}", schema, self.safe_name()),
-            None => self.name.to_owned()
+            None => self.name.to_owned(),
         }
     }
 }
-
-
 
 pub trait ToTableName {
     /// extract the table name from a struct

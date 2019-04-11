@@ -1,7 +1,7 @@
-use serde_derive::{Serialize, Deserialize};
 use crate::Dao;
-use std::slice;
 use crate::Value;
+use serde_derive::{Deserialize, Serialize};
+use std::slice;
 
 /// use this to store data retrieved from the database
 /// This is also slimmer than Vec<Dao> when serialized
@@ -55,7 +55,7 @@ pub struct Iter<'a> {
     iter: slice::Iter<'a, Vec<Value>>,
 }
 
-impl <'a>Iterator for Iter<'a> {
+impl<'a> Iterator for Iter<'a> {
     type Item = Dao;
 
     fn next(&mut self) -> Option<Dao> {
@@ -82,7 +82,7 @@ impl <'a>Iterator for Iter<'a> {
     }
 }
 
-impl <'a>ExactSizeIterator for Iter<'a> {}
+impl<'a> ExactSizeIterator for Iter<'a> {}
 
 #[cfg(test)]
 mod test {

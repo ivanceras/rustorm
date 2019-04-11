@@ -1,10 +1,10 @@
-use serde_derive::{Serialize, Deserialize};
+use crate::interval::Interval;
+use crate::ConvertError;
 use bigdecimal::BigDecimal;
 use chrono::{DateTime, Utc};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use crate::ConvertError;
 use geo::Point;
-use crate::interval::Interval;
+use serde_derive::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use uuid::Uuid;
 
@@ -43,8 +43,7 @@ pub enum Value {
     Array(Array),
 }
 
-impl Value{
-
+impl Value {
     pub fn is_nil(&self) -> bool {
         *self == Value::Nil
     }
@@ -177,11 +176,10 @@ impl_from!(NaiveTime, Time);
 impl_from!(DateTime<Utc>, Timestamp);
 
 impl<'a> From<&'a str> for Value {
-    fn from(f: &'a str) -> Value{
+    fn from(f: &'a str) -> Value {
         Value::Text(f.to_string())
     }
 }
-
 
 impl From<Vec<String>> for Value {
     fn from(f: Vec<String>) -> Value {
@@ -221,7 +219,6 @@ macro_rules! impl_tryfrom {
 
     }
 }
-
 
 macro_rules! impl_tryfrom_option {
     ($ty:ty) => {
@@ -272,13 +269,16 @@ impl_tryfrom!(char, "char", Char);
 impl_tryfrom!(Uuid, "Uuid", Uuid);
 impl_tryfrom!(NaiveDate, "NaiveDate", Date);
 
-impl<'a> TryFrom<&'a Value> for NaiveDateTime{
+impl<'a> TryFrom<&'a Value> for NaiveDateTime {
     type Error = ConvertError;
 
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
-        match *value{
+        match *value {
             Value::Text(ref v) => Ok(parse_naive_date_time(v)),
-            _ => Err(ConvertError::NotSupported(format!("{:?}",value), "NaiveDateTime".to_string())),
+            _ => Err(ConvertError::NotSupported(
+                format!("{:?}", value),
+                "NaiveDateTime".to_string(),
+            )),
         }
     }
 }
@@ -297,17 +297,17 @@ fn parse_naive_date_time(v: &str) -> NaiveDateTime {
     }
 }
 
-
-impl<'a> TryFrom<&'a Value> for DateTime<Utc>{
+impl<'a> TryFrom<&'a Value> for DateTime<Utc> {
     type Error = ConvertError;
 
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
-        match *value{
-            Value::Text(ref v) => {
-                Ok(DateTime::<Utc>::from_utc(parse_naive_date_time(v), Utc))
-            }
+        match *value {
+            Value::Text(ref v) => Ok(DateTime::<Utc>::from_utc(parse_naive_date_time(v), Utc)),
             Value::Timestamp(v) => Ok(v),
-            _ => Err(ConvertError::NotSupported(format!("{:?}",value), "DateTime".to_string())),
+            _ => Err(ConvertError::NotSupported(
+                format!("{:?}", value),
+                "DateTime".to_string(),
+            )),
         }
     }
 }
@@ -359,25 +359,25 @@ mod tests {
     }
 
     #[test]
-    fn naive_date_parse(){
+    fn naive_date_parse() {
         let v = "2018-01-29";
-        let ts = NaiveDate::parse_from_str(v,"%Y-%m-%d");
+        let ts = NaiveDate::parse_from_str(v, "%Y-%m-%d");
         println!("{:?}", ts);
         assert!(ts.is_ok());
     }
 
     #[test]
-    fn naive_date_time_parse(){
+    fn naive_date_time_parse() {
         let v = "2018-01-29 09:58:20";
-        let ts = NaiveDateTime::parse_from_str(v,"%Y-%m-%d %H:%M:%S");
+        let ts = NaiveDateTime::parse_from_str(v, "%Y-%m-%d %H:%M:%S");
         println!("{:?}", ts);
         assert!(ts.is_ok());
     }
 
     #[test]
-    fn date_time_conversion(){
+    fn date_time_conversion() {
         let v = "2018-01-29 09:58:20";
-        let ts = NaiveDateTime::parse_from_str(v,"%Y-%m-%d %H:%M:%S");
+        let ts = NaiveDateTime::parse_from_str(v, "%Y-%m-%d %H:%M:%S");
         println!("{:?}", ts);
         assert!(ts.is_ok());
         DateTime::<Utc>::from_utc(ts.unwrap(), Utc);

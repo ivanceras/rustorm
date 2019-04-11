@@ -1,5 +1,5 @@
-use serde_derive::Serialize;
 use crate::common;
+use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub struct ColumnName {

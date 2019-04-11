@@ -1,11 +1,11 @@
 use crate::error::DaoError;
+use crate::Value;
 use serde::ser::{Serialize, Serializer};
+use serde::Deserialize;
+use serde::Deserializer;
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
-use crate::Value;
-use serde::Deserialize;
-use serde::Deserializer;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Dao(pub BTreeMap<String, Value>);
@@ -15,7 +15,7 @@ impl Dao {
         Dao(BTreeMap::new())
     }
 
-    pub fn insert<K,V>(&mut self, k: K, v: V)
+    pub fn insert<K, V>(&mut self, k: K, v: V)
     where
         K: ToString,
         V: Into<Value>,
@@ -24,11 +24,11 @@ impl Dao {
     }
 
     pub fn insert_value<K>(&mut self, k: K, value: &Value)
-        where K: ToString
+    where
+        K: ToString,
     {
         self.0.insert(k.to_string(), value.clone());
     }
-
 
     pub fn get<'a, T>(&'a self, s: &str) -> Result<T, DaoError<T>>
     where
@@ -60,7 +60,6 @@ impl<'a> Serialize for Dao {
     }
 }
 
-
 impl<'de> Deserialize<'de> for Dao {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -69,7 +68,6 @@ impl<'de> Deserialize<'de> for Dao {
         BTreeMap::deserialize(deserializer).map(|result| Dao(result))
     }
 }
-
 
 pub trait FromDao {
     /// convert dao to an instance of the corresponding struct of the model
