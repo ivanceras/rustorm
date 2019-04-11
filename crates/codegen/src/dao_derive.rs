@@ -20,7 +20,7 @@ pub fn impl_from_dao(ast: &syn::MacroInput) -> quote::Tokens {
     let from_fields: Vec<quote::Tokens> = fields
         .iter()
         .map(|&(field, _ty)| {
-            quote!{ #field: dao.get(stringify!(#field)).unwrap(),}
+            quote! { #field: dao.get(stringify!(#field)).unwrap(),}
         })
         .collect();
 
@@ -56,7 +56,7 @@ pub fn impl_to_dao(ast: &syn::MacroInput) -> quote::Tokens {
     let from_fields: &Vec<quote::Tokens> = &fields
         .iter()
         .map(|&(field, _ty)| {
-            quote!{ dao.insert(stringify!(#field), &self.#field);}
+            quote! { dao.insert(stringify!(#field), &self.#field);}
         })
         .collect();
 

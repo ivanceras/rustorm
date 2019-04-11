@@ -20,7 +20,7 @@ pub fn impl_to_column_names(ast: &syn::MacroInput) -> quote::Tokens {
     let from_fields: Vec<quote::Tokens> = fields
         .iter()
         .map(|&(field, _ty)| {
-            quote!{
+            quote! {
                 rustorm_dao::ColumnName {
                     name: stringify!(#field).into(),
                     table: Some(stringify!(#name).to_lowercase().into()),
