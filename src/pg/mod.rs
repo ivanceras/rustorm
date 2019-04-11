@@ -5,12 +5,12 @@ use bigdecimal::BigDecimal;
 use rustorm_dao::value::Array;
 use rustorm_dao::Interval;
 use rustorm_dao::Rows;
-use rustorm_dao::TableName;
-use rustorm_dao::Value;
-use database::Database;
-use entity::EntityManager;
-use error::DbError;
-use error::PlatformError;
+use crate::TableName;
+use crate::Value;
+use crate::Database;
+use crate::EntityManager;
+use crate::DbError;
+use crate::error::PlatformError;
 use geo::Point;
 use openssl::ssl::{SslConnectorBuilder, SslMethod};
 use postgres;
@@ -26,14 +26,17 @@ use serde_json;
 use std::error::Error;
 use std::fmt;
 use std::string::FromUtf8Error;
-use table::SchemaContent;
-use table::Table;
+use crate::table::SchemaContent;
+use crate::Table;
 use tree_magic;
-use users::User;
-use database::DatabaseName;
-use users::Role;
+use crate::users::User;
+use crate::database::DatabaseName;
+use crate::users::Role;
+use crate::*;
+use log::*;
 
 mod column_info;
+#[allow(unused)]
 mod interval;
 mod numeric;
 mod table_info;
@@ -48,6 +51,7 @@ pub fn init_pool(
     Ok(pool)
 }
 
+#[allow(unused)]
 fn get_tls() -> TlsMode {
     let mut builder = SslConnectorBuilder::new(SslMethod::tls()).unwrap();
     builder
@@ -420,12 +424,12 @@ impl fmt::Display for PostgresError {
 #[cfg(test)]
 mod test {
 
-    use super::*;
-    use rustorm_dao::Rows;
-    use rustorm_dao::Value;
-    use pool::{Pool, PooledConn};
     use postgres::Connection;
     use std::ops::Deref;
+    use crate::*;
+    use log::*;
+    use crate::Pool;
+    use crate::pool::*;
 
     #[test]
     fn connect_test_query() {

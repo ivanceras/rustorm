@@ -1,7 +1,9 @@
 use chrono::DateTime;
 use chrono::Utc;
-use rustorm_dao::FromDao;
+use rustorm_codegen::FromDao;
+use serde_derive::{Deserialize, Serialize};
 
+#[allow(unused)]
 mod previlege;
 
 /// This is the user object mapped from pg_authid

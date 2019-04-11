@@ -1,7 +1,7 @@
-use rustorm_dao::ColumnName;
-use rustorm_dao::FromDao;
-use rustorm_dao::TableName;
-use types::SqlType;
+use crate::types::SqlType;
+use crate::ColumnName;
+use crate::FromDao;
+use crate::TableName;
 use uuid::Uuid;
 
 #[derive(Debug, PartialEq, Clone)]

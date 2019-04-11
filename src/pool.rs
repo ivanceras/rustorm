@@ -1,21 +1,23 @@
+use cfg_if::cfg_if;
+use log::*;
 #[cfg(any(feature = "with-postgres", feature = "with-sqlite"))]
 use r2d2;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     use r2d2_postgres::PostgresConnectionManager;
-    use pg::{self, PostgresDB};
+    use crate::pg::{self, PostgresDB};
 }}
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use r2d2_sqlite::SqliteConnectionManager;
-    use sq::{self, SqliteDB};
+    use crate::sq::{self, SqliteDB};
 }}
 
-use dao_manager::DaoManager;
-use entity::EntityManager;
-use error::DbError;
-use error::{ConnectError, ParseError};
-use platform::DBPlatform;
-use platform::Platform;
+use crate::error::{ConnectError, ParseError};
+use crate::platform::DBPlatform;
+use crate::platform::Platform;
+use crate::DaoManager;
+use crate::DbError;
+use crate::EntityManager;
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 

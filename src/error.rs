@@ -1,13 +1,15 @@
+use cfg_if::cfg_if;
 use r2d2;
 use std::error::Error;
 use std::fmt;
 use url;
+
 cfg_if! {if #[cfg(feature = "with-postgres")]{
-    use pg::PostgresError;
+    use crate::pg::PostgresError;
 }}
 
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
-    use sq::SqliteError;
+    use crate::sq::SqliteError;
     use rusqlite;
 }}
 

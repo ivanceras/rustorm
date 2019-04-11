@@ -63,9 +63,9 @@ impl PgInterval {
 impl FromSql for PgInterval {
     fn from_sql(_ty: &Type, bytes: &[u8]) -> Result<Self, Box<Error + Send + Sync>> {
         let mut bytes = bytes.clone();
-        let ms = try!(bytes.read_i64::<BigEndian>());
-        let days = try!(bytes.read_i32::<BigEndian>());
-        let months = try!(bytes.read_i32::<BigEndian>());
+        let ms = bytes.read_i64::<BigEndian>()?;
+        let days = bytes.read_i32::<BigEndian>()?;
+        let months = bytes.read_i32::<BigEndian>()?;
         Ok(PgInterval::new(ms, days, months))
     }
 

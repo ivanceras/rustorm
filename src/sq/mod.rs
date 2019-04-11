@@ -1,26 +1,27 @@
 use r2d2;
 use r2d2_sqlite;
 use rusqlite;
-use error::DbError;
-use error::PlatformError;
-use database::Database;
-use rustorm_dao::{Value,Rows};
-use table::Table;
-use entity::EntityManager;
-use rustorm_dao::TableName;
-use table::SchemaContent;
+use crate::DbError;
+use crate::error::PlatformError;
+use crate::Database;
+use crate::{Value,Rows};
+use crate::Table;
+use crate::EntityManager;
+use crate::TableName;
+use crate::table::SchemaContent;
 use r2d2::ManageConnection;
-use rustorm_dao::FromDao;
-use types::SqlType;
-use common;
-use rustorm_dao::ColumnName;
-use table::{TableKey,ForeignKey, Key};
-use column::{Column, ColumnConstraint, Literal, ColumnSpecification, Capacity};
-use util;
+use crate::FromDao;
+use crate::types::SqlType;
+use crate::common;
+use crate::ColumnName;
+use crate::table::{TableKey,ForeignKey, Key};
+use crate::column::{Column, ColumnConstraint, Literal, ColumnSpecification, Capacity};
+use crate::util;
 use uuid::Uuid;
-use users::User;
-use database::DatabaseName;
-use users::Role;
+use crate::DatabaseName;
+use crate::users::User;
+use crate::users::Role;
+use log::*;
 
 pub fn init_pool(db_url: &str) -> Result<r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>, SqliteError> {
     info!("initializing pool: {}", db_url);
@@ -478,13 +479,13 @@ impl From<rusqlite::Error> for SqliteError {
 #[cfg(test)]
 mod test{
     use super::*;
-    use pool::Pool;
-    use pool;
+    use crate::Pool;
+    use crate::pool;
 
-    use column::Literal::Null;
-    use column::ColumnConstraint::{NotNull,DefaultValue};
-    use types::SqlType::{Text,Int,Timestamp};
-    use column::Capacity::Limit;
+    use crate::column::Literal::Null;
+    use crate::column::ColumnConstraint::{NotNull,DefaultValue};
+    use crate::types::SqlType::{Text,Int,Timestamp};
+    use crate::column::Capacity::Limit;
 
     #[test]
     fn test_get_all_tables(){

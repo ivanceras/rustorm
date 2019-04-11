@@ -1,3 +1,4 @@
+#![deny(warnings)]
 //!
 //! Rustorm is an SQL-centered ORM with focus on ease of use on conversion of database types to
 //! their appropriate rust type.
@@ -61,24 +62,16 @@
 //! Inserting and displaying the inserted records
 //!
 //! ```rust
-//! #[macro_use]
-//! extern crate rustorm_codegen;
-//! extern crate rustorm_dao;
-//! extern crate rustorm;
-//! extern crate chrono;
-//! #[macro_use]
-//! extern crate log;
-//! #[macro_use]
-//! extern crate cfg_if;
 //!
 //! use rustorm::TableName;
-//! use rustorm_dao::ToColumnNames;
-//! use rustorm_dao::ToTableName;
-//! use rustorm_dao::{FromDao, ToDao};
+//! use rustorm::ToColumnNames;
+//! use rustorm::ToTableName;
+//! use rustorm::{FromDao, ToDao};
 //! use rustorm::Pool;
 //! use rustorm::DbError;
 //! use chrono::offset::Utc;
 //! use chrono::{DateTime, NaiveDate};
+//! use cfg_if::cfg_if;
 //!
 //!cfg_if! {
 //!      if #[cfg(feature="with-postgres")] {
@@ -100,7 +93,14 @@
 //!
 //!   fn main() {
 //!       mod for_insert {
-//!           use super::*;
+//! use rustorm::TableName;
+//! use rustorm::ToColumnNames;
+//! use rustorm::ToTableName;
+//! use rustorm::{FromDao, ToDao};
+//! use rustorm::Pool;
+//! use rustorm::DbError;
+//! use chrono::offset::Utc;
+//! use chrono::{DateTime, NaiveDate};
 //!           #[derive(Debug, PartialEq, ToDao, ToColumnNames, ToTableName)]
 //!           pub struct Actor {
 //!               pub first_name: String,
@@ -109,7 +109,15 @@
 //!       }
 //!
 //!       mod for_retrieve {
-//!           use super::*;
+//!
+//! use rustorm::TableName;
+//! use rustorm::ToColumnNames;
+//! use rustorm::ToTableName;
+//! use rustorm::{FromDao, ToDao};
+//! use rustorm::Pool;
+//! use rustorm::DbError;
+//! use chrono::offset::Utc;
+//! use chrono::{DateTime, NaiveDate};
 //!           #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
 //!           pub struct Actor {
 //!               pub actor_id: i32,
@@ -147,33 +155,8 @@
 //! ```
 //! Rustorm is wholly used by [diwata](https://github.com/ivanceras/diwata)
 //!
-#![feature(external_doc)]
-#![deny(warnings)]
-#![allow(dead_code)]
-extern crate base64;
-extern crate bigdecimal;
-extern crate byteorder;
-#[macro_use]
-extern crate cfg_if;
-extern crate chrono;
-extern crate num_bigint;
-extern crate num_integer;
-extern crate num_traits;
-extern crate r2d2;
-#[macro_use]
-extern crate rustorm_codegen;
-extern crate rustorm_dao;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate geo;
-extern crate serde_json;
-extern crate time;
-extern crate tree_magic;
-extern crate url;
-extern crate uuid;
-#[macro_use]
-extern crate log;
+
+use cfg_if::cfg_if;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     extern crate r2d2_postgres;
@@ -200,55 +183,26 @@ pub mod pool;
 pub mod table;
 pub mod types;
 mod users;
-mod util;
+
+pub mod util;
 
 pub use column::Column;
 pub use dao_manager::DaoManager;
 pub use database::Database;
 pub use database::DatabaseName;
 pub use entity::EntityManager;
+pub use error::DataError;
 pub use error::DbError;
 pub use pool::Pool;
+pub use table::Table;
+
 pub use rustorm_dao::ColumnName;
 pub use rustorm_dao::Dao;
 pub use rustorm_dao::Rows;
 pub use rustorm_dao::TableName;
-pub use rustorm_dao::ToColumnNames;
-pub use rustorm_dao::ToTableName;
+pub use rustorm_dao::ToValue;
 pub use rustorm_dao::Value;
-pub use rustorm_dao::{FromDao, ToDao};
-pub use table::Table;
 
-#[cfg(test)]
-mod test {
-    use rustorm_dao::{Dao, FromDao, ToDao};
-
-    #[test]
-    fn derive_fromdao_and_todao() {
-        #[derive(Debug, PartialEq, FromDao, ToDao)]
-        struct User {
-            id: i32,
-            username: String,
-            active: Option<bool>,
-        }
-
-        let user = User {
-            id: 1,
-            username: "ivanceras".into(),
-            active: Some(true),
-        };
-        info!("user: {:#?}", user);
-        let dao = user.to_dao();
-        let mut expected_dao = Dao::new();
-        expected_dao.insert("id", 1);
-        expected_dao.insert("username", "ivanceras".to_string());
-        expected_dao.insert("active", true);
-
-        assert_eq!(expected_dao, dao);
-
-        info!("dao: {:#?}", dao);
-        let from_dao = User::from_dao(&dao);
-        info!("from_dao: {:#?}", from_dao);
-        assert_eq!(from_dao, user);
-    }
-}
+pub use rustorm_codegen::ToColumnNames;
+pub use rustorm_codegen::ToTableName;
+pub use rustorm_codegen::{FromDao, ToDao};

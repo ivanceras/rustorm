@@ -1,13 +1,14 @@
-use entity::EntityManager;
-use rustorm_dao::TableName;
-use rustorm_dao::{Rows, Value};
-use table::SchemaContent;
-use table::Table;
-use users::Role;
-use users::User;
+use crate::table::SchemaContent;
+use crate::users::Role;
+use crate::users::User;
+use crate::EntityManager;
+use crate::Table;
+use crate::TableName;
+use crate::{Rows, Value};
+use serde_derive::Serialize;
 
-use error::DbError;
-use rustorm_dao::FromDao;
+use crate::DbError;
+use rustorm_codegen::FromDao;
 
 /// The current database name and its comment
 #[derive(Serialize, FromDao)]

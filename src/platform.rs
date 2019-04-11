@@ -1,15 +1,17 @@
-use database::Database;
-use error::ParseError;
+use crate::error::ParseError;
+use crate::Database;
+use cfg_if::cfg_if;
+use log::*;
 use std::convert::TryFrom;
 use std::ops::Deref;
 use url::Url;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
-    use pg::PostgresDB;
+    use crate::pg::PostgresDB;
 }}
 
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
-    use sq::SqliteDB;
+    use crate::sq::SqliteDB;
 }}
 
 pub enum DBPlatform {

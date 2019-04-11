@@ -1,13 +1,9 @@
-use column::{Capacity, Column, ColumnConstraint, ColumnSpecification, ColumnStat, Literal};
-use common;
-use rustorm_dao::ColumnName;
-use rustorm_dao::FromDao;
-use rustorm_dao::TableName;
-use entity::EntityManager;
-use error::DbError;
-use types::SqlType;
-use util;
+use crate::column::{Capacity, Column, ColumnConstraint, ColumnSpecification, ColumnStat, Literal};
+use crate::types::SqlType;
+use crate::util;
 use uuid::Uuid;
+use crate::*;
+use log::*;
 
 /// get all the columns of the table
 pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>, DbError> {
@@ -390,13 +386,12 @@ fn get_column_stat(
 #[cfg(test)]
 mod test {
 
-    use super::*;
-    use chrono::offset::Utc;
-    use chrono::DateTime;
-    use rustorm_dao::ToColumnNames;
-    use rustorm_dao::ToDao;
-    use rustorm_dao::ToTableName;
-    use pool::Pool;
+    use crate::types::*;
+    use crate::column::*;
+    use crate::*;
+    use log::*;
+    use chrono::*;
+    use crate::pg::column_info::*;
 
     #[test]
     fn insert_text_array() {

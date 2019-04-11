@@ -1,7 +1,7 @@
-use column::Column;
-use rustorm_dao::ColumnName;
-use rustorm_dao::TableName;
-use types::SqlType;
+use crate::types::SqlType;
+use crate::Column;
+use crate::ColumnName;
+use crate::TableName;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Table {
@@ -229,10 +229,9 @@ pub struct SchemaContent {
 #[cfg(test)]
 #[cfg(feature = "with-postgres")]
 mod test {
-    use pool::Pool;
-    use rustorm_dao::ColumnName;
-    use rustorm_dao::TableName;
-    use table::ForeignKey;
+    use crate::table::*;
+    use crate::*;
+    use log::*;
 
     #[test]
     fn referred_columns() {

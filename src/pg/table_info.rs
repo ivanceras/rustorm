@@ -1,13 +1,14 @@
 //! module table_info extract the table meta data using SQL queries on pg_catalog.
 //! This is not using information_schema since there is a performance issue with it.
-use column::Column;
-use rustorm_dao::ColumnName;
-use rustorm_dao::FromDao;
-use rustorm_dao::TableName;
-use entity::EntityManager;
-use error::DbError;
-use pg::column_info;
-use table::{self, Key, ForeignKey, SchemaContent, Table, TableKey};
+use crate::Column;
+use crate::ColumnName;
+use crate::FromDao;
+use crate::TableName;
+use crate::EntityManager;
+use crate::DbError;
+use crate::pg::column_info;
+use crate::table::{self, Key, ForeignKey, SchemaContent, Table, TableKey};
+use log::*;
 
 /// get all database tables and views except from special schema
 pub fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
@@ -447,8 +448,11 @@ fn get_referred_foreign_columns(
 #[cfg(test)]
 mod test {
 
-    use super::*;
-    use pool::Pool;
+    use crate::table::*;
+    use crate::Pool;
+    use log::*;
+    use crate::TableName;
+    use crate::pg::table_info::*;
 
     #[test]
     fn all_schemas() {

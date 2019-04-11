@@ -7,6 +7,7 @@ description = "A complete rewrite of rustorm"
 repository = "https://github.com/ivanceras/rustorm"
 documentation = "https://docs.rs/rustorm"
 keywords = ["orm", "postgresql", "sqlite"]
+edition = "2018"
 
 [dependencies]
 log = "0.4"
@@ -39,6 +40,7 @@ tree_magic = "0.2"
 base64 = "0.9"
 geo = "0.4"
 time = "0.1.14"
+
 
 [dependencies.rustorm_dao]
 version = "0.2.0"

@@ -1,17 +1,18 @@
-use database::Database;
-use database::DatabaseName;
-use error::{DataError, DbError};
-use platform::DBPlatform;
+use crate::platform::DBPlatform;
+use crate::table::SchemaContent;
+use crate::users::Role;
+use crate::users::User;
+use crate::Database;
+use crate::DatabaseName;
+use crate::Table;
+use crate::ToValue;
+use crate::Value;
+use crate::{DataError, DbError};
+use log::*;
 use rustorm_dao::TableName;
 use rustorm_dao::ToColumnNames;
 use rustorm_dao::ToTableName;
-use rustorm_dao::ToValue;
-use rustorm_dao::Value;
 use rustorm_dao::{FromDao, ToDao};
-use table::SchemaContent;
-use table::Table;
-use users::Role;
-use users::User;
 
 pub struct EntityManager(pub DBPlatform);
 
@@ -114,7 +115,7 @@ impl EntityManager {
 
         let mut values: Vec<Value> = Vec::with_capacity(entities.len() * columns.len());
         for entity in entities {
-            let mut dao = entity.to_dao();
+            let dao = entity.to_dao();
             for col in columns.iter() {
                 let value = dao.get_value(&col.name);
                 match value {
@@ -306,20 +307,15 @@ impl EntityManager {
 #[cfg(test)]
 #[cfg(feature = "with-postgres")]
 mod test_pg {
-    extern crate rustorm_dao;
-    use super::*;
+    use crate::*;
     use chrono::offset::Utc;
     use chrono::{DateTime, NaiveDate};
-    use pool::Pool;
-    use rustorm_dao::TableName;
-    use rustorm_dao::ToColumnNames;
-    use rustorm_dao::ToTableName;
-    use rustorm_dao::{FromDao, ToDao};
+    use log::*;
     use uuid::Uuid;
 
     #[test]
     fn use_em() {
-        #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
+        #[derive(Debug, FromDao, ToColumnNames, crate::ToTableName)]
         struct Actor {
             actor_id: i32,
             first_name: String,

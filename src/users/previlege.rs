@@ -1,6 +1,6 @@
-use users::User;
-use ColumnName;
-use TableName;
+use crate::users::User;
+use crate::ColumnName;
+use crate::TableName;
 
 /// User can have previlege to tables, to columns
 /// The table models can be filtered depending on how much
