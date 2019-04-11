@@ -1,4 +1,5 @@
-use common;
+use serde_derive::Serialize;
+use crate::common;
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
 pub struct ColumnName {

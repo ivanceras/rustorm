@@ -1,3 +1,5 @@
+use serde_derive::{Serialize, Deserialize};
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Interval {
     pub microseconds: i64,

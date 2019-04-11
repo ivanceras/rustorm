@@ -1,4 +1,5 @@
-use common;
+use serde_derive::{Serialize, Deserialize};
+use crate::common;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TableName {

@@ -1,20 +1,12 @@
 #![deny(warnings)]
 
-extern crate bigdecimal;
-extern crate chrono;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate geo;
-extern crate serde_json;
-extern crate uuid;
-
 pub use column_name::ColumnName;
 pub use column_name::ToColumnNames;
 pub use dao::Dao;
 pub use dao::FromDao;
 pub use dao::ToDao;
 pub use error::DaoError;
+pub use error::ConvertError;
 pub use interval::Interval;
 pub use rows::Rows;
 pub use table_name::TableName;
