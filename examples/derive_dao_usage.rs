@@ -1,15 +1,22 @@
-#![deny(warning)]
-use rustorm::FromDao;
-use rustorm_dao::ToDao;
-use rustorm_dao::ToTableName;
+#![deny(warnings)]
 
-#[derive(Debug, FromDao, rustorm::ToDao, rustorm::ToTableName)]
+use rustorm::FromDao;
+use rustorm::ToDao;
+use rustorm::ToTableName;
+
+#[derive(Debug, FromDao, ToDao, ToTableName)]
 struct User {
     id: i32,
     username: String,
 }
 
 fn main() {
+    // imported here since we are using the trait methods
+    // `to_dao` and `to_table_name` without
+    // conflicting with the derive ToDao and ToTableName macro
+    use rustorm::dao::ToDao;
+    use rustorm::dao::ToTableName;
+
     let user = User {
         id: 1,
         username: "ivanceras".to_string(),
