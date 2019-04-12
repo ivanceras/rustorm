@@ -7,9 +7,9 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 before_script:
-  - gather-prerequisites.sh
-  - rename-database-hosts.sh
-  - execute-data-import.sh
+  - ./gather-prerequisites.sh
+  - ./rename-database-host.sh
+  - ./execute-data-import.sh
 
 stages:
   - test
