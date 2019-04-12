@@ -1,14 +1,20 @@
-use crate::column::{Capacity, Column, ColumnConstraint, ColumnSpecification, ColumnStat, Literal};
+use crate::column::{Capacity, ColumnConstraint, ColumnSpecification, ColumnStat, Literal};
 use crate::types::SqlType;
 use crate::util;
 use uuid::Uuid;
-use crate::*;
 use log::*;
+use crate::Column;
+use crate::common;
+use crate::ColumnName;
+use crate::TableName;
+use crate::EntityManager;
+use crate::DbError;
+use rustorm_dao;
 
 /// get all the columns of the table
 pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>, DbError> {
     /// column name and comment
-    #[derive(Debug, FromDao)]
+    #[derive(Debug, crate::codegen::FromDao)]
     struct ColumnSimple {
         number: i32,
         name: String,
@@ -89,7 +95,7 @@ fn get_column_specification(
     column_name: &String,
 ) -> Result<ColumnSpecification, DbError> {
     /// null, datatype default value
-    #[derive(Debug, FromDao)]
+    #[derive(Debug, crate::codegen::FromDao)]
     struct ColumnConstraintSimple {
         not_null: bool,
         data_type: String,
@@ -402,7 +408,7 @@ mod test {
             special_features: Vec<String>,
         }
 
-        #[derive(Debug, FromDao, ToColumnNames)]
+        #[derive(Debug, crate::codegen::FromDao, ToColumnNames)]
         struct RetrieveFilm {
             film_id: i32,
             title: String,
