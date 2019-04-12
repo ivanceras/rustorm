@@ -1,11 +1,11 @@
 #![deny(warnings)]
 
-use chrono::{NaiveDateTime};
+use chrono::NaiveDateTime;
 use rustorm::DbError;
 use rustorm::Pool;
-use rustorm::Value;
 use rustorm::ToColumnNames;
 use rustorm::ToTableName;
+use rustorm::Value;
 use rustorm::{FromDao, ToDao};
 
 fn main() {

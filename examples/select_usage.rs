@@ -1,7 +1,7 @@
 #![deny(warnings)]
 use rustorm::DbError;
 use rustorm::Pool;
-use rustorm::{FromDao, ToTableName, ToColumnNames};
+use rustorm::{FromDao, ToColumnNames, ToTableName};
 
 #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
 struct Actor {

@@ -1,7 +1,6 @@
-
 #![deny(warnings)]
 use chrono::offset::Utc;
-use chrono::{DateTime};
+use chrono::DateTime;
 use rustorm::DbError;
 use rustorm::Pool;
 use rustorm::ToColumnNames;
