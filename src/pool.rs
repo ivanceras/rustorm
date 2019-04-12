@@ -21,6 +21,7 @@ use crate::EntityManager;
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 
+#[derive(Default)]
 pub struct Pool(BTreeMap<String, ConnPool>);
 pub enum ConnPool {
     #[cfg(feature = "with-postgres")]
@@ -38,7 +39,7 @@ pub enum PooledConn {
 
 impl Pool {
     pub fn new() -> Self {
-        Pool(BTreeMap::new())
+        Default::default()
     }
 
     /// ensure that a connection pool for this db_url exist

@@ -5,7 +5,7 @@ fn trim_parenthesis(arg: &str) -> &str {
 }
 
 pub fn maybe_trim_parenthesis(arg: &str) -> &str {
-    if arg.starts_with("(") && arg.ends_with(")") {
+    if arg.starts_with('(') && arg.ends_with(')') {
         trim_parenthesis(arg)
     } else {
         arg

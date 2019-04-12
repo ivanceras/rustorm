@@ -120,54 +120,47 @@ pub enum ArrayType {
     Enum(String, Vec<String>),
 }
 
+trait HasType {
+    fn get_type(&self) -> Option<SqlType>;
+}
+
+impl HasType for Value {
+    fn get_type(&self) -> Option<SqlType> {
+        match self {
+            Value::Nil => None,
+            Value::Bool(_) => Some(SqlType::Bool),
+            Value::Tinyint(_) => Some(SqlType::Tinyint),
+            Value::Smallint(_) => Some(SqlType::Smallint),
+            Value::Int(_) => Some(SqlType::Int),
+            Value::Bigint(_) => Some(SqlType::Bigint),
+            Value::Float(_) => Some(SqlType::Float),
+            Value::Double(_) => Some(SqlType::Double),
+            Value::BigDecimal(_) => Some(SqlType::Numeric),
+            Value::Blob(_) => Some(SqlType::Blob),
+            Value::ImageUri(_) => Some(SqlType::Text),
+            Value::Char(_) => Some(SqlType::Char),
+            Value::Text(_) => Some(SqlType::Text),
+            Value::Json(_) => Some(SqlType::Json),
+            Value::Uuid(_) => Some(SqlType::Uuid),
+            Value::Date(_) => Some(SqlType::Date),
+            Value::Time(_) => Some(SqlType::Time),
+            Value::DateTime(_) => Some(SqlType::Timestamp),
+            Value::Timestamp(_) => Some(SqlType::Timestamp),
+            Value::Interval(_) => Some(SqlType::Interval),
+            Value::Point(_) => Some(SqlType::Point),
+            Value::Array(Array::Int(_)) => Some(SqlType::Array(Box::new(SqlType::Int))),
+            Value::Array(Array::Float(_)) => Some(SqlType::Array(Box::new(SqlType::Float))),
+            Value::Array(Array::Text(_)) => Some(SqlType::Array(Box::new(SqlType::Text))),
+        }
+    }
+}
+
 impl SqlType {
     pub fn same_type(&self, value: &Value) -> bool {
-        macro_rules! match_value {
-            ($variant:ident) => {
-                match *value {
-                    Value::$variant(_) => true,
-                    _ => false,
-                }
-            };
-        }
-        match *self {
-            SqlType::Bool => match_value!(Bool),
-            SqlType::Tinyint => match_value!(Tinyint),
-            SqlType::Smallint => match_value!(Smallint),
-            SqlType::Int => match_value!(Int),
-            SqlType::Bigint => match_value!(Bigint),
-            SqlType::Float => match_value!(Float),
-            SqlType::Double => match_value!(Double),
-            SqlType::Numeric => match_value!(BigDecimal),
-            SqlType::Blob => match_value!(Blob),
-            SqlType::Char => match_value!(Char),
-            SqlType::Text | SqlType::Varchar => match_value!(Text),
-            SqlType::Json => match_value!(Json),
-            SqlType::Point => match_value!(Point),
-            SqlType::Uuid => match_value!(Uuid),
-            SqlType::Date => match_value!(Date),
-            SqlType::Timestamp => match_value!(Timestamp),
-            SqlType::TimestampTz => match_value!(Timestamp),
-            SqlType::Interval => match_value!(Interval),
-            SqlType::Enum(_, _) => match_value!(Text),
-            SqlType::Array(ref r) if SqlType::Text == *r.as_ref() => match *value {
-                Value::Array(Array::Text(_)) => true,
-                _ => false,
-            },
-            SqlType::Array(ref r) if SqlType::Int == *r.as_ref() => match *value {
-                Value::Array(Array::Int(_)) => true,
-                _ => false,
-            },
-            SqlType::Real => match *value {
-                Value::Float(_) => true,
-                _ => false,
-            },
-            SqlType::Array(ref r) if SqlType::Float == *r.as_ref() => match *value {
-                Value::Array(Array::Float(_)) => true,
-                _ => false,
-            },
-            SqlType::TsVector => match_value!(Text),
-            _ => panic!("not yet implemented for checking {:?} to {:?}", self, value),
+        if let Some(simple_type) = value.get_type() {
+            simple_type == *self
+        } else {
+            false
         }
     }
 }

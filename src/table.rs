@@ -35,13 +35,10 @@ impl Table {
     pub fn get_primary_column_names(&self) -> Vec<&ColumnName> {
         let mut primary: Vec<&ColumnName> = vec![];
         for key in &self.table_key {
-            match *key {
-                TableKey::PrimaryKey(ref pk) => {
-                    for col in &pk.columns {
-                        primary.push(col)
-                    }
+            if let TableKey::PrimaryKey(ref pk) = key {
+                for col in &pk.columns {
+                    primary.push(col)
                 }
-                _ => (),
             }
         }
         primary.sort_by(|a, b| a.name.cmp(&b.name));
@@ -73,9 +70,8 @@ impl Table {
     pub fn get_foreign_keys(&self) -> Vec<&ForeignKey> {
         let mut foreign: Vec<&ForeignKey> = vec![];
         for key in &self.table_key {
-            match *key {
-                TableKey::ForeignKey(ref fk) => foreign.push(fk),
-                _ => (),
+            if let TableKey::ForeignKey(ref fk) = key {
+                foreign.push(fk)
             }
         }
         foreign

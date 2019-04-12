@@ -14,8 +14,8 @@ pub fn extract_datatype_with_capacity(data_type: &str) -> (String, Option<Capaci
         if let Some(end) = end {
             let dtype = &data_type[0..start];
             let range = &data_type[start + 1..end];
-            let capacity = if range.contains(",") {
-                let splinters = range.split(",").collect::<Vec<&str>>();
+            let capacity = if range.contains(',') {
+                let splinters = range.split(',').collect::<Vec<&str>>();
                 assert!(splinters.len() == 2, "There should only be 2 parts");
                 let range1: Result<i32, _> = splinters[0].parse();
                 let range2: Result<i32, _> = splinters[1].parse();
@@ -61,16 +61,14 @@ pub fn extract_datatype_with_capacity(data_type: &str) -> (String, Option<Capaci
 }
 
 pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
-    if *value == Value::Nil {
-        value.to_owned()
-    } else if required_type.same_type(value) {
+    if *value == Value::Nil && !required_type.same_type(value) {
         value.to_owned()
     } else {
         match *value {
             Value::Smallint(v) => match *required_type {
                 SqlType::Tinyint => Value::Tinyint(v as i8),
-                SqlType::Int => Value::Int(v as i32),
-                SqlType::Bigint => Value::Bigint(v as i64),
+                SqlType::Int => Value::Int(i32::from(v)),
+                SqlType::Bigint => Value::Bigint(i64::from(v)),
                 _ => panic!(
                     "unsupported conversion from {:?} to {:?}",
                     value, required_type
@@ -79,7 +77,7 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
             Value::Int(v) => match *required_type {
                 SqlType::Tinyint => Value::Tinyint(v as i8),
                 SqlType::Smallint => Value::Smallint(v as i16),
-                SqlType::Bigint => Value::Bigint(v as i64),
+                SqlType::Bigint => Value::Bigint(i64::from(v)),
                 _ => panic!(
                     "unsupported conversion from {:?} to {:?}",
                     value, required_type
