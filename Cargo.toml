@@ -63,3 +63,6 @@ with-sqlite = ["rusqlite","r2d2_sqlite"]
 "rustorm_dao:0.2.0" = { path = "crates/dao" }
 "rustorm_codegen:0.2.0" = { path = "crates/codegen" }
 
+[package.metadata.docs.rs]
+features = ["with-postgres"]
+
