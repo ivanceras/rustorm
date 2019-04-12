@@ -7,12 +7,12 @@ use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct Dao(pub BTreeMap<String, Value>);
 
 impl Dao {
     pub fn new() -> Self {
-        Dao(BTreeMap::new())
+        Dao::default()
     }
 
     pub fn insert<K, V>(&mut self, k: K, v: V)
@@ -37,7 +37,7 @@ impl Dao {
     {
         let value: Option<&'a Value> = self.0.get(s);
         match value {
-            Some(v) => TryFrom::try_from(v).map_err(|e| DaoError::ConvertError(e)),
+            Some(v) => TryFrom::try_from(v).map_err(DaoError::ConvertError),
             None => Err(DaoError::NoSuchValueError(s.into())),
         }
     }
@@ -65,7 +65,7 @@ impl<'de> Deserialize<'de> for Dao {
     where
         D: Deserializer<'de>,
     {
-        BTreeMap::deserialize(deserializer).map(|result| Dao(result))
+        BTreeMap::deserialize(deserializer).map(Dao)
     }
 }
 

@@ -38,17 +38,6 @@ impl Rows {
     }
 }
 
-/*
-impl <'a>IntoIterator for Rows {
-    type Item = Dao;
-    type IntoIter = Iter<'a>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-*/
-
 /// An iterator over `Row`s.
 pub struct Iter<'a> {
     columns: Vec<String>,
@@ -61,7 +50,7 @@ impl<'a> Iterator for Iter<'a> {
     fn next(&mut self) -> Option<Dao> {
         let next_row = self.iter.next();
         if let Some(row) = next_row {
-            if row.len() > 0 {
+            if !row.is_empty() {
                 let mut dao = Dao::new();
                 for (i, column) in self.columns.iter().enumerate() {
                     if let Some(value) = row.get(i) {
@@ -93,8 +82,8 @@ mod test {
         let columns = vec!["id".to_string(), "username".to_string()];
         let data: Vec<Vec<Value>> = vec![vec![1.into(), "ivanceras".into()]];
         let rows = Rows {
-            columns: columns,
-            data: data,
+            columns,
+            data,
             count: None,
         };
         assert_eq!(1, rows.iter().count());
@@ -108,8 +97,8 @@ mod test {
             vec![2.into(), "lee".into()],
         ];
         let rows = Rows {
-            columns: columns,
-            data: data,
+            columns,
+            data,
             count: None,
         };
         assert_eq!(2, rows.iter().count());
@@ -120,8 +109,8 @@ mod test {
         let columns = vec!["id".to_string(), "username".to_string()];
         let data: Vec<Vec<Value>> = vec![vec![1.into(), "ivanceras".into()]];
         let rows = Rows {
-            columns: columns,
-            data: data,
+            columns,
+            data,
             count: None,
         };
         let mut dao = Dao::new();
@@ -138,8 +127,8 @@ mod test {
             vec![2.into(), "lee".into()],
         ];
         let rows = Rows {
-            columns: columns,
-            data: data,
+            columns,
+            data,
             count: None,
         };
         let mut iter = rows.iter();
@@ -154,31 +143,4 @@ mod test {
         assert_eq!(dao2, iter.next().unwrap());
     }
 
-    /*
-    #[test]
-    fn into_iter() {
-        let columns = vec!["id".to_string(), "username".to_string()];
-        let data: Vec<Vec<Value>> = vec![
-            vec![1.into(), "ivanceras".into()],
-            vec![2.into(), "lee".into()],
-        ];
-        let rows = Rows {
-            columns: columns,
-            data: data,
-            count: None,
-        };
-        let mut iter = rows.into_iter();
-        let mut dao = Dao::new();
-        dao.insert("id", 1);
-        dao.insert("username", "ivanceras");
-        assert_eq!(dao, iter.next().unwrap());
-
-        let mut dao2 = Dao::new();
-        dao2.insert("id", 2);
-        dao2.insert("username", "lee");
-        assert_eq!(dao2, iter.next().unwrap());
-
-        assert_eq!(2, rows.iter().count());
-    }
-    */
 }

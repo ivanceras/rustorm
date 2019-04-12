@@ -1,4 +1,5 @@
 #![deny(warnings)]
+#![deny(clippy::all)]
 
 pub use column_name::ColumnName;
 pub use column_name::ToColumnNames;

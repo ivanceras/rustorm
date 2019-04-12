@@ -1,3 +1,4 @@
+#![allow(clippy::cast_lossless)]
 use crate::interval::Interval;
 use crate::ConvertError;
 use bigdecimal::BigDecimal;
@@ -229,7 +230,7 @@ macro_rules! impl_tryfrom_option {
             fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
                 match *value {
                     Value::Nil => Ok(None),
-                    _ => TryFrom::try_from(value).map(|v| Some(v)),
+                    _ => TryFrom::try_from(value).map(Some),
                 }
             }
         }

@@ -10,9 +10,9 @@ pub struct Interval {
 impl Interval {
     pub fn new(microseconds: i64, days: i32, months: i32) -> Self {
         Interval {
-            microseconds: microseconds,
-            days: days,
-            months: months,
+            microseconds,
+            days,
+            months,
         }
     }
 }
