@@ -196,6 +196,13 @@ pub use error::DbError;
 pub use pool::Pool;
 pub use table::Table;
 
+// we export the traits that has a derived proc macro
+// this are used in the apps
+pub use codegen::ToColumnNames;
+pub use codegen::ToTableName;
+pub use codegen::FromDao;
+pub use codegen::ToDao;
+
 pub use rustorm_dao::ColumnName;
 pub use rustorm_dao::Dao;
 pub use rustorm_dao::Rows;
@@ -203,6 +210,21 @@ pub use rustorm_dao::TableName;
 pub use rustorm_dao::ToValue;
 pub use rustorm_dao::Value;
 
-pub use rustorm_codegen::ToColumnNames;
-pub use rustorm_codegen::ToTableName;
-pub use rustorm_codegen::{FromDao, ToDao};
+/// Wrap the rustorm_dao exports to avoid name conflict with the rustorm_codegen
+pub mod dao{
+    pub use rustorm_dao::FromDao;
+    pub use rustorm_dao::ToDao;
+    pub use rustorm_dao::ToTableName;
+    pub use rustorm_dao::ToColumnNames;
+}
+
+
+/// Wrap the rustorm_codegen exports to avoid name conflict with the rustorm_dao
+pub mod codegen{
+    pub use rustorm_codegen::ToColumnNames;
+    pub use rustorm_codegen::ToTableName;
+    pub use rustorm_codegen::FromDao;
+    pub use rustorm_codegen::ToDao;
+}
+
+

@@ -1,6 +1,6 @@
 use crate::types::SqlType;
 use crate::ColumnName;
-use rustorm_codegen::FromDao;
+use crate::FromDao;
 use crate::TableName;
 use uuid::Uuid;
 
