@@ -13,12 +13,8 @@ services:
   - postgresql
 
 before_script:
-  - cd .. && git clone https://github.com/ivanceras/bazaar && cd -
-  - cd .. && git clone https://github.com/ivanceras/sakila && cd -
-  - cd .. && git clone https://github.com/ivanceras/dota-sql && cd -
-  - cd ../dota-sql/data/ && sh reimport.sh && cd -
-  - cd ../bazaar/scripts && sh setup.sh && cd -
-  - cp ../sakila/sqlite-sakila-db/sakila.db .
+  - ./gather-prerequisites.sh
+  - ./execute-data-import.sh
 
 
   
