@@ -1,4 +1,5 @@
 #![deny(warnings)]
+#![deny(clippy::all)]
 
 extern crate proc_macro;
 #[macro_use]
