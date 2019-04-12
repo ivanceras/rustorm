@@ -138,8 +138,6 @@ cfg_if! {
 ```
 Rustorm is wholly used by [diwata](https://github.com/ivanceras/diwata)
 
- License: [MIT](LICENSE)
-
 
 
 License: MIT
