@@ -11,14 +11,18 @@ before_script:
   - ls ~
   - ls $HOME
   - pwd
-  - cd .. && git clone https://github.com/ivanceras/bazaar && cd -
-  - cd .. && git clone https://github.com/ivanceras/sakila && cd -
-  - cd .. && git clone https://github.com/ivanceras/dota-sql && ls && cd -
+  - cd .. && git clone https://github.com/ivanceras/bazaar
+  - cd -
+  - cd .. && git clone https://github.com/ivanceras/sakila
+  - cd -
+  - cd .. && git clone https://github.com/ivanceras/dota-sql
+  - cd -
   - apt update
   - apt install -y postgresql-client
-  - cd ../dota-sql/data/ && sh reimport.sh && cd -
-  - cd ../bazaar/scripts && sh setup.sh && cd -
-  - pwd && ls
+  - cd ../dota-sql/data/ && sh reimport.sh
+  - cd -
+  - cd ../bazaar/scripts && sh setup.sh
+  - cd -
   - cp ../sakila/sqlite-sakila-db/sakila.db .
 
 stages:
