@@ -8,6 +8,7 @@ variables:
 
 before_script:
   - ./gather-prerequisites.sh
+  - ./install-postgresql-client.sh
   - ./rename-database-host.sh
   - ./execute-data-import.sh
 
