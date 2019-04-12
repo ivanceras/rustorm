@@ -7,17 +7,12 @@ their appropriate rust type.
 Selecting records
 
 ```rust
-#[macro_use]
-extern crate rustorm_codegen;
-extern crate rustorm_dao as dao;
-extern crate rustorm_dao;
-extern crate rustorm;
-use rustorm::TableName;
-use rustorm_dao::ToColumnNames;
-use rustorm_dao::ToTableName;
-use rustorm_dao::{FromDao, ToDao};
-use rustorm::Pool;
+use cfg_if::cfg_if;
+use rustorm::ToTableName;
+use rustorm::ToColumnNames;
+use rustorm::FromDao;
 use rustorm::DbError;
+use rustorm::Pool;
 
 #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
 struct Actor {
@@ -25,10 +20,27 @@ struct Actor {
     first_name: String,
 }
 
+
+cfg_if! {
+     if #[cfg(feature="with-postgres")] {
+       fn db_url() -> &'static str {
+           "postgres://postgres:p0stgr3s@localhost/sakila"
+       }
+     }
+     else if #[cfg(feature = "with-sqlite")] {
+       fn db_url() -> &'static str{
+           "sqlite://sakila.db"
+       }
+     }
+     else {
+       fn db_url() -> &'static str {
+           panic!("add --features flag, ie: --features=\"with-postgres\" ");
+       }
+     }
+}
 fn main(){
-    let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
     let mut pool = Pool::new();
-    let em = pool.em(db_url).unwrap();
+    let em = pool.em(db_url()).unwrap();
     let sql = "SELECT * FROM actor LIMIT 10";
     let actors: Result<Vec<Actor>, DbError> = em.execute_sql_with_return(sql, &[]);
     println!("Actor: {:#?}", actors);
@@ -42,21 +54,34 @@ fn main(){
 Inserting and displaying the inserted records
 
 ```rust
-#[macro_use]
-extern crate rustorm_codegen;
-extern crate rustorm_dao as dao;
-extern crate rustorm_dao;
-extern crate rustorm;
-extern crate chrono;
 
 use rustorm::TableName;
-use rustorm_dao::ToColumnNames;
-use rustorm_dao::ToTableName;
-use rustorm_dao::{FromDao, ToDao};
+use rustorm::ToColumnNames;
+use rustorm::ToTableName;
+use rustorm::{FromDao, ToDao};
 use rustorm::Pool;
 use rustorm::DbError;
 use chrono::offset::Utc;
 use chrono::{DateTime, NaiveDate};
+use cfg_if::cfg_if;
+
+cfg_if! {
+     if #[cfg(feature="with-postgres")] {
+       fn db_url() -> &'static str {
+           "postgres://postgres:p0stgr3s@localhost/sakila"
+       }
+     }
+     else if #[cfg(feature = "with-sqlite")] {
+       fn db_url() -> &'static str {
+           "sqlite://sakila.db"
+       }
+     }
+     else {
+       fn db_url() -> &'static str {
+           panic!("add --features flag, ie: --features=\"with-postgres\" ");
+       }
+     }
+}
 
   fn main() {
       mod for_insert {
@@ -79,9 +104,8 @@ use chrono::{DateTime, NaiveDate};
           }
       }
 
-      let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
       let mut pool = Pool::new();
-      let em = pool.em(db_url).unwrap();
+      let em = pool.em(db_url()).unwrap();
       let tom_cruise = for_insert::Actor {
           first_name: "TOM".into(),
           last_name: "CRUISE".to_string(),
@@ -100,6 +124,7 @@ use chrono::{DateTime, NaiveDate};
       assert_eq!(tom_cruise.first_name, actors[0].first_name);
       assert_eq!(tom_cruise.last_name, actors[0].last_name);
       assert_eq!(today, actors[0].last_update.date());
+
       assert_eq!(tom_hanks.first_name, actors[1].first_name);
       assert_eq!(tom_hanks.last_name, actors[1].last_name);
       assert_eq!(today, actors[1].last_update.date());
@@ -107,5 +132,8 @@ use chrono::{DateTime, NaiveDate};
 ```
 Rustorm is wholly used by [diwata](https://github.com/ivanceras/diwata)
 
+ License: [MIT](LICENSE)
 
-License: [MIT](LICENSE)
+
+
+License: MIT

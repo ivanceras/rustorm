@@ -6,21 +6,12 @@
 //! Selecting records
 //!
 //! ```rust
-//! #[macro_use]
-//! extern crate rustorm_codegen;
-//! extern crate rustorm_dao;
-//! extern crate rustorm;
-//! #[macro_use]
-//! extern crate log;
-//! #[macro_use]
-//! extern crate cfg_if;
-//!
-//! use rustorm::TableName;
-//! use rustorm_dao::ToColumnNames;
-//! use rustorm_dao::ToTableName;
-//! use rustorm_dao::{FromDao, ToDao};
-//! use rustorm::Pool;
+//! use cfg_if::cfg_if;
+//! use rustorm::ToTableName;
+//! use rustorm::ToColumnNames;
+//! use rustorm::FromDao;
 //! use rustorm::DbError;
+//! use rustorm::Pool;
 //!
 //! #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
 //! struct Actor {
@@ -51,11 +42,11 @@
 //!     let em = pool.em(db_url()).unwrap();
 //!     let sql = "SELECT * FROM actor LIMIT 10";
 //!     let actors: Result<Vec<Actor>, DbError> = em.execute_sql_with_return(sql, &[]);
-//!     info!("Actor: {:#?}", actors);
+//!     println!("Actor: {:#?}", actors);
 //!     let actors = actors.unwrap();
 //!     assert_eq!(actors.len(), 10);
 //!     for actor in actors {
-//!         info!("actor: {:?}", actor);
+//!         println!("actor: {:?}", actor);
 //!     }
 //! }
 //! ```
@@ -93,14 +84,7 @@
 //!
 //!   fn main() {
 //!       mod for_insert {
-//! use rustorm::TableName;
-//! use rustorm::ToColumnNames;
-//! use rustorm::ToTableName;
-//! use rustorm::{FromDao, ToDao};
-//! use rustorm::Pool;
-//! use rustorm::DbError;
-//! use chrono::offset::Utc;
-//! use chrono::{DateTime, NaiveDate};
+//!           use super::*;
 //!           #[derive(Debug, PartialEq, ToDao, ToColumnNames, ToTableName)]
 //!           pub struct Actor {
 //!               pub first_name: String,
@@ -109,15 +93,7 @@
 //!       }
 //!
 //!       mod for_retrieve {
-//!
-//! use rustorm::TableName;
-//! use rustorm::ToColumnNames;
-//! use rustorm::ToTableName;
-//! use rustorm::{FromDao, ToDao};
-//! use rustorm::Pool;
-//! use rustorm::DbError;
-//! use chrono::offset::Utc;
-//! use chrono::{DateTime, NaiveDate};
+//!           use super::*;
 //!           #[derive(Debug, FromDao, ToColumnNames, ToTableName)]
 //!           pub struct Actor {
 //!               pub actor_id: i32,
@@ -154,6 +130,9 @@
 //!   }
 //! ```
 //! Rustorm is wholly used by [diwata](https://github.com/ivanceras/diwata)
+//!
+//!  License: [MIT](LICENSE)
+//!
 //!
 
 use cfg_if::cfg_if;
@@ -198,10 +177,10 @@ pub use table::Table;
 
 // we export the traits that has a derived proc macro
 // this are used in the apps
-pub use codegen::ToColumnNames;
-pub use codegen::ToTableName;
 pub use codegen::FromDao;
+pub use codegen::ToColumnNames;
 pub use codegen::ToDao;
+pub use codegen::ToTableName;
 
 pub use rustorm_dao::ColumnName;
 pub use rustorm_dao::Dao;
@@ -211,20 +190,17 @@ pub use rustorm_dao::ToValue;
 pub use rustorm_dao::Value;
 
 /// Wrap the rustorm_dao exports to avoid name conflict with the rustorm_codegen
-pub mod dao{
+pub mod dao {
     pub use rustorm_dao::FromDao;
+    pub use rustorm_dao::ToColumnNames;
     pub use rustorm_dao::ToDao;
     pub use rustorm_dao::ToTableName;
-    pub use rustorm_dao::ToColumnNames;
 }
-
 
 /// Wrap the rustorm_codegen exports to avoid name conflict with the rustorm_dao
-pub mod codegen{
-    pub use rustorm_codegen::ToColumnNames;
-    pub use rustorm_codegen::ToTableName;
+pub mod codegen {
     pub use rustorm_codegen::FromDao;
+    pub use rustorm_codegen::ToColumnNames;
     pub use rustorm_codegen::ToDao;
+    pub use rustorm_codegen::ToTableName;
 }
-
-
