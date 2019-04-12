@@ -1,23 +1,36 @@
-image: rustlang/rust:nightly
-
-services:
-  - postgres:latest
-
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
-
-before_script:
-  - ./gather-prerequisites.sh
-  - ./install-postgresql-client.sh
-  - ./rename-database-host.sh
-  - ./execute-data-import.sh
-
 stages:
-  - test
+  - build
 
-test:
+
+rust-latest:
+  stage: build
+  image: rust:latest
+  services:
+      - postgres:latest
+
+  before_script:
+      - ./gather-prerequisites.sh
+      - ./install-postgresql-client.sh
+      - ./rename-database-host.sh
+      - ./execute-data-import.sh
   script:
     - cargo test --features "with-postgres with-sqlite"
     - cargo test --features "with-postgres"
     - cargo test --features "with-sqlite"
 
+rust-nightly:
+  stage: build
+  image: rustlang/rust:nightly
+  services:
+      - postgres:latest
+
+  before_script:
+      - ./gather-prerequisites.sh
+      - ./install-postgresql-client.sh
+      - ./rename-database-host.sh
+      - ./execute-data-import.sh
+
+  script:
+    - cargo test --features "with-postgres with-sqlite"
+    - cargo test --features "with-postgres"
+    - cargo test --features "with-sqlite"
