@@ -13,5 +13,5 @@ cd .. && git clone https://github.com/ivanceras/dota-sql
 cd -
 
 ## update and install postgresql client
-apt update
-apt install -y postgresql-client
+#apt update
+#apt install -y postgresql-client
