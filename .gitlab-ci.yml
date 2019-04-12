@@ -7,6 +7,9 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 before_script:
+  - echo $HOME
+  - ls ~
+  - ls $HOME
   - pwd
   - cd .. && git clone https://github.com/ivanceras/bazaar && cd -
   - cd .. && git clone https://github.com/ivanceras/sakila && cd -
