@@ -61,7 +61,7 @@ pub fn extract_datatype_with_capacity(data_type: &str) -> (String, Option<Capaci
 }
 
 pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
-    if *value == Value::Nil && !required_type.same_type(value) {
+    if *value == Value::Nil || required_type.same_type(value) {
         value.to_owned()
     } else {
         match *value {
