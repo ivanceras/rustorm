@@ -57,3 +57,8 @@ with-sqlite = ["rusqlite","r2d2_sqlite"]
 #with-oracle = ["oci_rs"]
 #with-mssql = ["tiberius"]
 
+
+[replace]
+"rustorm_dao:0.2.0" = { path = "crates/rustorm/crates/dao" }
+"rustorm_codegen:0.2.0" = { path = "crates/rustorm/crates/codegen" }
+
