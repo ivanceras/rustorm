@@ -5,6 +5,7 @@ language: rust
 
 rust:
   - nightly
+  - stable
 
 addons:
   postgresql: "9.5"
