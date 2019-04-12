@@ -2,7 +2,10 @@
 
 
 ### Rustorm
-![](https://travis-ci.org/ivanceras/rustorm.svg?branch=master)
+
+[![Latest Version](https://img.shields.io/crates/v/rustorm.svg)](https://crates.io/crates/rustorm)
+[![Build Status](https://travis-ci.org/ivanceras/rustorm.svg?branch=master)](https://travis-ci.org/ivanceras/rustorm)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 Rustorm is an SQL-centered ORM with focus on ease of use on conversion of database types to
 their appropriate rust type.
