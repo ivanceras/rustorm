@@ -17,6 +17,7 @@ services:
     - postgresql
 
 before_script:
+    - rustup component add clippy
     - ./gather-prerequisites.sh
     - ./execute-data-import.sh
 

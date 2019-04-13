@@ -9,6 +9,7 @@ rust-latest:
       - postgres:latest
 
   before_script:
+      - rustup component add clippy
       - ./gather-prerequisites.sh
       - ./install-postgresql-client.sh
       - ./rename-database-host.sh
@@ -26,6 +27,7 @@ rust-nightly:
       - postgres:latest
 
   before_script:
+      - rustup component add clippy
       - ./gather-prerequisites.sh
       - ./install-postgresql-client.sh
       - ./rename-database-host.sh
