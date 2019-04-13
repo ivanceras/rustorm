@@ -62,3 +62,9 @@ with-sqlite = ["rusqlite","r2d2_sqlite"]
 [package.metadata.docs.rs]
 features = ["with-postgres"]
 
+
+# Needed to be here since rustorm is tested as one project
+# in the ci instead of part of diwata
+[replace]
+"rustorm_dao:0.3.0" = { path = "crates/dao" }
+"rustorm_codegen:0.3.0" = { path = "crates/codegen" }
