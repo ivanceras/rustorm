@@ -49,6 +49,9 @@ version = "0.3.0"
 [dependencies.rustorm_codegen]
 version = "0.3.0"
 
+[badges]
+travis-ci = { repository = "ivanceras/rustorm" }
+
 [features]
 #default = ["with-postgres"]
 with-postgres = ["postgres", "r2d2_postgres", "postgres-shared", "openssl"]
