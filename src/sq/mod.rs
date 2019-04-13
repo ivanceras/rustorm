@@ -106,7 +106,7 @@ impl Database for SqliteDB{
         };
         let column_names: Vec<String> = column_names
             .iter()
-            .map(|c| c.to_string())
+            .map(ToString::to_string)
             .collect();
 
         match stmt{

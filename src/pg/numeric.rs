@@ -142,6 +142,8 @@ impl Iterator for ToBase10000 {
 }
 
 impl<'a> From<&'a BigDecimal> for PgNumeric {
+
+    #[allow(clippy::redundant_closure)]
     fn from(decimal: &'a BigDecimal) -> Self {
         let (mut integer, scale) = decimal.as_bigint_and_exponent();
         let scale = scale as u16;

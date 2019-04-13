@@ -255,6 +255,7 @@ impl EntityManager {
         sql
     }
 
+    #[allow(clippy::redundant_closure)]
     pub fn execute_sql_with_return<'a, R>(
         &self,
         sql: &str,
