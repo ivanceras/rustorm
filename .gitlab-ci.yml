@@ -17,6 +17,7 @@ rust-latest:
     - cargo test --features "with-postgres with-sqlite"
     - cargo test --features "with-postgres"
     - cargo test --features "with-sqlite"
+    - ./run_clippy.sh
 
 rust-nightly:
   stage: build
@@ -34,3 +35,4 @@ rust-nightly:
     - cargo test --features "with-postgres with-sqlite"
     - cargo test --features "with-postgres"
     - cargo test --features "with-sqlite"
+    - ./run_clippy.sh

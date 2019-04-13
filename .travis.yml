@@ -8,21 +8,22 @@ rust:
   - stable
 
 addons:
-  postgresql: "9.5"
-  apt:
-     packages:
-     - postgresql-client
+    postgresql: "9.5"
+    apt:
+        packages:
+            - postgresql-client
 
 services:
-  - postgresql
+    - postgresql
 
 before_script:
-  - ./gather-prerequisites.sh
-  - ./execute-data-import.sh
+    - ./gather-prerequisites.sh
+    - ./execute-data-import.sh
 
 
   
 script:
-  - cargo test --features "with-postgres with-sqlite"
-  - cargo test --features "with-postgres"
-  - cargo test --features "with-sqlite"
+    - cargo test --features "with-postgres with-sqlite"
+    - cargo test --features "with-postgres"
+    - cargo test --features "with-sqlite"
+    - ./run_clippy.sh
