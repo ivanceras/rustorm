@@ -18,10 +18,10 @@ pub fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
         schema: String,
     }
     impl TableNameSimple {
-        fn to_tablename(self) -> TableName {
+        fn to_tablename(&self) -> TableName {
             TableName {
-                name: self.name,
-                schema: Some(self.schema),
+                name: self.name.to_string(),
+                schema: Some(self.schema.to_string()),
                 alias: None,
             }
         }
@@ -80,7 +80,7 @@ impl TableKind {
 /// get all database tables or views from this schema
 fn get_schema_tables(
     em: &EntityManager,
-    schema: &String,
+    schema: &str,
     kind: &TableKind,
 ) -> Result<Vec<TableName>, DbError> {
     #[derive(Debug, FromDao)]
@@ -89,10 +89,10 @@ fn get_schema_tables(
         schema: String,
     }
     impl TableNameSimple {
-        fn to_tablename(self) -> TableName {
+        fn to_tablename(&self) -> TableName {
             TableName {
-                name: self.name,
-                schema: Some(self.schema),
+                name: self.name.to_string(),
+                schema: Some(self.schema.to_string()),
                 alias: None,
             }
         }
@@ -109,7 +109,7 @@ fn get_schema_tables(
     ORDER BY relname
             "#;
     let tablenames_simple: Result<Vec<TableNameSimple>, DbError> =
-        em.execute_sql_with_return(sql, &[schema, &kind.to_sql_char()]);
+        em.execute_sql_with_return(sql, &[&schema, &kind.to_sql_char()]);
     match tablenames_simple {
         Ok(simples) => {
             let mut table_names = Vec::with_capacity(simples.len());
@@ -176,17 +176,17 @@ pub fn get_table(em: &EntityManager, table_name: &TableName) -> Result<Table, Db
     }
 
     impl TableSimple {
-        fn to_table(self, columns: Vec<Column>, table_key: Vec<TableKey>) -> Table {
+        fn to_table(&self, columns: Vec<Column>, table_key: Vec<TableKey>) -> Table {
             Table {
                 name: TableName {
-                    name: self.name,
-                    schema: Some(self.schema),
+                    name: self.name.to_string(),
+                    schema: Some(self.schema.to_string()),
                     alias: None,
                 },
-                comment: self.comment,
-                columns: columns,
+                comment: self.comment.clone(),
+                columns,
                 is_view: self.is_view,
-                table_key: table_key,
+                table_key,
             }
         }
     }
@@ -208,30 +208,11 @@ pub fn get_table(em: &EntityManager, table_name: &TableName) -> Result<Table, Db
         None => "public".to_string(),
     };
 
-    let table_simple: Result<TableSimple, DbError> =
-        em.execute_sql_with_one_return(&sql, &[&table_name.name, &schema]);
-
-    match table_simple {
-        Ok(table_simple) => {
-            let columns: Result<Vec<Column>, DbError> = column_info::get_columns(em, table_name);
-            match columns {
-                Ok(columns) => {
-                    let keys: Result<Vec<TableKey>, DbError> = get_table_key(em, table_name);
-                    match keys {
-                        Ok(keys) => {
-                            let table = table_simple.to_table(columns, keys);
-                            Ok(table)
-                        }
-                        Err(e) => Err(e),
-                    }
-                }
-                Err(e) => {
-                    return Err(e);
-                }
-            }
-        }
-        Err(e) => Err(e),
-    }
+    let table_simple:TableSimple  = em.execute_sql_with_one_return(&sql, &[&table_name.name, &schema])?;
+    let columns:Vec<Column> = column_info::get_columns(em, table_name)?;
+    let keys:Vec<TableKey> = get_table_key(em, table_name)?;
+    let table: Table = table_simple.to_table(columns, keys);
+    Ok(table)
 }
 
 /// column name only
@@ -240,9 +221,9 @@ struct ColumnNameSimple {
     column: String,
 }
 impl ColumnNameSimple {
-    fn to_columnname(self) -> ColumnName {
+    fn to_columnname(&self) -> ColumnName {
         ColumnName {
-            name: self.column,
+            name: self.column.to_string(),
             table: None,
             alias: None,
         }
@@ -252,7 +233,7 @@ impl ColumnNameSimple {
 /// get the column names involved in a Primary key or unique key
 fn get_columnname_from_key(
     em: &EntityManager,
-    key_name: &String,
+    key_name: &str,
     table_name: &TableName,
 ) -> Result<Vec<ColumnName>, DbError> {
     let sql = r#"SELECT pg_attribute.attname as column
@@ -300,7 +281,7 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
     }
 
     impl TableKeySimple {
-        fn to_table_key(self, em: &EntityManager, table_name: &TableName) -> TableKey {
+        fn to_table_key(&self, em: &EntityManager, table_name: &TableName) -> TableKey {
             if self.is_primary_key {
                 let primary = Key {
                     name: Some(self.key_name.to_owned()),
@@ -365,7 +346,7 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
 /// get the foreign key detail of this key name
 fn get_foreign_key(
     em: &EntityManager,
-    foreign_key: &String,
+    foreign_key: &str,
     table_name: &TableName,
 ) -> Result<ForeignKey, DbError> {
     #[derive(Debug, FromDao)]
@@ -376,16 +357,16 @@ fn get_foreign_key(
     }
     impl ForeignKeySimple {
         fn to_foreign_key(
-            self,
+            &self,
             columns: Vec<ColumnName>,
             referred_columns: Vec<ColumnName>,
         ) -> ForeignKey {
             ForeignKey {
-                name: Some(self.key_name),
+                name: Some(self.key_name.to_string()),
                 columns: columns,
                 foreign_table: TableName {
-                    name: self.foreign_table,
-                    schema: self.foreign_schema,
+                    name: self.foreign_table.to_string(),
+                    schema: self.foreign_schema.clone(),
                     alias: None,
                 },
                 referred_columns: referred_columns,
@@ -417,7 +398,7 @@ fn get_foreign_key(
 
 fn get_referred_foreign_columns(
     em: &EntityManager,
-    foreign_key: &String,
+    foreign_key: &str,
 ) -> Result<Vec<ColumnName>, DbError> {
     let sql = r#"SELECT DISTINCT conname AS key_name,
         pg_attribute.attname AS column

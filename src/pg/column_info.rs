@@ -92,7 +92,7 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
 fn get_column_specification(
     em: &EntityManager,
     table_name: &TableName,
-    column_name: &String,
+    column_name: &str,
 ) -> Result<ColumnSpecification, DbError> {
     /// null, datatype default value
     #[derive(Debug, crate::codegen::FromDao)]
@@ -179,7 +179,6 @@ fn get_column_specification(
                             if default == "now()" || default == "timezone('utc'::text, now())" {
                                 Literal::CurrentTimestamp
                             } else {
-                                //panic!("timestamp other than now is not covered")
                                 Literal::Null
                             }
                         }
@@ -213,9 +212,9 @@ fn get_column_specification(
                                 if trimmed_values.is_empty(){
                                     Literal::ArrayInt(vec![])
                                 }else{
-                                    let int_array_result:Vec<Result<i64,_>> = trimmed_values.split(',').map(|i|i.parse::<i64>()).collect();
+                                    let int_array_result:Vec<Result<i64,_>> = trimmed_values.split(',').map(str::parse).collect();
                                     let int_array:Vec<i64> = int_array_result.iter().map(|r|match r {
-                                        Ok(r) => r.clone(),
+                                        Ok(r) => *r,
                                         Err(e) => panic!("unable to parse integer value: {:?}, Error:{:?}", r, e)
                                     }).collect();
                                     Literal::ArrayInt(int_array)
@@ -229,12 +228,12 @@ fn get_column_specification(
                                 let splinters:Vec<&str> = default.split("::").collect();
                                 let values = splinters[0];
                                 let trimmed_values = values.trim_matches('\'').trim_start_matches('{').trim_end_matches('}');
-                                let array_result:Vec<Result<f64,_>> = trimmed_values.split(',').map(|i|i.parse::<f64>()).collect();
+                                let array_result:Vec<Result<f64,_>> = trimmed_values.split(',').map(str::parse).collect();
                                 if trimmed_values.is_empty(){
                                     Literal::ArrayInt(vec![])
                                 }else{
                                     let array:Vec<f64> = array_result.iter().map(|r|match r {
-                                        Ok(r) => r.clone(),
+                                        Ok(r) => *r,
                                         Err(e) => panic!("unable to parse float value: {:?}, Error:{:?}", r, e)
                                     }).collect();
                                     Literal::ArrayFloat(array)
@@ -247,7 +246,7 @@ fn get_column_specification(
                               // default = '{Mon,Wed,Fri}'::character varying[],
                                 let splinters:Vec<&str> = default.split("::").collect();
                                 let string_values = splinters[0];
-                                let trimmed_values = string_values.trim_matches('\'').trim_start_matches('{').trim_end_matches('}').split(',').map(|s|s.to_owned()).collect();
+                                let trimmed_values = string_values.trim_matches('\'').trim_start_matches('{').trim_end_matches('}').split(',').map(ToString::to_string).collect();
                                 Literal::ArrayString(trimmed_values)
                             }
                             _ => panic!("ArrayType not convered: {:?} in {}.{}", sql_type, table_name.complete_name(), column_name),
@@ -269,7 +268,7 @@ fn get_column_specification(
                 info!("enum: {}", data_type);
                 let enum_type = SqlType::Enum(data_type.to_owned(), self.enum_choices.to_owned());
                 (enum_type, None)
-            } else if self.is_array_enum && self.array_enum_choices.len() > 0 {
+            } else if self.is_array_enum && !self.array_enum_choices.is_empty() {
                 let array_enum = SqlType::Array(Box::new(SqlType::Enum(
                     data_type.to_owned(),
                     self.array_enum_choices.to_owned(),
@@ -369,7 +368,7 @@ fn get_column_specification(
 fn get_column_stat(
     em: &EntityManager,
     table_name: &TableName,
-    column_name: &String,
+    column_name: &str,
 ) -> Result<Option<ColumnStat>, DbError> {
     let sql = r#"
             SELECT avg_width,
@@ -385,7 +384,7 @@ fn get_column_stat(
         None => "public".to_string(),
     };
     let column_stat: Result<Option<ColumnStat>, DbError> =
-        em.execute_sql_with_maybe_one_return(&sql, &[column_name, &table_name.name, &schema]);
+        em.execute_sql_with_maybe_one_return(&sql, &[&column_name, &table_name.name, &schema]);
     column_stat
 }
 

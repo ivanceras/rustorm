@@ -182,6 +182,12 @@ impl<'a> From<&'a str> for Value {
     }
 }
 
+impl ToValue for &str {
+    fn to_value(&self) -> Value {
+        Value::Text(self.to_string())
+    }
+}
+
 impl From<Vec<String>> for Value {
     fn from(f: Vec<String>) -> Value {
         Value::Array(Array::Text(f))

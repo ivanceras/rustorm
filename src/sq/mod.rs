@@ -47,23 +47,23 @@ fn to_sq_value(val: &Value) -> rusqlite::types::Value {
             rusqlite::types::Value::Integer(if v{1}else{0})
         }
         Value::Tinyint(v) => {
-            rusqlite::types::Value::Integer(v as i64)
+            rusqlite::types::Value::Integer(i64::from(v))
         }
         Value::Smallint(v) => {
-            rusqlite::types::Value::Integer(v as i64)
+            rusqlite::types::Value::Integer(i64::from(v))
         }
         Value::Int(v) => {
-            rusqlite::types::Value::Integer(v as i64)
+            rusqlite::types::Value::Integer(i64::from(v))
         }
         Value::Bigint(v) => {
-            rusqlite::types::Value::Integer(v as i64)
+            rusqlite::types::Value::Integer(v)
         }
 
         Value::Float(v) => {
-            rusqlite::types::Value::Real(v as f64)
+            rusqlite::types::Value::Real(f64::from(v))
         }
         Value::Double(v) => {
-            rusqlite::types::Value::Real(v as f64)
+            rusqlite::types::Value::Real(v)
         }
         Value::BigDecimal(ref v) => {
             match v.to_f64(){
@@ -317,7 +317,7 @@ impl Database for SqliteDB{
             }
         }
         let sql = format!("PRAGMA table_info({});", table_name.complete_name());
-        let result = self.execute_sql_with_return(&sql, &vec![])?;
+        let result = self.execute_sql_with_return(&sql, &[])?;
         let mut primary_columns = vec![];
         let mut columns = vec![];
         for dao in result.iter(){
@@ -355,7 +355,7 @@ impl Database for SqliteDB{
         info!("primary key: {:#?}", primary_key);
         let foreign_keys = get_foreign_keys(em, table_name)?;
         let table_key_foreign:Vec<TableKey> = foreign_keys.into_iter()
-                .map(|fk| TableKey::ForeignKey(fk))
+                .map(TableKey::ForeignKey)
                 .collect();
         let mut table_keys = vec![
             TableKey::PrimaryKey(primary_key),
@@ -438,7 +438,7 @@ fn get_foreign_keys(em: &EntityManager, table: &TableName) -> Result<Vec<Foreign
         from: String,
         to: String,
     }
-    let result: Vec<ForeignSimple> = em.execute_sql_with_return(&sql, &vec![])?;
+    let result: Vec<ForeignSimple> = em.execute_sql_with_return(&sql, &[])?;
     let mut foreign_tables:Vec<(i64, TableName)> = result.iter().map(|f| (f.id, TableName::from(&f.table)) ).collect();
     foreign_tables.dedup();
     let mut foreign_keys = Vec::with_capacity(foreign_tables.len());

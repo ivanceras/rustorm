@@ -181,7 +181,7 @@ impl Database for PostgresDB {
                         LEFT JOIN pg_shdescription ON objoid = pg_database.oid
                         WHERE datname = current_database()";
         em.execute_sql_with_one_return(&sql, &[])
-            .map(|dn|Some(dn))
+            .map(Some)
     }
 }
 
@@ -189,7 +189,7 @@ fn to_pg_values<'a>(values: &[&'a Value]) -> Vec<PgValue<'a>> {
     values.iter().map(|v| PgValue(v)).collect()
 }
 
-fn to_sql_types<'a>(values: &'a Vec<PgValue>) -> Vec<&'a ToSql> {
+fn to_sql_types<'a>(values: &'a [PgValue]) -> Vec<&'a ToSql> {
     let mut sql_types = vec![];
     for v in values.iter() {
         sql_types.push(&*v as &ToSql);

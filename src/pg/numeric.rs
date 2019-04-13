@@ -46,7 +46,7 @@ impl Error for InvalidNumericSign {
 
 impl FromSql for PgNumeric {
     fn from_sql(_ty: &Type, bytes: &[u8]) -> Result<Self, Box<Error + Send + Sync>> {
-        let mut bytes = bytes.clone();
+        let mut bytes = <&[u8]>::clone(&bytes);
         let ndigits = bytes.read_u16::<NetworkEndian>()?;
         let mut digits = Vec::with_capacity(ndigits as usize);
         let weight = bytes.read_i16::<NetworkEndian>()?;
@@ -149,7 +149,7 @@ impl<'a> From<&'a BigDecimal> for PgNumeric {
 
         // Ensure that the decimal will always lie on a digit boundary
         for _ in 0..(4 - scale % 4) {
-            integer = integer * 10;
+            integer *= 10;
         }
         let integer = integer.to_biguint().expect("integer is always positive");
 
@@ -218,14 +218,13 @@ impl From<PgNumeric> for BigDecimal {
         let mut result = BigUint::default();
         let count = digits.len() as i64;
         for digit in digits {
-            result = result * BigUint::from(10_000u64);
-            result = result + BigUint::from(digit as u64);
+            result *= BigUint::from(10_000u64);
+            result += BigUint::from(digit as u64);
         }
         // First digit got factor 10_000^(digits.len() - 1), but should get 10_000^weight
         let correction_exp = 4 * (i64::from(weight) - count + 1);
         // FIXME: `scale` allows to drop some insignificant figures, which is currently unimplemented.
         // This means that e.g. PostgreSQL 0.01 will be interpreted as 0.0100
-        let result = BigDecimal::new(BigInt::from_biguint(sign, result), -correction_exp);
-        result
+        BigDecimal::new(BigInt::from_biguint(sign, result), -correction_exp)
     }
 }
