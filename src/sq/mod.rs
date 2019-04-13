@@ -98,18 +98,20 @@ impl Database for SqliteDB{
         info!("executing sql: {}", sql);
         info!("params: {:?}", params);
         let stmt = self.0.prepare(&sql);
-                let column_names = if let Ok(ref stmt) = stmt {
-                    stmt.column_names()
-                }else{
-                    vec![]
-                };
+
+        let column_names = if let Ok(ref stmt) = stmt {
+            stmt.column_names()
+        }else{
+            vec![]
+        };
+        let column_names: Vec<String> = column_names
+            .iter()
+            .map(|c| c.to_string())
+            .collect();
+
         match stmt{
             Ok(mut stmt) => {
                 let sq_values = to_sq_values(params);
-                let column_names: Vec<String> = column_names
-                    .iter()
-                    .map(|c| c.to_string())
-                    .collect();
                 let column_count = stmt.column_count();
                  let mut records = Rows::new(column_names);
                  if let Ok(mut rows) = stmt.query(sq_values){
