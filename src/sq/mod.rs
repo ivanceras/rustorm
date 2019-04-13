@@ -398,16 +398,16 @@ impl Database for SqliteDB{
     }
 
     /// there are no users in sqlite
-    /// TODO: extract from a fix table ie: users which satisfies the username, password combination
     fn get_users(&self, _em: &EntityManager) -> Result<Vec<User>, DbError> {
-        Ok(vec![])
+        Err(DbError::UnsupportedOperation("sqlite doesn't have operatio to extract users".to_string()))
     }
 
     /// there are not roles in sqlite
     fn get_roles(&self, _em: &EntityManager, _username: &str) -> Result<Vec<Role>, DbError> {
-        Ok(vec![])
+        Err(DbError::UnsupportedOperation("sqlite doesn't have operatio to extract roles".to_string()))
     }
 
+    /// TODO: return the filename if possible
     fn get_database_name(&self, _em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {
         Ok(None)
     }

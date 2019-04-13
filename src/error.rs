@@ -92,6 +92,7 @@ pub enum DbError {
     PlatformError(PlatformError),
     ConvertError(ConvertError),
     ConnectError(ConnectError), //agnostic connection error
+    UnsupportedOperation(String),
 }
 
 impl From<PlatformError> for DbError {

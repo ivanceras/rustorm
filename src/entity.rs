@@ -18,7 +18,6 @@ pub struct EntityManager(pub DBPlatform);
 
 impl EntityManager {
     pub fn set_session_user(&self, username: &str) -> Result<(), DbError> {
-        //let sql = format!("SET SESSION AUTHORIZATION '{}'", username);
         let sql = format!("SET SESSION ROLE '{}'", username);
         self.0.execute_sql_with_return(&sql, &[])?;
         Ok(())
@@ -74,6 +73,20 @@ impl EntityManager {
         self.0.get_all_tables(self)
     }
 
+    /// Get the total count of records
+    pub fn get_total_records(&self, table_name: &TableName) -> Result<u64, DbError> {
+        #[derive(crate::FromDao)]
+        struct Count {
+            count: i64,
+        }
+        let sql = format!(
+            "SELECT COUNT(*) AS count FROM {}",
+            table_name.complete_name()
+        );
+        let count: Result<Count, DbError> = self.execute_sql_with_one_return(&sql, &[]);
+        count.map(|c| c.count as u64)
+    }
+
     pub fn get_users(&self) -> Result<Vec<User>, DbError> {
         self.0.get_users(self)
     }
@@ -100,6 +113,7 @@ impl EntityManager {
         }
     }
 
+    /// called when the platform used is postgresql
     pub fn insert_bulk_with_returning_support<T, R>(
         &self,
         entities: &[&T],
@@ -134,6 +148,8 @@ impl EntityManager {
         Ok(retrieved_entities)
     }
 
+    /// called multiple times when using database platform that doesn;t support multiple value
+    /// insert such as sqlite
     pub fn single_insert<T>(&self, entity: &T) -> Result<(), DbError>
     where
         T: ToTableName + ToColumnNames + ToDao,
@@ -154,6 +170,7 @@ impl EntityManager {
         Ok(())
     }
 
+    /// this is soly for use with sqlite since sqlite doesn't support bulk insert
     pub fn insert_simple<T, R>(&self, entities: &[&T]) -> Result<Vec<R>, DbError>
     where
         T: ToTableName + ToColumnNames + ToDao,
@@ -167,7 +184,7 @@ impl EntityManager {
             .join(", ");
 
         let table = T::to_table_name();
-        //TODO: last_insert_rowid() doesn't seem to return value
+        //TODO: move this specific query to sqlite
         let last_insert_sql = format!(
             "\
              SELECT {} \
@@ -178,19 +195,6 @@ impl EntityManager {
             table.complete_name(),
             table.complete_name()
         );
-        //TODO: This is using a hack by getting the MAX(ROWID)
-        /*
-        let last_insert_sql = format!(
-            "\
-             SELECT {} \
-             FROM {} \
-             WHERE ROWID = (\
-             SELECT MAX(ROWID) FROM {})",
-            return_column_names,
-            table.complete_name(),
-            table.complete_name()
-        );
-        */
         let mut retrieved_entities = vec![];
         println!("sql: {}", last_insert_sql);
         for entity in entities {
@@ -201,6 +205,7 @@ impl EntityManager {
         Ok(retrieved_entities)
     }
 
+    /// build the returning clause
     fn build_returning_clause(&self, return_columns: Vec<rustorm_dao::ColumnName>) -> String {
         format!(
             "\nRETURNING \n{}",
@@ -212,8 +217,7 @@ impl EntityManager {
         )
     }
 
-    /// insert to table the values of this struct
-    /// TODO: sqlite3 doesn't support the RETURNING keyword
+    /// build an insert clause
     fn build_insert_clause<T>(&self, entities: &[&T]) -> String
     where
         T: ToTableName + ToColumnNames + ToDao,
@@ -582,7 +586,7 @@ mod test_pg {
 
     #[test]
     fn execute_sql_non_existing_table() {
-        #[derive(Debug, FromDao)]
+        #[derive(Debug, crate::FromDao)]
         struct Event {
             id: i32,
             name: String,
