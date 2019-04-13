@@ -1,6 +1,6 @@
 [package]
 name = "rustorm"
-version = "0.11.0"
+version = "0.13.0"
 authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
 license = "MIT"
 description = "A complete rewrite of rustorm"
@@ -44,10 +44,10 @@ time = "0.1.14"
 
 
 [dependencies.rustorm_dao]
-version = "0.2.0"
+version = "0.3.0"
 
 [dependencies.rustorm_codegen]
-version = "0.2.0"
+version = "0.3.0"
 
 [features]
 #default = ["with-postgres"]
@@ -61,7 +61,7 @@ with-sqlite = ["rusqlite","r2d2_sqlite"]
 
 [replace]
 "rustorm_dao:0.3.0" = { path = "crates/dao" }
-"rustorm_codegen:0.2.0" = { path = "crates/codegen" }
+"rustorm_codegen:0.3.0" = { path = "crates/codegen" }
 
 [package.metadata.docs.rs]
 features = ["with-postgres"]
