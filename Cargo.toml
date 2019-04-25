@@ -45,7 +45,7 @@ rustorm_codegen = "0.3.0"
 travis-ci = { repository = "ivanceras/rustorm" }
 
 [features]
-default = ["with-postgres"]
+##default = ["with-postgres"]
 with-postgres = ["postgres", "r2d2_postgres", "postgres-shared", "openssl"]
 with-sqlite = ["rusqlite","r2d2_sqlite"]
 
