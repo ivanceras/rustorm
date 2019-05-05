@@ -1,7 +1,9 @@
-use crate::types::SqlType;
-use crate::ColumnName;
-use crate::FromDao;
-use crate::TableName;
+use crate::{
+    types::SqlType,
+    ColumnName,
+    FromDao,
+    TableName,
+};
 use uuid::Uuid;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -24,19 +26,25 @@ impl Column {
 
     /// check if any of the column constraint default is generated from uuid
     pub fn default_is_generated_uuid(&self) -> bool {
-        self.specification.constraints.iter().any(|c| match *c {
-            ColumnConstraint::DefaultValue(ref literal) => match *literal {
-                Literal::UuidGenerateV4 => true,
+        self.specification.constraints.iter().any(|c| {
+            match *c {
+                ColumnConstraint::DefaultValue(ref literal) => {
+                    match *literal {
+                        Literal::UuidGenerateV4 => true,
+                        _ => false,
+                    }
+                }
                 _ => false,
-            },
-            _ => false,
+            }
         })
     }
 
     pub fn is_not_null(&self) -> bool {
-        self.specification.constraints.iter().any(|c| match *c {
-            ColumnConstraint::NotNull => true,
-            _ => false,
+        self.specification.constraints.iter().any(|c| {
+            match *c {
+                ColumnConstraint::NotNull => true,
+                _ => false,
+            }
         })
     }
 
@@ -49,24 +57,28 @@ impl Column {
     }
 
     pub fn has_generated_default(&self) -> bool {
-        self.specification.constraints.iter().any(|c| match *c {
-            ColumnConstraint::DefaultValue(ref literal) => match *literal {
-                Literal::Bool(_) => true,
-                Literal::Null => false,
-                Literal::Integer(_) => true,
-                Literal::Double(_) => true,
-                Literal::UuidGenerateV4 => true,
-                Literal::Uuid(_) => true,
-                Literal::String(_) => false,
-                Literal::Blob(_) => false,
-                Literal::CurrentTime => true,
-                Literal::CurrentDate => true,
-                Literal::CurrentTimestamp => true,
-                Literal::ArrayInt(_) => false,
-                Literal::ArrayFloat(_) => false,
-                Literal::ArrayString(_) => false,
-            },
-            _ => false,
+        self.specification.constraints.iter().any(|c| {
+            match *c {
+                ColumnConstraint::DefaultValue(ref literal) => {
+                    match *literal {
+                        Literal::Bool(_) => true,
+                        Literal::Null => false,
+                        Literal::Integer(_) => true,
+                        Literal::Double(_) => true,
+                        Literal::UuidGenerateV4 => true,
+                        Literal::Uuid(_) => true,
+                        Literal::String(_) => false,
+                        Literal::Blob(_) => false,
+                        Literal::CurrentTime => true,
+                        Literal::CurrentDate => true,
+                        Literal::CurrentTimestamp => true,
+                        Literal::ArrayInt(_) => false,
+                        Literal::ArrayFloat(_) => false,
+                        Literal::ArrayString(_) => false,
+                    }
+                }
+                _ => false,
+            }
         })
     }
 }
@@ -130,7 +142,7 @@ pub enum Literal {
 /// column stat, derive from pg_stats
 #[derive(Debug, PartialEq, FromDao, Clone)]
 pub struct ColumnStat {
-    pub avg_width: i32, //average width of the column, (the number of characters)
+    pub avg_width: i32, /* average width of the column, (the number of characters) */
     //most_common_values: Value,//top 5 most common values
     pub n_distinct: f32, // the number of distinct values of these column
 }

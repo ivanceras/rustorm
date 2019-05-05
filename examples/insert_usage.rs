@@ -1,11 +1,16 @@
 #![deny(warnings)]
-use chrono::offset::Utc;
-use chrono::DateTime;
-use rustorm::DbError;
-use rustorm::Pool;
-use rustorm::ToColumnNames;
-use rustorm::ToTableName;
-use rustorm::{FromDao, ToDao};
+use chrono::{
+    offset::Utc,
+    DateTime,
+};
+use rustorm::{
+    DbError,
+    FromDao,
+    Pool,
+    ToColumnNames,
+    ToDao,
+    ToTableName,
+};
 
 fn main() {
     mod for_insert {
@@ -42,7 +47,8 @@ fn main() {
     println!("tom_cruise: {:#?}", tom_cruise);
     println!("tom_hanks: {:#?}", tom_hanks);
 
-    let actors: Result<Vec<for_retrieve::Actor>, DbError> = em.insert(&[&tom_cruise, &tom_hanks]);
+    let actors: Result<Vec<for_retrieve::Actor>, DbError> =
+        em.insert(&[&tom_cruise, &tom_hanks]);
     println!("Actor: {:#?}", actors);
     assert!(actors.is_ok());
     let actors = actors.unwrap();

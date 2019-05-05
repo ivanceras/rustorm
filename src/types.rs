@@ -1,5 +1,7 @@
-use rustorm_dao::value::Array;
-use rustorm_dao::Value;
+use rustorm_dao::{
+    value::Array,
+    Value,
+};
 use serde_derive::Serialize;
 
 #[derive(Debug, Serialize, PartialEq, Clone)]
@@ -54,6 +56,7 @@ impl SqlType {
             _ => false,
         }
     }
+
     pub fn is_integer_type(&self) -> bool {
         match *self {
             SqlType::Int => true,
@@ -80,14 +83,17 @@ impl SqlType {
             _ => None,
         }
     }
+
     pub fn name(&self) -> String {
         match *self {
             SqlType::Text => "text".into(),
             SqlType::TsVector => "tsvector".into(),
-            SqlType::Array(ref ty) => match ty.as_ref() {
-                SqlType::Text => "text[]".into(),
-                _ => panic!("not yet dealt {:?}", self),
-            },
+            SqlType::Array(ref ty) => {
+                match ty.as_ref() {
+                    SqlType::Text => "text[]".into(),
+                    _ => panic!("not yet dealt {:?}", self),
+                }
+            }
             _ => panic!("not yet dealt {:?}", self),
         }
     }
@@ -148,9 +154,15 @@ impl HasType for Value {
             Value::Timestamp(_) => Some(SqlType::Timestamp),
             Value::Interval(_) => Some(SqlType::Interval),
             Value::Point(_) => Some(SqlType::Point),
-            Value::Array(Array::Int(_)) => Some(SqlType::Array(Box::new(SqlType::Int))),
-            Value::Array(Array::Float(_)) => Some(SqlType::Array(Box::new(SqlType::Float))),
-            Value::Array(Array::Text(_)) => Some(SqlType::Array(Box::new(SqlType::Text))),
+            Value::Array(Array::Int(_)) => {
+                Some(SqlType::Array(Box::new(SqlType::Int)))
+            }
+            Value::Array(Array::Float(_)) => {
+                Some(SqlType::Array(Box::new(SqlType::Float)))
+            }
+            Value::Array(Array::Text(_)) => {
+                Some(SqlType::Array(Box::new(SqlType::Text)))
+            }
         }
     }
 }

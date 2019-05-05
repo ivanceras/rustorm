@@ -12,14 +12,23 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use crate::sq::{self, SqliteDB};
 }}
 
-use crate::error::{ConnectError, ParseError};
-use crate::platform::DBPlatform;
-use crate::platform::Platform;
-use crate::DaoManager;
-use crate::DbError;
-use crate::EntityManager;
-use std::collections::BTreeMap;
-use std::convert::TryFrom;
+use crate::{
+    error::{
+        ConnectError,
+        ParseError,
+    },
+    platform::{
+        DBPlatform,
+        Platform,
+    },
+    DaoManager,
+    DbError,
+    EntityManager,
+};
+use std::{
+    collections::BTreeMap,
+    convert::TryFrom,
+};
 
 #[derive(Default)]
 pub struct Pool(BTreeMap<String, ConnPool>);
@@ -32,9 +41,9 @@ pub enum ConnPool {
 
 pub enum PooledConn {
     #[cfg(feature = "with-postgres")]
-    PooledPg(r2d2::PooledConnection<PostgresConnectionManager>),
+    PooledPg(Box<r2d2::PooledConnection<PostgresConnectionManager>>),
     #[cfg(feature = "with-sqlite")]
-    PooledSq(r2d2::PooledConnection<SqliteConnectionManager>),
+    PooledSq(Box<r2d2::PooledConnection<SqliteConnectionManager>>),
 }
 
 impl Pool {
@@ -47,29 +56,39 @@ impl Pool {
         info!("ensure db_url: {}", db_url);
         let platform: Result<Platform, _> = TryFrom::try_from(db_url);
         match platform {
-            Ok(platform) => match platform {
-                #[cfg(feature = "with-postgres")]
-                Platform::Postgres => {
-                    let pool_pg = pg::init_pool(db_url)?;
-                    if self.0.get(db_url).is_none() {
-                        self.0.insert(db_url.to_string(), ConnPool::PoolPg(pool_pg));
+            Ok(platform) => {
+                match platform {
+                    #[cfg(feature = "with-postgres")]
+                    Platform::Postgres => {
+                        let pool_pg = pg::init_pool(db_url)?;
+                        if self.0.get(db_url).is_none() {
+                            self.0.insert(
+                                db_url.to_string(),
+                                ConnPool::PoolPg(pool_pg),
+                            );
+                        }
+                        Ok(())
                     }
-                    Ok(())
-                }
-                #[cfg(feature = "with-sqlite")]
-                Platform::Sqlite(path) => {
-                    info!("matched sqlite");
-                    let pool_sq = sq::init_pool(&path)?;
-                    if self.0.get(db_url).is_none() {
-                        self.0.insert(db_url.to_string(), ConnPool::PoolSq(pool_sq));
+                    #[cfg(feature = "with-sqlite")]
+                    Platform::Sqlite(path) => {
+                        info!("matched sqlite");
+                        let pool_sq = sq::init_pool(&path)?;
+                        if self.0.get(db_url).is_none() {
+                            self.0.insert(
+                                db_url.to_string(),
+                                ConnPool::PoolSq(pool_sq),
+                            );
+                        }
+                        Ok(())
                     }
-                    Ok(())
+                    Platform::Unsupported(scheme) => {
+                        info!("unsupported");
+                        Err(DbError::ConnectError(ConnectError::UnsupportedDb(
+                            scheme,
+                        )))
+                    }
                 }
-                Platform::Unsupported(scheme) => {
-                    info!("unsupported");
-                    Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
-                }
-            },
+            }
             Err(e) => Err(DbError::ConnectError(ConnectError::ParseError(e))),
         }
     }
@@ -79,31 +98,39 @@ impl Pool {
         self.ensure(db_url)?;
         let platform: Result<Platform, ParseError> = TryFrom::try_from(db_url);
         match platform {
-            Ok(platform) => match platform {
-                #[cfg(feature = "with-postgres")]
-                Platform::Postgres => {
-                    let conn: Option<&ConnPool> = self.0.get(db_url);
-                    if let Some(conn) = conn {
-                        Ok(conn)
-                    } else {
-                        Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
+            Ok(platform) => {
+                match platform {
+                    #[cfg(feature = "with-postgres")]
+                    Platform::Postgres => {
+                        let conn: Option<&ConnPool> = self.0.get(db_url);
+                        if let Some(conn) = conn {
+                            Ok(conn)
+                        } else {
+                            Err(DbError::ConnectError(
+                                ConnectError::NoSuchPoolConnection,
+                            ))
+                        }
                     }
-                }
-                #[cfg(feature = "with-sqlite")]
-                Platform::Sqlite(_path) => {
-                    info!("getting sqlite pool");
-                    let conn: Option<&ConnPool> = self.0.get(db_url);
-                    if let Some(conn) = conn {
-                        Ok(conn)
-                    } else {
-                        Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
+                    #[cfg(feature = "with-sqlite")]
+                    Platform::Sqlite(_path) => {
+                        info!("getting sqlite pool");
+                        let conn: Option<&ConnPool> = self.0.get(db_url);
+                        if let Some(conn) = conn {
+                            Ok(conn)
+                        } else {
+                            Err(DbError::ConnectError(
+                                ConnectError::NoSuchPoolConnection,
+                            ))
+                        }
                     }
-                }
 
-                Platform::Unsupported(scheme) => {
-                    Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
+                    Platform::Unsupported(scheme) => {
+                        Err(DbError::ConnectError(ConnectError::UnsupportedDb(
+                            scheme,
+                        )))
+                    }
                 }
-            },
+            }
             Err(e) => Err(DbError::ConnectError(ConnectError::ParseError(e))),
         }
     }
@@ -116,16 +143,24 @@ impl Pool {
             ConnPool::PoolPg(ref pool_pg) => {
                 let pooled_conn = pool_pg.get();
                 match pooled_conn {
-                    Ok(pooled_conn) => Ok(PooledConn::PooledPg(pooled_conn)),
-                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
+                    Ok(pooled_conn) => {
+                        Ok(PooledConn::PooledPg(Box::new(pooled_conn)))
+                    }
+                    Err(e) => {
+                        Err(DbError::ConnectError(ConnectError::R2d2Error(e)))
+                    }
                 }
             }
             #[cfg(feature = "with-sqlite")]
             ConnPool::PoolSq(ref pool_sq) => {
                 let pooled_conn = pool_sq.get();
                 match pooled_conn {
-                    Ok(pooled_conn) => Ok(PooledConn::PooledSq(pooled_conn)),
-                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
+                    Ok(pooled_conn) => {
+                        Ok(PooledConn::PooledSq(Box::new(pooled_conn)))
+                    }
+                    Err(e) => {
+                        Err(DbError::ConnectError(ConnectError::R2d2Error(e)))
+                    }
                 }
             }
         }
@@ -136,9 +171,13 @@ impl Pool {
         let pooled_conn = self.connect(db_url)?;
         match pooled_conn {
             #[cfg(feature = "with-postgres")]
-            PooledConn::PooledPg(pooled_pg) => Ok(DBPlatform::Postgres(PostgresDB(pooled_pg))),
+            PooledConn::PooledPg(pooled_pg) => {
+                Ok(DBPlatform::Postgres(Box::new(PostgresDB(*pooled_pg))))
+            }
             #[cfg(feature = "with-sqlite")]
-            PooledConn::PooledSq(pooled_sq) => Ok(DBPlatform::Sqlite(SqliteDB(pooled_sq))),
+            PooledConn::PooledSq(pooled_sq) => {
+                Ok(DBPlatform::Sqlite(Box::new(SqliteDB(*pooled_sq))))
+            }
         }
     }
 
@@ -156,22 +195,26 @@ impl Pool {
 pub fn test_connection(db_url: &str) -> Result<(), DbError> {
     let platform: Result<Platform, ParseError> = TryFrom::try_from(db_url);
     match platform {
-        Ok(platform) => match platform {
-            #[cfg(feature = "with-postgres")]
-            Platform::Postgres => {
-                pg::test_connection(db_url)?;
-                Ok(())
+        Ok(platform) => {
+            match platform {
+                #[cfg(feature = "with-postgres")]
+                Platform::Postgres => {
+                    pg::test_connection(db_url)?;
+                    Ok(())
+                }
+                #[cfg(feature = "with-sqlite")]
+                Platform::Sqlite(path) => {
+                    info!("testing connection: {}", path);
+                    sq::test_connection(&path)?;
+                    Ok(())
+                }
+                Platform::Unsupported(scheme) => {
+                    Err(DbError::ConnectError(ConnectError::UnsupportedDb(
+                        scheme,
+                    )))
+                }
             }
-            #[cfg(feature = "with-sqlite")]
-            Platform::Sqlite(path) => {
-                info!("testing connection: {}", path);
-                sq::test_connection(&path)?;
-                Ok(())
-            }
-            Platform::Unsupported(scheme) => {
-                Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
-            }
-        },
+        }
         Err(e) => Err(DbError::ConnectError(ConnectError::ParseError(e))),
     }
 }
@@ -185,7 +228,7 @@ mod tests_pg {
     fn connect() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        pool.ensure(db_url).is_ok();
+        pool.ensure(db_url).expect("Unable to initialize pool");
         let pooled = pool.get_pool(db_url);
         match pooled {
             Ok(_) => info!("ok"),

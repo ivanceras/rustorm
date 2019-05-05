@@ -1,9 +1,13 @@
-use crate::error::ParseError;
-use crate::Database;
+use crate::{
+    error::ParseError,
+    Database,
+};
 use cfg_if::cfg_if;
 use log::*;
-use std::convert::TryFrom;
-use std::ops::Deref;
+use std::{
+    convert::TryFrom,
+    ops::Deref,
+};
 use url::Url;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
@@ -16,9 +20,9 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
 
 pub enum DBPlatform {
     #[cfg(feature = "with-postgres")]
-    Postgres(PostgresDB),
+    Postgres(Box<PostgresDB>),
     #[cfg(feature = "with-sqlite")]
-    Sqlite(SqliteDB),
+    Sqlite(Box<SqliteDB>),
 }
 
 impl Deref for DBPlatform {
@@ -27,9 +31,9 @@ impl Deref for DBPlatform {
     fn deref(&self) -> &Self::Target {
         match *self {
             #[cfg(feature = "with-postgres")]
-            DBPlatform::Postgres(ref pg) => pg,
+            DBPlatform::Postgres(ref pg) => pg.deref(),
             #[cfg(feature = "with-sqlite")]
-            DBPlatform::Sqlite(ref sq) => sq,
+            DBPlatform::Sqlite(ref sq) => sq.deref(),
         }
     }
 }

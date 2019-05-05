@@ -1,7 +1,9 @@
 use cfg_if::cfg_if;
 use r2d2;
-use std::error::Error;
-use std::fmt;
+use std::{
+    error::Error,
+    fmt,
+};
 use url;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
@@ -26,6 +28,7 @@ impl Error for ConnectError {
     fn description(&self) -> &str {
         "short desc"
     }
+
     fn cause(&self) -> Option<&Error> {
         None
     }

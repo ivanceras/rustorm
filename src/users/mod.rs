@@ -1,7 +1,12 @@
-use chrono::DateTime;
-use chrono::Utc;
+use chrono::{
+    DateTime,
+    Utc,
+};
 use rustorm_codegen::FromDao;
-use serde_derive::{Deserialize, Serialize};
+use serde_derive::{
+    Deserialize,
+    Serialize,
+};
 
 #[allow(unused)]
 mod previlege;
