@@ -94,7 +94,7 @@ impl EntityManager {
     pub fn get_total_records(
         &self,
         table_name: &TableName,
-    ) -> Result<u64, DbError> {
+    ) -> Result<usize, DbError> {
         #[derive(crate::FromDao)]
         struct Count {
             count: i64,
@@ -105,7 +105,7 @@ impl EntityManager {
         );
         let count: Result<Count, DbError> =
             self.execute_sql_with_one_return(&sql, &[]);
-        count.map(|c| c.count as u64)
+        count.map(|c| c.count as usize)
     }
 
     pub fn get_users(&self) -> Result<Vec<User>, DbError> {

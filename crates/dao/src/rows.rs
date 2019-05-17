@@ -10,7 +10,7 @@ pub struct Rows {
     pub columns: Vec<String>,
     pub data: Vec<Vec<Value>>,
     /// can be optionally set, indicates how many total rows are there in the table
-    pub count: Option<u64>,
+    pub count: Option<usize>,
 }
 
 impl Rows {
