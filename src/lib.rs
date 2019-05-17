@@ -144,7 +144,6 @@
 //! }
 //! ```
 //! Rustorm is wholly used by [diwata](https://github.com/ivanceras/diwata)
-//!
 
 use cfg_if::cfg_if;
 
