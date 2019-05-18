@@ -3,7 +3,7 @@ use chrono::{
     Utc,
 };
 use rustorm_codegen::FromDao;
-use serde_derive::{
+use serde::{
     Deserialize,
     Serialize,
 };

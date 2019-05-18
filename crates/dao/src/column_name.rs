@@ -1,7 +1,10 @@
 use crate::common;
-use serde_derive::Serialize;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-#[derive(Debug, Serialize, PartialEq, Clone)]
+#[derive(Debug, Serialize,Deserialize,  PartialEq, Clone)]
 pub struct ColumnName {
     pub name: String,
     pub table: Option<String>,

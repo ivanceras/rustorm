@@ -10,7 +10,7 @@ use crate::{
     TableName,
     Value,
 };
-use serde_derive::Serialize;
+use serde::Serialize;
 
 use crate::DbError;
 use rustorm_codegen::FromDao;
