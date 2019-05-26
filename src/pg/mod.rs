@@ -309,10 +309,16 @@ impl FromSql for OwnedPgValue {
                         let v: Result<String, _> = FromSql::from_sql(&types::TEXT, raw);
                         match v {
                             Ok(v) => {
+                                // TODO: Need to unify char and character array in one Value::Text
+                                // variant to simplify handling them in some column
                                 if v.chars().count() == 1 {
                                     Ok(OwnedPgValue(Value::Char(v.chars().next().unwrap())))
                                 } else {
-                                    FromSql::from_sql(ty, raw).map(|v| OwnedPgValue(Value::Text(v)))
+                                    FromSql::from_sql(ty, raw).map(|v:String| {
+                                            let value_string:String = v.trim_end().to_string();
+                                            OwnedPgValue(Value::Text(value_string))
+                                        }
+                                    )
                                 }
                             }
                             Err(e) => Err(e),
@@ -431,6 +437,17 @@ mod test {
     use crate::Pool;
     use crate::pool::*;
 
+
+    #[test]
+    fn test_character_array_data_type() {
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let dm = pool.dm(db_url).unwrap();
+        let sql = format!("SELECT language_id, name FROM language", );
+        let languages: Result<Rows, DbError> =
+            dm.execute_sql_with_return(&sql, &[]);
+        println!("languages: {:#?}", languages);
+    }
     #[test]
     fn connect_test_query() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
