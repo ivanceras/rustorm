@@ -447,6 +447,19 @@ mod test {
         let languages: Result<Rows, DbError> =
             dm.execute_sql_with_return(&sql, &[]);
         println!("languages: {:#?}", languages);
+        assert!(languages.is_ok());
+    }
+
+    #[test]
+    fn test_ts_vector() {
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let dm = pool.dm(db_url).unwrap();
+        let sql = format!("SELECT film_id, title, fulltext::text FROM film LIMIT 40", );
+        let films: Result<Rows, DbError> =
+            dm.execute_sql_with_return(&sql, &[]);
+        println!("film: {:#?}", films);
+        assert!(films.is_ok());
     }
     #[test]
     fn connect_test_query() {
