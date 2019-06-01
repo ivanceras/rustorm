@@ -189,10 +189,10 @@ fn to_pg_values<'a>(values: &[&'a Value]) -> Vec<PgValue<'a>> {
     values.iter().map(|v| PgValue(v)).collect()
 }
 
-fn to_sql_types<'a>(values: &'a [PgValue]) -> Vec<&'a ToSql> {
+fn to_sql_types<'a>(values: &'a [PgValue]) -> Vec<&'a dyn ToSql> {
     let mut sql_types = vec![];
     for v in values.iter() {
-        sql_types.push(&*v as &ToSql);
+        sql_types.push(&*v as &dyn ToSql);
     }
     sql_types
 }
@@ -216,7 +216,7 @@ impl<'a> ToSql for PgValue<'a> {
         &self,
         ty: &Type,
         out: &mut Vec<u8>,
-    ) -> Result<IsNull, Box<Error + 'static + Sync + Send>> {
+    ) -> Result<IsNull, Box<dyn Error + 'static + Sync + Send>> {
         match *self.0 {
             Value::Bool(ref v) => v.to_sql(ty, out),
             Value::Tinyint(ref v) => v.to_sql(ty, out),
@@ -260,7 +260,7 @@ impl<'a> ToSql for PgValue<'a> {
 }
 
 impl FromSql for OwnedPgValue {
-    fn from_sql(ty: &Type, raw: &[u8]) -> Result<Self, Box<Error + Sync + Send>> {
+    fn from_sql(ty: &Type, raw: &[u8]) -> Result<Self, Box<dyn Error + Sync + Send>> {
         macro_rules! match_type {
             ($variant:ident) => {
                 FromSql::from_sql(ty, raw).map(|v| OwnedPgValue(Value::$variant(v)))
@@ -378,10 +378,10 @@ impl FromSql for OwnedPgValue {
         true
     }
 
-    fn from_sql_null(_ty: &Type) -> Result<Self, Box<Error + Sync + Send>> {
+    fn from_sql_null(_ty: &Type) -> Result<Self, Box<dyn Error + Sync + Send>> {
         Ok(OwnedPgValue(Value::Nil))
     }
-    fn from_sql_nullable(ty: &Type, raw: Option<&[u8]>) -> Result<Self, Box<Error + Sync + Send>> {
+    fn from_sql_nullable(ty: &Type, raw: Option<&[u8]>) -> Result<Self, Box<dyn Error + Sync + Send>> {
         match raw {
             Some(raw) => Self::from_sql(ty, raw),
             None => Self::from_sql_null(ty),
@@ -412,13 +412,6 @@ impl From<r2d2::Error> for PostgresError {
 }
 
 impl Error for PostgresError {
-    fn description(&self) -> &str {
-        "postgres error"
-    }
-
-    fn cause(&self) -> Option<&Error> {
-        None
-    }
 }
 
 impl fmt::Display for PostgresError {

@@ -45,7 +45,7 @@ impl Error for InvalidNumericSign {
 }
 
 impl FromSql for PgNumeric {
-    fn from_sql(_ty: &Type, bytes: &[u8]) -> Result<Self, Box<Error + Send + Sync>> {
+    fn from_sql(_ty: &Type, bytes: &[u8]) -> Result<Self, Box<dyn Error + Send + Sync>> {
         let mut bytes = <&[u8]>::clone(&bytes);
         let ndigits = bytes.read_u16::<NetworkEndian>()?;
         let mut digits = Vec::with_capacity(ndigits as usize);
@@ -81,7 +81,7 @@ impl FromSql for PgNumeric {
 }
 
 impl ToSql for PgNumeric {
-    fn to_sql(&self, _ty: &Type, out: &mut Vec<u8>) -> Result<IsNull, Box<Error + Sync + Send>> {
+    fn to_sql(&self, _ty: &Type, out: &mut Vec<u8>) -> Result<IsNull, Box<dyn Error + Sync + Send>> {
         let sign = match *self {
             PgNumeric::Positive { .. } => 0,
             PgNumeric::Negative { .. } => 0x4000,
