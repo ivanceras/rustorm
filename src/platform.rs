@@ -26,7 +26,7 @@ pub enum DBPlatform {
 }
 
 impl Deref for DBPlatform {
-    type Target = Database;
+    type Target = dyn Database;
 
     fn deref(&self) -> &Self::Target {
         match *self {

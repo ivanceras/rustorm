@@ -14,9 +14,6 @@ impl Error for ConvertError {
         "Conversion is not supported"
     }
 
-    fn cause(&self) -> Option<&Error> {
-        None
-    }
 }
 
 impl fmt::Display for ConvertError {
