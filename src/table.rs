@@ -178,19 +178,6 @@ impl Table {
     }
 }
 
-/*
-#[derive(Debug, PartialEq, Clone)]
-pub struct PrimaryKey {
-    pub name: Option<String>,
-    pub columns: Vec<ColumnName>,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct UniqueKey {
-    pub name: Option<String>,
-    pub columns: Vec<ColumnName>,
-}
-*/
 
 /// example:
 ///     category { id, name }

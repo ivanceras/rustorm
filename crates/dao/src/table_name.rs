@@ -1,5 +1,6 @@
 use crate::common;
 use serde_derive::{Deserialize, Serialize};
+use std::hash::{Hash, Hasher};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TableName {
@@ -7,6 +8,8 @@ pub struct TableName {
     pub schema: Option<String>,
     pub alias: Option<String>,
 }
+
+impl Eq for TableName {}
 
 impl TableName {
     /// create table with name
@@ -51,6 +54,14 @@ impl TableName {
             Some(ref schema) => format!("{}.{}", schema, self.safe_name()),
             None => self.name.to_owned(),
         }
+    }
+}
+
+impl Hash for TableName {
+
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.schema.hash(state);
+        self.name.hash(state);
     }
 }
 
