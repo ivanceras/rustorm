@@ -14,6 +14,7 @@ pub use table_name::TableName;
 pub use table_name::ToTableName;
 pub use value::ToValue;
 pub use value::Value;
+pub use value::Array;
 
 mod column_name;
 mod common;

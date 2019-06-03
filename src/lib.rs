@@ -205,6 +205,7 @@ pub use rustorm_dao::{
     TableName,
     ToValue,
     Value,
+    Array,
 };
 
 /// Wrap the rustorm_dao exports to avoid name conflict with the rustorm_codegen
