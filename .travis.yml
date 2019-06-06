@@ -17,14 +17,12 @@ services:
     - postgresql
 
 before_script:
-    - rustup component add clippy
     - ./gather-prerequisites.sh
     - ./execute-data-import.sh
 
 
-  
+
 script:
     - cargo test --features "with-postgres with-sqlite"
     - cargo test --features "with-postgres"
     - cargo test --features "with-sqlite"
-    - ./run_clippy.sh

@@ -9,7 +9,6 @@ rust-latest:
       - postgres:latest
 
   before_script:
-      - rustup component add clippy
       - ./gather-prerequisites.sh
       - ./install-postgresql-client.sh
       - ./rename-database-host.sh
@@ -18,7 +17,6 @@ rust-latest:
     - cargo test --features "with-postgres with-sqlite"
     - cargo test --features "with-postgres"
     - cargo test --features "with-sqlite"
-    - ./run_clippy.sh
 
 rust-nightly:
   stage: build
@@ -27,7 +25,6 @@ rust-nightly:
       - postgres:latest
 
   before_script:
-      - rustup component add clippy
       - ./gather-prerequisites.sh
       - ./install-postgresql-client.sh
       - ./rename-database-host.sh
@@ -37,4 +34,3 @@ rust-nightly:
     - cargo test --features "with-postgres with-sqlite"
     - cargo test --features "with-postgres"
     - cargo test --features "with-sqlite"
-    - ./run_clippy.sh
