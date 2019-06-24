@@ -171,7 +171,7 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
                         }
                     }
                     // enums will be just Text
-                    SqlType::Enum(_,_) => Value::Text(v.to_string()),
+                    SqlType::Enum(_, _) => Value::Text(v.to_string()),
                     // ts vector is casted into text and then we just
                     // return them as text as well
                     SqlType::TsVector => Value::Text(v.to_string()),

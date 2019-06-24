@@ -178,7 +178,6 @@ impl Table {
     }
 }
 
-
 /// example:
 ///     category { id, name }
 ///     product { product_id, name, category_id }

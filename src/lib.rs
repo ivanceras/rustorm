@@ -198,13 +198,13 @@ pub use codegen::{
 };
 
 pub use rustorm_dao::{
+    Array,
     ColumnName,
     Dao,
     Rows,
     TableName,
     ToValue,
     Value,
-    Array,
 };
 
 /// Wrap the rustorm_dao exports to avoid name conflict with the rustorm_codegen

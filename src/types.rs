@@ -173,13 +173,13 @@ impl HasType for Value {
 impl SqlType {
     pub fn same_type(&self, value: &Value) -> bool {
         if let Some(simple_type) = value.get_type() {
-            if simple_type == *self{
-                return true
+            if simple_type == *self {
+                return true;
             }
-            match (self, value){
+            match (self, value) {
                 (SqlType::Varchar, Value::Text(_)) => true,
                 (SqlType::TimestampTz, Value::Timestamp(_)) => true,
-                (_, _) => false
+                (_, _) => false,
             }
         } else {
             false
