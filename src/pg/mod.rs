@@ -12,9 +12,7 @@ use crate::EntityManager;
 use crate::DbError;
 use crate::error::PlatformError;
 use geo::Point;
-use openssl::ssl::{SslConnectorBuilder, SslMethod};
 use postgres;
-use postgres::tls::openssl::OpenSsl;
 use postgres::types::{self, FromSql, IsNull, ToSql, Type};
 use postgres_shared::types::Kind;
 use postgres_shared::types::Kind::Enum;
@@ -51,15 +49,6 @@ pub fn init_pool(
     Ok(pool)
 }
 
-#[allow(unused)]
-fn get_tls() -> TlsMode {
-    let mut builder = SslConnectorBuilder::new(SslMethod::tls()).unwrap();
-    builder
-        .set_ca_file("/etc/ssl/certs/ca-certificates.crt")
-        .unwrap();
-    let negotiator = OpenSsl::from(builder.build());
-    TlsMode::Require(Box::new(negotiator))
-}
 
 pub fn test_connection(db_url: &str) -> Result<(), PostgresError> {
     let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)?;
