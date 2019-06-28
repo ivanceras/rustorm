@@ -1,6 +1,6 @@
 [package]
 name = "rustorm"
-version = "0.13.0"
+version = "0.14.0"
 authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
 license = "MIT"
 description = "A complete rewrite of rustorm"
@@ -34,7 +34,7 @@ tree_magic = "0.2"
 base64 = "0.9"
 geo = "0.4"
 time = "0.1.14"
-rustorm_dao = "0.3.0"
+rustorm_dao = "0.4.0"
 rustorm_codegen = "0.3.0"
 
 
@@ -55,5 +55,5 @@ features = ["with-postgres"]
 # Needed to be here since rustorm is tested as one project
 # in the ci instead of part of diwata
 [replace]
-"rustorm_dao:0.3.0" = { path = "crates/dao" }
+"rustorm_dao:0.4.0" = { path = "crates/dao" }
 "rustorm_codegen:0.3.0" = { path = "crates/codegen" }
