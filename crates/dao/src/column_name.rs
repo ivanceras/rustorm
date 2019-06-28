@@ -1,5 +1,5 @@
 use crate::common;
-use serde::{
+use serde_derive::{
     Deserialize,
     Serialize,
 };
