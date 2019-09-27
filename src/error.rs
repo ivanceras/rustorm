@@ -15,6 +15,10 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use rusqlite;
 }}
 
+cfg_if! {if #[cfg(feature = "with-mysql")]{
+    use crate::my::MysqlError;
+}}
+
 #[derive(Debug)]
 pub enum ConnectError {
     NoSuchPoolConnection,
@@ -42,6 +46,8 @@ pub enum PlatformError {
     PostgresError(PostgresError),
     #[cfg(feature = "with-sqlite")]
     SqliteError(SqliteError),
+    #[cfg(feature = "with-mysql")]
+    MysqlError(MysqlError),
 }
 
 #[cfg(feature = "with-postgres")]
@@ -75,6 +81,20 @@ impl From<SqliteError> for PlatformError {
 #[cfg(feature = "with-sqlite")]
 impl From<SqliteError> for DbError {
     fn from(e: SqliteError) -> Self {
+        DbError::PlatformError(PlatformError::from(e))
+    }
+}
+
+#[cfg(feature = "with-mysql")]
+impl From<MysqlError> for PlatformError {
+    fn from(e: MysqlError) -> Self {
+        PlatformError::MysqlError(e)
+    }
+}
+
+#[cfg(feature = "with-mysql")]
+impl From<MysqlError> for DbError {
+    fn from(e: MysqlError) -> Self {
         DbError::PlatformError(PlatformError::from(e))
     }
 }

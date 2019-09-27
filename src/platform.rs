@@ -1,6 +1,6 @@
 use crate::{
     error::ParseError,
-    Database,
+    Database, Database2,
 };
 use cfg_if::cfg_if;
 use log::*;
@@ -16,6 +16,10 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use crate::sq::SqliteDB;
+}}
+
+cfg_if! {if #[cfg(feature = "with-mysql")]{
+    use crate::my::MysqlDB;
 }}
 
 pub enum DBPlatform {
@@ -38,11 +42,38 @@ impl Deref for DBPlatform {
     }
 }
 
+pub enum DBPlatform2 {
+    #[cfg(feature = "with-mysql")]
+    Mysql(Box<MysqlDB>),
+}
+
+impl Deref for DBPlatform2 {
+    type Target = dyn Database2;
+
+    fn deref(&self) -> &Self::Target {
+        match *self {
+            #[cfg(feature = "with-mysql")]
+            DBPlatform2::Mysql(ref my) => my.deref(),
+        }
+    }
+}
+
+impl std::ops::DerefMut for DBPlatform2 {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        match *self {
+            #[cfg(feature = "with-mysql")]
+            DBPlatform2::Mysql(ref mut my) => my.deref_mut(),
+        }
+    }
+}
+
 pub(crate) enum Platform {
     #[cfg(feature = "with-postgres")]
     Postgres,
     #[cfg(feature = "with-sqlite")]
     Sqlite(String),
+    #[cfg(feature = "with-mysql")]
+    Mysql,
     Unsupported(String),
 }
 
@@ -68,6 +99,8 @@ impl<'a> TryFrom<&'a str> for Platform {
                         let db_file = format!("{}{}", host, path);
                         Ok(Platform::Sqlite(db_file))
                     }
+                    #[cfg(feature = "with-mysql")]
+                    "mysql" => Ok(Platform::Mysql),
                     _ => Ok(Platform::Unsupported(scheme.to_string())),
                 }
             }

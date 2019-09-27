@@ -36,6 +36,7 @@ geo = "0.4"
 time = "0.1.14"
 rustorm_dao = "0.4.0"
 rustorm_codegen = "0.3.0"
+r2d2_mysql = {version = "16.0.0", optional = true}
 
 
 
@@ -46,6 +47,7 @@ travis-ci = { repository = "ivanceras/rustorm" }
 ##default = ["with-postgres"]
 with-postgres = ["postgres", "r2d2_postgres", "postgres-shared"]
 with-sqlite = ["rusqlite","r2d2_sqlite"]
+with-mysql = ["r2d2_mysql"]
 
 
 [package.metadata.docs.rs]

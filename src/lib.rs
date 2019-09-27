@@ -159,6 +159,9 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
     extern crate rusqlite;
     mod sq;
 }}
+cfg_if! {if #[cfg(feature = "with-mysql")]{
+    mod my;
+}}
 
 pub mod column;
 pub mod common;
@@ -178,9 +181,13 @@ pub use column::Column;
 pub use dao_manager::DaoManager;
 pub use database::{
     Database,
+    Database2,
     DatabaseName,
 };
-pub use entity::EntityManager;
+pub use entity::{
+    EntityManager,
+    EntityManager2
+};
 pub use error::{
     DataError,
     DbError,
@@ -198,6 +205,7 @@ pub use codegen::{
 };
 
 pub use rustorm_dao::{
+    self,
     Array,
     ColumnName,
     Dao,

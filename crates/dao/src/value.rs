@@ -282,6 +282,7 @@ impl<'a> TryFrom<&'a Value> for NaiveDateTime {
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match *value {
             Value::Text(ref v) => Ok(parse_naive_date_time(v)),
+            Value::DateTime(v) => Ok(v),
             _ => Err(ConvertError::NotSupported(
                 format!("{:?}", value),
                 "NaiveDateTime".to_string(),
@@ -310,6 +311,7 @@ impl<'a> TryFrom<&'a Value> for DateTime<Utc> {
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match *value {
             Value::Text(ref v) => Ok(DateTime::<Utc>::from_utc(parse_naive_date_time(v), Utc)),
+            Value::DateTime(v) => Ok(DateTime::<Utc>::from_utc(v, Utc)),
             Value::Timestamp(v) => Ok(v),
             _ => Err(ConvertError::NotSupported(
                 format!("{:?}", value),
