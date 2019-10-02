@@ -38,7 +38,7 @@ pub trait Database {
     fn get_database_name(&self, em: &EntityManager) -> Result<Option<DatabaseName>, DbError>;
 }
 
-pub trait Database2 {
+pub trait DatabaseMut {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError>;
 
     fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError>;

@@ -167,12 +167,12 @@ pub mod column;
 pub mod common;
 mod dao_manager;
 mod database;
-mod database2;
+mod database_mut;
 mod entity;
-mod entity2;
+mod entity_mut;
 pub mod error;
 mod platform;
-mod platform2;
+mod platform_mut;
 pub mod pool;
 pub mod table;
 pub mod types;
@@ -187,9 +187,9 @@ pub use database::{
     DatabaseName,
 };
 
-pub use database2::Database2;
+pub use database_mut::DatabaseMut;
 pub use entity::EntityManager;
-pub use entity2::EntityManager2;
+pub use entity_mut::EntityManagerMut;
 pub use error::{
     DataError,
     DbError,

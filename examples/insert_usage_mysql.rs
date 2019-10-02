@@ -37,7 +37,7 @@ fn main() {
     let db_url = "mysql://root:r00tpwdh3r3@localhost/sakila";
     let mut pool = Pool::new();
     pool.ensure(db_url);
-    let mut em = pool.em2(db_url).expect("Can not connect");
+    let mut em = pool.em_mut(db_url).expect("Can not connect");
     let tom_cruise = for_insert::Actor {
         first_name: "TOM".into(),
         last_name: "CRUISE".to_string(),

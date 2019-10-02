@@ -25,11 +25,11 @@ use crate::{
         DBPlatform,
         Platform,
     },
-    platform2::DBPlatform2,
+    platform_mut::DBPlatformMut,
     DaoManager,
     DbError,
     EntityManager,
-    EntityManager2,
+    EntityManagerMut,
 };
 use std::{
     collections::BTreeMap,
@@ -280,22 +280,22 @@ impl Pool {
     }
 
     /// get a database instance with a connection, ready to send sql statements
-    pub fn db2(&self, db_url: &str) -> Result<DBPlatform2, DbError> {
+    pub fn db_mut(&self, db_url: &str) -> Result<DBPlatformMut, DbError> {
         let pooled_conn = self.connect2(db_url)?;
 
         #[allow(unreachable_patterns)]
         match pooled_conn {
             #[cfg(feature = "with-mysql")]
             PooledConn::PooledMy(pooled_sq) => {
-                Ok(DBPlatform2::Mysql(Box::new(MysqlDB(*pooled_sq))))
+                Ok(DBPlatformMut::Mysql(Box::new(MysqlDB(*pooled_sq))))
             }
-            _ => panic!("postgres and sqlite unsupported in `db2()`"),
+            _ => panic!("postgres and sqlite unsupported in `db_mut()`"),
         }
     }
 
-    pub fn em2(&self, db_url: &str) -> Result<EntityManager2, DbError> {
-        let db = self.db2(db_url)?;
-        Ok(EntityManager2(db))
+    pub fn em_mut(&self, db_url: &str) -> Result<EntityManagerMut, DbError> {
+        let db = self.db_mut(db_url)?;
+        Ok(EntityManagerMut(db))
     }
 }
 

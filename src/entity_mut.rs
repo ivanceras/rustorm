@@ -1,7 +1,7 @@
 use crate::{
-    platform2::DBPlatform2,
+    platform_mut::DBPlatformMut,
     DataError,
-    Database2,
+    DatabaseMut,
     DbError,
     Table,
     ToValue,
@@ -17,9 +17,9 @@ use rustorm_dao::{
 };
 
 
-pub struct EntityManager2(pub DBPlatform2);
+pub struct EntityManagerMut(pub DBPlatformMut);
 
-impl EntityManager2 {
+impl EntityManagerMut {
     pub fn set_session_user(&mut self, username: &str) -> Result<(), DbError> {
         let sql = format!("SET SESSION ROLE '{}'", username);
         self.0.execute_sql_with_return(&sql, &[])?;
@@ -44,7 +44,7 @@ impl EntityManager2 {
     //     }
     // }
 
-    pub fn db(&self) -> &dyn Database2 { &*self.0 }
+    pub fn db(&self) -> &dyn DatabaseMut { &*self.0 }
 
     /// get all the records of this table
     pub fn get_all<T>(&mut self) -> Result<Vec<T>, DbError>
@@ -123,7 +123,7 @@ impl EntityManager2 {
             //     self.insert_bulk_with_returning_support(_entities)
             // }
             #[cfg(feature = "with-mysql")]
-            DBPlatform2::Mysql(_) => self.insert_simple(_entities),
+            DBPlatformMut::Mysql(_) => self.insert_simple(_entities),
         }
     }
 
@@ -267,7 +267,7 @@ impl EntityManager2 {
                                 // #[cfg(feature = "with-postgres")]
                                 // DBPlatform::Postgres(_) => format!("${}", _y * columns_len + _x + 1),
                                 #[cfg(feature = "with-mysql")]
-                                DBPlatform2::Mysql(_) => "?".to_string(),
+                                DBPlatformMut::Mysql(_) => "?".to_string(),
                                 _ => format!("${}", y * columns_len + x + 1),
                             }
                         })

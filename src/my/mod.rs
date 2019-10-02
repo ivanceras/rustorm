@@ -5,7 +5,7 @@ use crate::{
     Column,
     ColumnName,
     DataError,
-    Database2,
+    DatabaseMut,
     DbError,
     FromDao,
     Table,
@@ -44,7 +44,7 @@ pub fn test_connection(db_url: &str) -> Result<(), MysqlError> {
 
 pub struct MysqlDB(pub r2d2::PooledConnection<r2d2_mysql::MysqlConnectionManager>);
 
-impl Database2 for MysqlDB {
+impl DatabaseMut for MysqlDB {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
         let stmt = self.0.prepare(&sql);
 

@@ -1,5 +1,5 @@
 use crate::{
-    Database2,
+    DatabaseMut,
 };
 use cfg_if::cfg_if;
 
@@ -21,27 +21,27 @@ cfg_if! {if #[cfg(feature = "with-mysql")]{
 }}
 
 
-pub enum DBPlatform2 {
+pub enum DBPlatformMut {
     #[cfg(feature = "with-mysql")]
     Mysql(Box<MysqlDB>),
 }
 
-impl Deref for DBPlatform2 {
-    type Target = dyn Database2;
+impl Deref for DBPlatformMut {
+    type Target = dyn DatabaseMut;
 
     fn deref(&self) -> &Self::Target {
         match *self {
             #[cfg(feature = "with-mysql")]
-            DBPlatform2::Mysql(ref my) => my.deref(),
+            DBPlatformMut::Mysql(ref my) => my.deref(),
         }
     }
 }
 
-impl std::ops::DerefMut for DBPlatform2 {
+impl std::ops::DerefMut for DBPlatformMut {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match *self {
             #[cfg(feature = "with-mysql")]
-            DBPlatform2::Mysql(ref mut my) => my.deref_mut(),
+            DBPlatformMut::Mysql(ref mut my) => my.deref_mut(),
         }
     }
 }

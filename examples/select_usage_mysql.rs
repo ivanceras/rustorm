@@ -18,7 +18,7 @@ fn main() {
     let mut pool = Pool::new();
     pool.ensure(db_url);
     let mut em = pool
-        .em2(db_url)
+        .em_mut(db_url)
         .expect("Should be able to get a connection here..");
     let sql = "SELECT * FROM actor LIMIT 10";
     let actors: Result<Vec<Actor>, DbError> = em.execute_sql_with_return(sql, &[]);
