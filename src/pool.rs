@@ -23,9 +23,9 @@ use crate::{
     },
     platform::{
         DBPlatform,
-        DBPlatform2,
         Platform,
     },
+    platform2::DBPlatform2,
     DaoManager,
     DbError,
     EntityManager,
