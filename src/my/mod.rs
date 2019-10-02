@@ -1,10 +1,26 @@
 use crate::{
-    column, common, types::SqlType, Column, ColumnName, DataError, Database2, DbError, FromDao,
-    Table, TableName, Value,
+    column,
+    common,
+    types::SqlType,
+    Column,
+    ColumnName,
+    DataError,
+    Database2,
+    DbError,
+    FromDao,
+    Table,
+    TableName,
+    Value,
 };
 use r2d2::ManageConnection;
-use r2d2_mysql::{self, mysql};
-use rustorm_dao::{FromDao, Rows};
+use r2d2_mysql::{
+    self,
+    mysql,
+};
+use rustorm_dao::{
+    FromDao,
+    Rows,
+};
 
 pub fn init_pool(
     db_url: &str,
@@ -192,10 +208,10 @@ impl Database2 for MysqlDB {
                     name: ColumnName::from(&spec.name),
                     comment: Some(spec.comment),
                     specification: column::ColumnSpecification {
-                        capacity: capacity,
+                        capacity,
                         // TODO: implementation
                         constraints: vec![],
-                        sql_type: sql_type,
+                        sql_type,
                     },
                     stat: None,
                 }
@@ -254,7 +270,10 @@ fn into_record(
     mut row: mysql::Row,
     column_types: &[mysql::consts::ColumnType],
 ) -> Result<Vec<Value>, MysqlError> {
-    use mysql::{consts::ColumnType, from_value_opt as fvo};
+    use mysql::{
+        consts::ColumnType,
+        from_value_opt as fvo,
+    };
 
     column_types
         .iter()
@@ -284,9 +303,11 @@ fn into_record(
                 ColumnType::MYSQL_TYPE_FLOAT => fvo(cell).map(Value::Float),
                 ColumnType::MYSQL_TYPE_DOUBLE => fvo(cell).map(Value::Double),
                 ColumnType::MYSQL_TYPE_NULL => fvo(cell).map(|_: mysql::Value| Value::Nil),
-                ColumnType::MYSQL_TYPE_TIMESTAMP => fvo(cell).map(|v: chrono::NaiveDateTime| {
-                    Value::Timestamp(chrono::DateTime::from_utc(v, chrono::Utc))
-                }),
+                ColumnType::MYSQL_TYPE_TIMESTAMP => {
+                    fvo(cell).map(|v: chrono::NaiveDateTime| {
+                        Value::Timestamp(chrono::DateTime::from_utc(v, chrono::Utc))
+                    })
+                }
                 ColumnType::MYSQL_TYPE_DATE | ColumnType::MYSQL_TYPE_NEWDATE => {
                     fvo(cell).map(Value::Date)
                 }
@@ -328,25 +349,17 @@ pub enum MysqlError {
 }
 
 impl From<mysql::Error> for MysqlError {
-    fn from(e: mysql::Error) -> Self {
-        MysqlError::GenericError("From conversion".into(), e)
-    }
+    fn from(e: mysql::Error) -> Self { MysqlError::GenericError("From conversion".into(), e) }
 }
 
 impl From<r2d2::Error> for MysqlError {
-    fn from(e: r2d2::Error) -> Self {
-        MysqlError::PoolInitializationError(e)
-    }
+    fn from(e: r2d2::Error) -> Self { MysqlError::PoolInitializationError(e) }
 }
 
 impl From<mysql::UrlError> for MysqlError {
-    fn from(e: mysql::error::UrlError) -> Self {
-        MysqlError::UrlError(e)
-    }
+    fn from(e: mysql::error::UrlError) -> Self { MysqlError::UrlError(e) }
 }
 
 impl From<mysql::FromValueError> for MysqlError {
-    fn from(e: mysql::FromValueError) -> Self {
-        MysqlError::ConvertError(e)
-    }
+    fn from(e: mysql::FromValueError) -> Self { MysqlError::ConvertError(e) }
 }

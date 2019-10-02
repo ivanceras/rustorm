@@ -18,8 +18,7 @@ fn main() {
     let mut pool = Pool::new();
     let em = pool.em(db_url).unwrap();
     let sql = "SELECT * FROM actor LIMIT 10";
-    let actors: Result<Vec<Actor>, DbError> =
-        em.execute_sql_with_return(sql, &[]);
+    let actors: Result<Vec<Actor>, DbError> = em.execute_sql_with_return(sql, &[]);
     println!("Actor: {:#?}", actors);
     let actors = actors.unwrap();
     assert_eq!(actors.len(), 10);

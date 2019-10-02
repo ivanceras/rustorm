@@ -1,6 +1,7 @@
 use crate::{
     error::ParseError,
-    Database, Database2,
+    Database,
+    Database2,
 };
 use cfg_if::cfg_if;
 use log::*;

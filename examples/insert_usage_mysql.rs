@@ -1,7 +1,17 @@
 //#![deny(warnings)]
-use chrono::{offset::Utc, DateTime};
-use rustorm::pool;
-use rustorm::{DbError, FromDao, Pool, ToColumnNames, ToDao, ToTableName};
+use chrono::{
+    offset::Utc,
+    DateTime,
+};
+use rustorm::{
+    pool,
+    DbError,
+    FromDao,
+    Pool,
+    ToColumnNames,
+    ToDao,
+    ToTableName,
+};
 
 fn main() {
     mod for_insert {

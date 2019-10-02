@@ -1,37 +1,61 @@
-use self::interval::PgInterval;
-use self::numeric::PgNumeric;
+use self::{
+    interval::PgInterval,
+    numeric::PgNumeric,
+};
+use crate::{
+    database::DatabaseName,
+    error::PlatformError,
+    table::SchemaContent,
+    users::{
+        Role,
+        User,
+    },
+    Database,
+    DbError,
+    EntityManager,
+    Table,
+    TableName,
+    Value,
+    *,
+};
 use base64;
 use bigdecimal::BigDecimal;
-use rustorm_dao::value::Array;
-use rustorm_dao::Interval;
-use rustorm_dao::Rows;
-use crate::TableName;
-use crate::Value;
-use crate::Database;
-use crate::EntityManager;
-use crate::DbError;
-use crate::error::PlatformError;
 use geo::Point;
-use postgres;
-use postgres::types::{self, FromSql, IsNull, ToSql, Type};
-use postgres_shared::types::Kind;
-use postgres_shared::types::Kind::Enum;
-use r2d2;
-use r2d2::ManageConnection;
-use r2d2_postgres;
-use r2d2_postgres::TlsMode;
-use serde_json;
-use std::error::Error;
-use std::fmt;
-use std::string::FromUtf8Error;
-use crate::table::SchemaContent;
-use crate::Table;
-use tree_magic;
-use crate::users::User;
-use crate::database::DatabaseName;
-use crate::users::Role;
-use crate::*;
 use log::*;
+use postgres::{
+    self,
+    types::{
+        self,
+        FromSql,
+        IsNull,
+        ToSql,
+        Type,
+    },
+};
+use postgres_shared::types::{
+    Kind,
+    Kind::Enum,
+};
+use r2d2::{
+    self,
+    ManageConnection,
+};
+use r2d2_postgres::{
+    self,
+    TlsMode,
+};
+use rustorm_dao::{
+    value::Array,
+    Interval,
+    Rows,
+};
+use serde_json;
+use std::{
+    error::Error,
+    fmt,
+    string::FromUtf8Error,
+};
+use tree_magic;
 
 mod column_info;
 #[allow(unused)]
@@ -77,9 +101,8 @@ impl Database for PostgresDB {
                         for r in rows.iter() {
                             let mut record: Vec<Value> = vec![];
                             for (i, column) in columns.iter().enumerate() {
-                                let value: Option<
-                                    Result<OwnedPgValue, postgres::Error>,
-                                > = r.get_opt(i);
+                                let value: Option<Result<OwnedPgValue, postgres::Error>> =
+                                    r.get_opt(i);
                                 match value {
                                     Some(value) => {
                                         match value {
@@ -108,14 +131,18 @@ impl Database for PostgresDB {
                         }
                         Ok(records)
                     }
-                    Err(e) => Err(DbError::PlatformError(PlatformError::PostgresError(
-                        PostgresError::SqlError(e, sql.to_string()),
-                    ))),
+                    Err(e) => {
+                        Err(DbError::PlatformError(PlatformError::PostgresError(
+                            PostgresError::SqlError(e, sql.to_string()),
+                        )))
+                    }
                 }
             }
-            Err(e) => Err(DbError::PlatformError(PlatformError::PostgresError(
-                PostgresError::SqlError(e, sql.to_string()),
-            ))),
+            Err(e) => {
+                Err(DbError::PlatformError(PlatformError::PostgresError(
+                    PostgresError::SqlError(e, sql.to_string()),
+                )))
+            }
         }
     }
 
@@ -169,8 +196,7 @@ impl Database for PostgresDB {
                         description FROM pg_database
                         LEFT JOIN pg_shdescription ON objoid = pg_database.oid
                         WHERE datname = current_database()";
-        em.execute_sql_with_one_return(&sql, &[])
-            .map(Some)
+        em.execute_sql_with_one_return(&sql, &[]).map(Some)
     }
 }
 
@@ -201,6 +227,8 @@ pub struct PgValue<'a>(&'a Value);
 pub struct OwnedPgValue(Value);
 
 impl<'a> ToSql for PgValue<'a> {
+    to_sql_checked!();
+
     fn to_sql(
         &self,
         ty: &Type,
@@ -232,20 +260,18 @@ impl<'a> ToSql for PgValue<'a> {
             }
             Value::Json(ref v) => v.to_sql(ty, out),
             Value::Point(ref v) => v.to_sql(ty, out),
-            Value::Array(ref v) => match *v {
-                Array::Text(ref av) => av.to_sql(ty, out),
-                Array::Int(ref av) => av.to_sql(ty, out),
-                Array::Float(ref av) => av.to_sql(ty, out),
-            },
+            Value::Array(ref v) => {
+                match *v {
+                    Array::Text(ref av) => av.to_sql(ty, out),
+                    Array::Int(ref av) => av.to_sql(ty, out),
+                    Array::Float(ref av) => av.to_sql(ty, out),
+                }
+            }
             Value::Nil => Ok(IsNull::Yes),
         }
     }
 
-    fn accepts(_ty: &Type) -> bool {
-        true
-    }
-
-    to_sql_checked!();
+    fn accepts(_ty: &Type) -> bool { true }
 }
 
 impl FromSql for OwnedPgValue {
@@ -261,19 +287,27 @@ impl FromSql for OwnedPgValue {
             Kind::Array(ref array_type) => {
                 let array_type_kind = array_type.kind();
                 match *array_type_kind {
-                    Enum(_) => FromSql::from_sql(ty, raw)
-                        .map(|v| OwnedPgValue(Value::Array(Array::Text(v)))),
-                    _ => match *ty {
-                        types::TEXT_ARRAY | types::NAME_ARRAY | types::VARCHAR_ARRAY => {
-                            FromSql::from_sql(ty, raw)
-                                .map(|v| OwnedPgValue(Value::Array(Array::Text(v))))
+                    Enum(_) => {
+                        FromSql::from_sql(ty, raw)
+                            .map(|v| OwnedPgValue(Value::Array(Array::Text(v))))
+                    }
+                    _ => {
+                        match *ty {
+                            types::TEXT_ARRAY | types::NAME_ARRAY | types::VARCHAR_ARRAY => {
+                                FromSql::from_sql(ty, raw)
+                                    .map(|v| OwnedPgValue(Value::Array(Array::Text(v))))
+                            }
+                            types::INT4_ARRAY => {
+                                FromSql::from_sql(ty, raw)
+                                    .map(|v| OwnedPgValue(Value::Array(Array::Int(v))))
+                            }
+                            types::FLOAT4_ARRAY => {
+                                FromSql::from_sql(ty, raw)
+                                    .map(|v| OwnedPgValue(Value::Array(Array::Float(v))))
+                            }
+                            _ => panic!("Array type {:?} is not yet covered", array_type),
                         }
-                        types::INT4_ARRAY => FromSql::from_sql(ty, raw)
-                            .map(|v| OwnedPgValue(Value::Array(Array::Int(v)))),
-                        types::FLOAT4_ARRAY => FromSql::from_sql(ty, raw)
-                            .map(|v| OwnedPgValue(Value::Array(Array::Float(v)))),
-                        _ => panic!("Array type {:?} is not yet covered", array_type),
-                    },
+                    }
                 }
             }
             Kind::Simple => {
@@ -303,11 +337,10 @@ impl FromSql for OwnedPgValue {
                                 if v.chars().count() == 1 {
                                     Ok(OwnedPgValue(Value::Char(v.chars().next().unwrap())))
                                 } else {
-                                    FromSql::from_sql(ty, raw).map(|v:String| {
-                                            let value_string:String = v.trim_end().to_string();
-                                            OwnedPgValue(Value::Text(value_string))
-                                        }
-                                    )
+                                    FromSql::from_sql(ty, raw).map(|v: String| {
+                                        let value_string: String = v.trim_end().to_string();
+                                        OwnedPgValue(Value::Text(value_string))
+                                    })
                                 }
                             }
                             Err(e) => Err(e),
@@ -324,9 +357,12 @@ impl FromSql for OwnedPgValue {
                         //assert_eq!(raw, &*bytes);
                         let base64 = base64::encode_config(&bytes, base64::MIME);
                         match &*mime_type {
-                            "image/jpeg" | "image/png" => Ok(OwnedPgValue(Value::ImageUri(
-                                format!("data:{};base64,{}", mime_type, base64),
-                            ))),
+                            "image/jpeg" | "image/png" => {
+                                Ok(OwnedPgValue(Value::ImageUri(format!(
+                                    "data:{};base64,{}",
+                                    mime_type, base64
+                                ))))
+                            }
                             _ => match_type!(Blob),
                         }
                     }
@@ -363,14 +399,17 @@ impl FromSql for OwnedPgValue {
             _ => panic!("not yet handling this kind: {:?}", kind),
         }
     }
-    fn accepts(_ty: &Type) -> bool {
-        true
-    }
+
+    fn accepts(_ty: &Type) -> bool { true }
 
     fn from_sql_null(_ty: &Type) -> Result<Self, Box<dyn Error + Sync + Send>> {
         Ok(OwnedPgValue(Value::Nil))
     }
-    fn from_sql_nullable(ty: &Type, raw: Option<&[u8]>) -> Result<Self, Box<dyn Error + Sync + Send>> {
+
+    fn from_sql_nullable(
+        ty: &Type,
+        raw: Option<&[u8]>,
+    ) -> Result<Self, Box<dyn Error + Sync + Send>> {
         match raw {
             Some(raw) => Self::from_sql(ty, raw),
             None => Self::from_sql_null(ty),
@@ -389,35 +428,30 @@ pub enum PostgresError {
 }
 
 impl From<postgres::Error> for PostgresError {
-    fn from(e: postgres::Error) -> Self {
-        PostgresError::GenericError("From conversion".into(), e)
-    }
+    fn from(e: postgres::Error) -> Self { PostgresError::GenericError("From conversion".into(), e) }
 }
 
 impl From<r2d2::Error> for PostgresError {
-    fn from(e: r2d2::Error) -> Self {
-        PostgresError::PoolInitializationError(e)
-    }
+    fn from(e: r2d2::Error) -> Self { PostgresError::PoolInitializationError(e) }
 }
 
-impl Error for PostgresError {
-}
+impl Error for PostgresError {}
 
 impl fmt::Display for PostgresError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:#?}", self)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#?}", self) }
 }
 
 #[cfg(test)]
 mod test {
 
+    use crate::{
+        pool::*,
+        Pool,
+        *,
+    };
+    use log::*;
     use postgres::Connection;
     use std::ops::Deref;
-    use crate::*;
-    use log::*;
-    use crate::Pool;
-    use crate::pool::*;
 
 
     #[test]
@@ -425,9 +459,8 @@ mod test {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let dm = pool.dm(db_url).unwrap();
-        let sql = format!("SELECT language_id, name FROM language", );
-        let languages: Result<Rows, DbError> =
-            dm.execute_sql_with_return(&sql, &[]);
+        let sql = format!("SELECT language_id, name FROM language",);
+        let languages: Result<Rows, DbError> = dm.execute_sql_with_return(&sql, &[]);
         println!("languages: {:#?}", languages);
         assert!(languages.is_ok());
     }
@@ -437,9 +470,8 @@ mod test {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let dm = pool.dm(db_url).unwrap();
-        let sql = format!("SELECT film_id, title, fulltext::text FROM film LIMIT 40", );
-        let films: Result<Rows, DbError> =
-            dm.execute_sql_with_return(&sql, &[]);
+        let sql = format!("SELECT film_id, title, fulltext::text FROM film LIMIT 40",);
+        let films: Result<Rows, DbError> = dm.execute_sql_with_return(&sql, &[]);
         println!("film: {:#?}", films);
         assert!(films.is_ok());
     }
@@ -579,6 +611,4 @@ mod test {
         info!("users: {:#?}", users);
         assert!(users.is_ok());
     }
-
 }
-

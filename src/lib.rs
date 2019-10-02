@@ -186,7 +186,7 @@ pub use database::{
 };
 pub use entity::{
     EntityManager,
-    EntityManager2
+    EntityManager2,
 };
 pub use error::{
     DataError,

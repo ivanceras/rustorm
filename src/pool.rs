@@ -29,7 +29,7 @@ use crate::{
     DaoManager,
     DbError,
     EntityManager,
-    EntityManager2
+    EntityManager2,
 };
 use std::{
     collections::BTreeMap,
@@ -57,9 +57,7 @@ pub enum PooledConn {
 }
 
 impl Pool {
-    pub fn new() -> Self {
-        Default::default()
-    }
+    pub fn new() -> Self { Default::default() }
 
     /// ensure that a connection pool for this db_url exist
     pub fn ensure(&mut self, db_url: &str) -> Result<(), DbError> {
@@ -72,10 +70,7 @@ impl Pool {
                     Platform::Postgres => {
                         let pool_pg = pg::init_pool(db_url)?;
                         if self.0.get(db_url).is_none() {
-                            self.0.insert(
-                                db_url.to_string(),
-                                ConnPool::PoolPg(pool_pg),
-                            );
+                            self.0.insert(db_url.to_string(), ConnPool::PoolPg(pool_pg));
                         }
                         Ok(())
                     }
@@ -84,10 +79,7 @@ impl Pool {
                         info!("matched sqlite");
                         let pool_sq = sq::init_pool(&path)?;
                         if self.0.get(db_url).is_none() {
-                            self.0.insert(
-                                db_url.to_string(),
-                                ConnPool::PoolSq(pool_sq),
-                            );
+                            self.0.insert(db_url.to_string(), ConnPool::PoolSq(pool_sq));
                         }
                         Ok(())
                     }
@@ -95,18 +87,13 @@ impl Pool {
                     Platform::Mysql => {
                         let pool_my = my::init_pool(db_url)?;
                         if self.0.get(db_url).is_none() {
-                            self.0.insert(
-                                db_url.to_string(),
-                                ConnPool::PoolMy(pool_my),
-                            );
+                            self.0.insert(db_url.to_string(), ConnPool::PoolMy(pool_my));
                         }
                         Ok(())
                     }
                     Platform::Unsupported(scheme) => {
                         info!("unsupported");
-                        Err(DbError::ConnectError(ConnectError::UnsupportedDb(
-                            scheme,
-                        )))
+                        Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
                     }
                 }
             }
@@ -127,9 +114,7 @@ impl Pool {
                         if let Some(conn) = conn {
                             Ok(conn)
                         } else {
-                            Err(DbError::ConnectError(
-                                ConnectError::NoSuchPoolConnection,
-                            ))
+                            Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
                         }
                     }
                     #[cfg(feature = "with-sqlite")]
@@ -139,9 +124,7 @@ impl Pool {
                         if let Some(conn) = conn {
                             Ok(conn)
                         } else {
-                            Err(DbError::ConnectError(
-                                ConnectError::NoSuchPoolConnection,
-                            ))
+                            Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
                         }
                     }
                     #[cfg(feature = "with-mysql")]
@@ -150,16 +133,12 @@ impl Pool {
                         if let Some(conn) = conn {
                             Ok(conn)
                         } else {
-                            Err(DbError::ConnectError(
-                                ConnectError::NoSuchPoolConnection,
-                            ))
+                            Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
                         }
                     }
 
                     Platform::Unsupported(scheme) => {
-                        Err(DbError::ConnectError(ConnectError::UnsupportedDb(
-                            scheme,
-                        )))
+                        Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
                     }
                 }
             }
@@ -175,36 +154,24 @@ impl Pool {
             ConnPool::PoolPg(ref pool_pg) => {
                 let pooled_conn = pool_pg.get();
                 match pooled_conn {
-                    Ok(pooled_conn) => {
-                        Ok(PooledConn::PooledPg(Box::new(pooled_conn)))
-                    }
-                    Err(e) => {
-                        Err(DbError::ConnectError(ConnectError::R2d2Error(e)))
-                    }
+                    Ok(pooled_conn) => Ok(PooledConn::PooledPg(Box::new(pooled_conn))),
+                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
                 }
             }
             #[cfg(feature = "with-sqlite")]
             ConnPool::PoolSq(ref pool_sq) => {
                 let pooled_conn = pool_sq.get();
                 match pooled_conn {
-                    Ok(pooled_conn) => {
-                        Ok(PooledConn::PooledSq(Box::new(pooled_conn)))
-                    }
-                    Err(e) => {
-                        Err(DbError::ConnectError(ConnectError::R2d2Error(e)))
-                    }
+                    Ok(pooled_conn) => Ok(PooledConn::PooledSq(Box::new(pooled_conn))),
+                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
                 }
             }
             #[cfg(feature = "with-mysql")]
             ConnPool::PoolMy(ref pool_my) => {
                 let pooled_conn = pool_my.get();
                 match pooled_conn {
-                    Ok(pooled_conn) => {
-                        Ok(PooledConn::PooledMy(Box::new(pooled_conn)))
-                    }
-                    Err(e) => {
-                        Err(DbError::ConnectError(ConnectError::R2d2Error(e)))
-                    }
+                    Ok(pooled_conn) => Ok(PooledConn::PooledMy(Box::new(pooled_conn))),
+                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
                 }
             }
         }
@@ -223,7 +190,7 @@ impl Pool {
                 Ok(DBPlatform::Sqlite(Box::new(SqliteDB(*pooled_sq))))
             }
             #[cfg(feature = "with-mysql")]
-            _ => panic!("mysql unsupported in `db()`")
+            _ => panic!("mysql unsupported in `db()`"),
         }
     }
 
@@ -249,9 +216,7 @@ impl Pool {
                         if let Some(conn) = conn {
                             Ok(conn)
                         } else {
-                            Err(DbError::ConnectError(
-                                ConnectError::NoSuchPoolConnection,
-                            ))
+                            Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
                         }
                     }
                     #[cfg(feature = "with-sqlite")]
@@ -261,9 +226,7 @@ impl Pool {
                         if let Some(conn) = conn {
                             Ok(conn)
                         } else {
-                            Err(DbError::ConnectError(
-                                ConnectError::NoSuchPoolConnection,
-                            ))
+                            Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
                         }
                     }
                     #[cfg(feature = "with-mysql")]
@@ -272,16 +235,12 @@ impl Pool {
                         if let Some(conn) = conn {
                             Ok(conn)
                         } else {
-                            Err(DbError::ConnectError(
-                                ConnectError::NoSuchPoolConnection,
-                            ))
+                            Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
                         }
                     }
 
                     Platform::Unsupported(scheme) => {
-                        Err(DbError::ConnectError(ConnectError::UnsupportedDb(
-                            scheme,
-                        )))
+                        Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
                     }
                 }
             }
@@ -297,36 +256,24 @@ impl Pool {
             ConnPool::PoolPg(ref pool_pg) => {
                 let pooled_conn = pool_pg.get();
                 match pooled_conn {
-                    Ok(pooled_conn) => {
-                        Ok(PooledConn::PooledPg(Box::new(pooled_conn)))
-                    }
-                    Err(e) => {
-                        Err(DbError::ConnectError(ConnectError::R2d2Error(e)))
-                    }
+                    Ok(pooled_conn) => Ok(PooledConn::PooledPg(Box::new(pooled_conn))),
+                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
                 }
             }
             #[cfg(feature = "with-sqlite")]
             ConnPool::PoolSq(ref pool_sq) => {
                 let pooled_conn = pool_sq.get();
                 match pooled_conn {
-                    Ok(pooled_conn) => {
-                        Ok(PooledConn::PooledSq(Box::new(pooled_conn)))
-                    }
-                    Err(e) => {
-                        Err(DbError::ConnectError(ConnectError::R2d2Error(e)))
-                    }
+                    Ok(pooled_conn) => Ok(PooledConn::PooledSq(Box::new(pooled_conn))),
+                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
                 }
             }
             #[cfg(feature = "with-mysql")]
             ConnPool::PoolMy(ref pool_my) => {
                 let pooled_conn = pool_my.get();
                 match pooled_conn {
-                    Ok(pooled_conn) => {
-                        Ok(PooledConn::PooledMy(Box::new(pooled_conn)))
-                    }
-                    Err(e) => {
-                        Err(DbError::ConnectError(ConnectError::R2d2Error(e)))
-                    }
+                    Ok(pooled_conn) => Ok(PooledConn::PooledMy(Box::new(pooled_conn))),
+                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
                 }
             }
         }
@@ -341,11 +288,10 @@ impl Pool {
             #[cfg(feature = "with-mysql")]
             PooledConn::PooledMy(pooled_sq) => {
                 Ok(DBPlatform2::Mysql(Box::new(MysqlDB(*pooled_sq))))
-            },
+            }
             _ => panic!("postgres and sqlite unsupported in `db2()`"),
         }
     }
-
 
     pub fn em2(&self, db_url: &str) -> Result<EntityManager2, DbError> {
         let db = self.db2(db_url)?;
@@ -375,9 +321,7 @@ pub fn test_connection(db_url: &str) -> Result<(), DbError> {
                     Ok(())
                 }
                 Platform::Unsupported(scheme) => {
-                    Err(DbError::ConnectError(ConnectError::UnsupportedDb(
-                        scheme,
-                    )))
+                    Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
                 }
             }
         }
@@ -409,5 +353,4 @@ mod tests_pg {
         let mut pool = Pool::new();
         assert!(pool.get_pool(db_url).is_ok());
     }
-
 }

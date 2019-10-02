@@ -10,11 +10,7 @@ use crate::{
 pub struct DaoManager(pub DBPlatform);
 
 impl DaoManager {
-    pub fn execute_sql_with_return(
-        &self,
-        sql: &str,
-        params: &[&Value],
-    ) -> Result<Rows, DbError> {
+    pub fn execute_sql_with_return(&self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
         let rows = self.0.execute_sql_with_return(sql, params)?;
         Ok(rows)
     }
@@ -40,9 +36,7 @@ impl DaoManager {
             Ok(record) => {
                 match record {
                     Some(record) => Ok(record),
-                    None => {
-                        Err(DbError::DataError(DataError::ZeroRecordReturned))
-                    }
+                    None => Err(DbError::DataError(DataError::ZeroRecordReturned)),
                 }
             }
             Err(e) => Err(e),
@@ -54,18 +48,13 @@ impl DaoManager {
         sql: &str,
         params: &[&Value],
     ) -> Result<Option<Dao>, DbError> {
-        let result: Result<Vec<Dao>, DbError> =
-            self.execute_sql_with_records_return(sql, params);
+        let result: Result<Vec<Dao>, DbError> = self.execute_sql_with_records_return(sql, params);
         match result {
             Ok(mut result) => {
                 match result.len() {
                     0 => Ok(None),
                     1 => Ok(Some(result.remove(0))),
-                    _ => {
-                        Err(DbError::DataError(
-                            DataError::MoreThan1RecordReturned,
-                        ))
-                    }
+                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
                 }
             }
             Err(e) => Err(e),
