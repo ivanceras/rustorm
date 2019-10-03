@@ -1,20 +1,9 @@
-use crate::{
-    DatabaseMut,
-};
+use crate::DatabaseMut;
 use cfg_if::cfg_if;
 
-use std::{
-    ops::Deref,
-};
+use std::ops::Deref;
 
 
-cfg_if! {if #[cfg(feature = "with-postgres")]{
-    use crate::pg::PostgresDB;
-}}
-
-cfg_if! {if #[cfg(feature = "with-sqlite")]{
-    use crate::sq::SqliteDB;
-}}
 
 cfg_if! {if #[cfg(feature = "with-mysql")]{
     use crate::my::MysqlDB;

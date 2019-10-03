@@ -441,11 +441,9 @@ mod test {
 
     use crate::{
         pg::table_info::*,
-        table::*,
         Pool,
         TableName,
     };
-    use log::*;
 
     #[test]
     fn all_schemas() {

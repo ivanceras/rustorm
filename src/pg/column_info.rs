@@ -444,14 +444,13 @@ mod test {
     use crate::{
         column::*,
         pg::column_info::*,
-        types::*,
         *,
     };
     use chrono::*;
-    use log::*;
 
     #[test]
     fn insert_text_array() {
+        use log::*;
         #[derive(Debug, ToDao, ToColumnNames, ToTableName)]
         struct Film {
             title: String,
