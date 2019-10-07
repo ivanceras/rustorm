@@ -44,7 +44,7 @@ impl EntityManagerMut {
     //     }
     // }
 
-    pub fn db(&self) -> &dyn DatabaseMut { &*self.0 }
+    pub fn db(&mut self) -> &mut dyn DatabaseMut { &mut *self.0 }
 
     /// get all the records of this table
     pub fn get_all<T>(&mut self) -> Result<Vec<T>, DbError>
