@@ -1,11 +1,21 @@
 #![allow(clippy::cast_lossless)]
-use crate::interval::Interval;
-use crate::ConvertError;
+use crate::{
+    interval::Interval,
+    ConvertError,
+};
 use bigdecimal::BigDecimal;
-use chrono::{DateTime, Utc};
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{
+    DateTime,
+    NaiveDate,
+    NaiveDateTime,
+    NaiveTime,
+    Utc,
+};
 use geo::Point;
-use serde_derive::{Deserialize, Serialize};
+use serde_derive::{
+    Deserialize,
+    Serialize,
+};
 use std::convert::TryFrom;
 use uuid::Uuid;
 
@@ -45,9 +55,7 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn is_nil(&self) -> bool {
-        *self == Value::Nil
-    }
+    pub fn is_nil(&self) -> bool { *self == Value::Nil }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -84,39 +92,29 @@ pub trait ToValue {
 macro_rules! impl_to_value {
     ($ty:ty) => {
         impl ToValue for $ty {
-            fn to_value(&self) -> Value {
-                self.into()
-            }
+            fn to_value(&self) -> Value { self.into() }
         }
 
         impl<'a> ToValue for &'a $ty {
-            fn to_value(&self) -> Value {
-                (*self).into()
-            }
+            fn to_value(&self) -> Value { (*self).into() }
         }
     };
 }
 
 impl ToValue for Vec<String> {
-    fn to_value(&self) -> Value {
-        Value::Array(Array::Text(self.to_owned()))
-    }
+    fn to_value(&self) -> Value { Value::Array(Array::Text(self.to_owned())) }
 }
 
 macro_rules! impl_from {
     ($ty:ty, $variant:ident) => {
         /// Owned types
         impl From<$ty> for Value {
-            fn from(f: $ty) -> Self {
-                Value::$variant(f)
-            }
+            fn from(f: $ty) -> Self { Value::$variant(f) }
         }
 
         /// For borrowed types
         impl<'a> From<&'a $ty> for Value {
-            fn from(f: &'a $ty) -> Self {
-                Value::$variant(f.to_owned())
-            }
+            fn from(f: &'a $ty) -> Self { Value::$variant(f.to_owned()) }
         }
 
         /// for borrowed option types
@@ -135,16 +133,12 @@ macro_rules! impl_from {
     ($ty:ty, $variant:ident, $fn:ident) => {
         /// Owned types
         impl From<$ty> for Value {
-            fn from(f: $ty) -> Self {
-                Value::$variant(f.$fn())
-            }
+            fn from(f: $ty) -> Self { Value::$variant(f.$fn()) }
         }
 
         /// For borrowed types
         impl<'a> From<&'a $ty> for Value {
-            fn from(f: &'a $ty) -> Self {
-                Value::$variant(f.$fn())
-            }
+            fn from(f: &'a $ty) -> Self { Value::$variant(f.$fn()) }
         }
 
         /// for borrowed option types
@@ -177,27 +171,19 @@ impl_from!(NaiveTime, Time);
 impl_from!(DateTime<Utc>, Timestamp);
 
 impl<'a> From<&'a str> for Value {
-    fn from(f: &'a str) -> Value {
-        Value::Text(f.to_string())
-    }
+    fn from(f: &'a str) -> Value { Value::Text(f.to_string()) }
 }
 
 impl ToValue for &str {
-    fn to_value(&self) -> Value {
-        Value::Text(self.to_string())
-    }
+    fn to_value(&self) -> Value { Value::Text(self.to_string()) }
 }
 
 impl From<Vec<String>> for Value {
-    fn from(f: Vec<String>) -> Value {
-        Value::Array(Array::Text(f))
-    }
+    fn from(f: Vec<String>) -> Value { Value::Array(Array::Text(f)) }
 }
 
 impl<'a> From<&'a Vec<String>> for Value {
-    fn from(f: &Vec<String>) -> Value {
-        Value::Array(Array::Text(f.to_owned()))
-    }
+    fn from(f: &Vec<String>) -> Value { Value::Array(Array::Text(f.to_owned())) }
 }
 
 impl<'a> From<&'a Value> for Vec<String> {
@@ -256,10 +242,12 @@ impl<'a> TryFrom<&'a Value> for String {
                 s.push(*v);
                 Ok(s)
             }
-            _ => Err(ConvertError::NotSupported(
-                format!("{:?}", value),
-                "String".to_string(),
-            )),
+            _ => {
+                Err(ConvertError::NotSupported(
+                    format!("{:?}", value),
+                    "String".to_string(),
+                ))
+            }
         }
     }
 }
@@ -283,10 +271,12 @@ impl<'a> TryFrom<&'a Value> for NaiveDateTime {
         match *value {
             Value::Text(ref v) => Ok(parse_naive_date_time(v)),
             Value::DateTime(v) => Ok(v),
-            _ => Err(ConvertError::NotSupported(
-                format!("{:?}", value),
-                "NaiveDateTime".to_string(),
-            )),
+            _ => {
+                Err(ConvertError::NotSupported(
+                    format!("{:?}", value),
+                    "NaiveDateTime".to_string(),
+                ))
+            }
         }
     }
 }
@@ -313,10 +303,12 @@ impl<'a> TryFrom<&'a Value> for DateTime<Utc> {
             Value::Text(ref v) => Ok(DateTime::<Utc>::from_utc(parse_naive_date_time(v), Utc)),
             Value::DateTime(v) => Ok(DateTime::<Utc>::from_utc(v, Utc)),
             Value::Timestamp(v) => Ok(v),
-            _ => Err(ConvertError::NotSupported(
-                format!("{:?}", value),
-                "DateTime".to_string(),
-            )),
+            _ => {
+                Err(ConvertError::NotSupported(
+                    format!("{:?}", value),
+                    "DateTime".to_string(),
+                ))
+            }
         }
     }
 }

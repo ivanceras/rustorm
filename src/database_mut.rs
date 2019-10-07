@@ -10,7 +10,6 @@ use crate::DbError;
 
 
 
-
 pub trait DatabaseMut {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError>;
 
