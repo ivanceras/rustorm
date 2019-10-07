@@ -13,6 +13,10 @@ use rustorm::{
     ToTableName,
 };
 
+/// Run using:
+/// ```sh
+/// cargo run --example insert_usage_mysql --features "with-mysql"
+/// ```
 fn main() {
     mod for_insert {
         use super::*;
