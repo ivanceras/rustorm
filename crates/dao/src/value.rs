@@ -242,6 +242,11 @@ impl<'a> TryFrom<&'a Value> for String {
                 s.push(*v);
                 Ok(s)
             }
+            Value::Blob(ref v) => {
+                String::from_utf8(v.to_owned()).map_err(|e| {
+                    ConvertError::NotSupported(format!("{:?}", value), format!("String: {}", e))
+                })
+            },
             _ => {
                 Err(ConvertError::NotSupported(
                     format!("{:?}", value),

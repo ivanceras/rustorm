@@ -46,46 +46,51 @@ pub struct MysqlDB(pub r2d2::PooledConnection<r2d2_mysql::MysqlConnectionManager
 
 impl DatabaseMut for MysqlDB {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
-        let stmt = self.0.prepare(&sql);
+        fn collect(mut rows: mysql::QueryResult) -> Result<Rows, DbError> {
+            let column_types: Vec<_> = rows.columns_ref().iter().map(|c| c.column_type()).collect();
 
-        match stmt {
-            Ok(mut stmt) => {
-                let params: mysql::Params = param
-                    .iter()
-                    .map(|v| MyValue(v))
-                    .map(|v| mysql::prelude::ToValue::to_value(&v))
-                    .collect::<Vec<_>>()
-                    .into();
-                let rows = stmt.execute(&params);
+            let column_names = rows
+                .columns_ref()
+                .iter()
+                .map(|c| std::str::from_utf8(c.name_ref()).map(ToString::to_string))
+                .collect::<Result<Vec<String>, _>>()
+                .map_err(|e| MysqlError::Utf8Error(e))?;
 
-                match rows {
-                    Ok(mut rows) => {
-                        let column_types: Vec<_> =
-                            rows.columns_ref().iter().map(|c| c.column_type()).collect();
-
-                        let column_names = rows
-                            .columns_ref()
-                            .iter()
-                            .map(|c| std::str::from_utf8(c.name_ref()).map(ToString::to_string))
-                            .collect::<Result<Vec<String>, _>>()
-                            .map_err(|e| MysqlError::Utf8Error(e))?;
-
-                        let mut records = Rows::new(column_names);
-                        while rows.more_results_exists() {
-                            for r in rows.by_ref() {
-                                records.push(into_record(
-                                    r.map_err(MysqlError::from)?,
-                                    &column_types,
-                                )?);
-                            }
-                        }
-
-                        Ok(records)
-                    }
-                    Err(e) => Err(MysqlError::SqlError(e, sql.to_string()).into()),
+            let mut records = Rows::new(column_names);
+            while rows.more_results_exists() {
+                for r in rows.by_ref() {
+                    records.push(into_record(r.map_err(MysqlError::from)?, &column_types)?);
                 }
             }
-            Err(e) => Err(MysqlError::SqlError(e, sql.to_string()).into()),
+
+            Ok(records)
+        }
+
+        if param.is_empty() {
+            let rows = self
+                .0
+                .query(&sql)
+                .map_err(|e| MysqlError::SqlError(e, sql.to_string()))?;
+
+            collect(rows)
+        } else {
+            let mut stmt = self
+                .0
+                .prepare(&sql)
+                .map_err(|e| MysqlError::SqlError(e, sql.to_string()))?;
+
+            let params: mysql::Params = param
+                .iter()
+                .map(|v| MyValue(v))
+                .map(|v| mysql::prelude::ToValue::to_value(&v))
+                .collect::<Vec<_>>()
+                .into();
+
+            let rows = stmt
+                .execute(&params)
+                .map_err(|e| MysqlError::SqlError(e, sql.to_string()))?;
+
+            collect(rows)
         }
     }
 
