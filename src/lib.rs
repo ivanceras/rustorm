@@ -12,8 +12,7 @@
 //!
 //! Selecting records
 //!
-//! ```rust,ignore
-//! use cfg_if::cfg_if;
+//! ```rust
 //! use rustorm::{
 //!     DbError,
 //!     FromDao,
@@ -28,6 +27,7 @@
 //!     first_name: String,
 //! }
 //!
+//! #[cfg(any(feature="with-postgres", feature = "with-sqlite"))]
 //! fn main() {
 //!     let mut pool = Pool::new();
 //!     #[cfg(feature = "with-sqlite")]
@@ -45,11 +45,14 @@
 //!         println!("actor: {:?}", actor);
 //!     }
 //! }
+//! #[cfg(feature="with-mysql")]
+//! fn main() {
+//!    println!("see examples for mysql usage, mysql has a little difference in the api");
+//! }
 //! ```
 //! Inserting and displaying the inserted records
 //!
-//! ```rust,ignore
-//! use cfg_if::cfg_if;
+//! ```rust
 //! use chrono::{
 //!     offset::Utc,
 //!     DateTime,
@@ -66,6 +69,7 @@
 //! };
 //!
 //!
+//! #[cfg(any(feature="with-postgres", feature = "with-sqlite"))]
 //! fn main() {
 //!     mod for_insert {
 //!         use super::*;
@@ -115,6 +119,10 @@
 //!     assert_eq!(tom_hanks.first_name, actors[1].first_name);
 //!     assert_eq!(tom_hanks.last_name, actors[1].last_name);
 //!     assert_eq!(today, actors[1].last_update.date());
+//! }
+//! #[cfg(feature="with-mysql")]
+//! fn main() {
+//!    println!("see examples for mysql usage, mysql has a little difference in the api");
 //! }
 //! ```
 //! Rustorm is wholly used by [diwata](https://github.com/ivanceras/diwata)

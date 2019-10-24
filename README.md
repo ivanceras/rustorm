@@ -15,7 +15,6 @@ their appropriate rust type.
 Selecting records
 
 ```rust
-use cfg_if::cfg_if;
 use rustorm::{
     DbError,
     FromDao,
@@ -30,6 +29,7 @@ struct Actor {
     first_name: String,
 }
 
+#[cfg(any(feature="with-postgres", feature = "with-sqlite"))]
 fn main() {
     let mut pool = Pool::new();
     #[cfg(feature = "with-sqlite")]
@@ -47,11 +47,14 @@ fn main() {
         println!("actor: {:?}", actor);
     }
 }
+#[cfg(feature="with-mysql")]
+fn main() {
+   println!("see examples for mysql usage, mysql has a little difference in the api");
+}
 ```
 Inserting and displaying the inserted records
 
 ```rust
-use cfg_if::cfg_if;
 use chrono::{
     offset::Utc,
     DateTime,
@@ -68,6 +71,7 @@ use rustorm::{
 };
 
 
+#[cfg(any(feature="with-postgres", feature = "with-sqlite"))]
 fn main() {
     mod for_insert {
         use super::*;
@@ -117,6 +121,10 @@ fn main() {
     assert_eq!(tom_hanks.first_name, actors[1].first_name);
     assert_eq!(tom_hanks.last_name, actors[1].last_name);
     assert_eq!(today, actors[1].last_update.date());
+}
+#[cfg(feature="with-mysql")]
+fn main() {
+   println!("see examples for mysql usage, mysql has a little difference in the api");
 }
 ```
 Rustorm is wholly used by [diwata](https://github.com/ivanceras/diwata)
