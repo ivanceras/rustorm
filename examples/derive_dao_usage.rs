@@ -1,5 +1,3 @@
-#![deny(warnings)]
-
 use rustorm::{
     FromDao,
     ToDao,

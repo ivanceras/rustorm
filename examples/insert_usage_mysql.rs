@@ -3,6 +3,7 @@ use chrono::{
     DateTime,
 };
 use rustorm::{
+    pool,
     DbError,
     FromDao,
     Pool,
@@ -11,6 +12,10 @@ use rustorm::{
     ToTableName,
 };
 
+/// Run using:
+/// ```sh
+/// cargo run --example insert_usage_mysql --features "with-mysql"
+/// ```
 fn main() {
     mod for_insert {
         use super::*;
@@ -32,9 +37,10 @@ fn main() {
         }
     }
 
-    let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+    let db_url = "mysql://root:r00tpwdh3r3@localhost/sakila";
     let mut pool = Pool::new();
-    let em = pool.em(db_url).unwrap();
+    pool.ensure(db_url);
+    let mut em = pool.em_mut(db_url).expect("Can not connect");
     let tom_cruise = for_insert::Actor {
         first_name: "TOM".into(),
         last_name: "CRUISE".to_string(),

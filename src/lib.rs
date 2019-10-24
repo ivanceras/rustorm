@@ -13,7 +13,6 @@
 //! Selecting records
 //!
 //! ```rust
-//! use cfg_if::cfg_if;
 //! use rustorm::{
 //!     DbError,
 //!     FromDao,
@@ -28,26 +27,14 @@
 //!     first_name: String,
 //! }
 //!
-//! cfg_if! {
-//!      if #[cfg(feature="with-postgres")] {
-//!        fn db_url() -> &'static str {
-//!            "postgres://postgres:p0stgr3s@localhost/sakila"
-//!        }
-//!      }
-//!      else if #[cfg(feature = "with-sqlite")] {
-//!        fn db_url() -> &'static str{
-//!            "sqlite://sakila.db"
-//!        }
-//!      }
-//!      else {
-//!        fn db_url() -> &'static str {
-//!            panic!("add --features flag, ie: --features=\"with-postgres\" ");
-//!        }
-//!      }
-//! }
+//! #[cfg(any(feature="with-postgres", feature = "with-sqlite"))]
 //! fn main() {
 //!     let mut pool = Pool::new();
-//!     let em = pool.em(db_url()).unwrap();
+//!     #[cfg(feature = "with-sqlite")]
+//!     let db_url = "sqlite://sakila.db";
+//!     #[cfg(feature = "with-postgres")]
+//!     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+//!     let em = pool.em(db_url).unwrap();
 //!     let sql = "SELECT * FROM actor LIMIT 10";
 //!     let actors: Result<Vec<Actor>, DbError> =
 //!         em.execute_sql_with_return(sql, &[]);
@@ -58,11 +45,14 @@
 //!         println!("actor: {:?}", actor);
 //!     }
 //! }
+//! #[cfg(feature="with-mysql")]
+//! fn main() {
+//!    println!("see examples for mysql usage, mysql has a little difference in the api");
+//! }
 //! ```
 //! Inserting and displaying the inserted records
 //!
 //! ```rust
-//! use cfg_if::cfg_if;
 //! use chrono::{
 //!     offset::Utc,
 //!     DateTime,
@@ -78,24 +68,8 @@
 //!     ToTableName,
 //! };
 //!
-//! cfg_if! {
-//!      if #[cfg(feature="with-postgres")] {
-//!        fn db_url() -> &'static str {
-//!            "postgres://postgres:p0stgr3s@localhost/sakila"
-//!        }
-//!      }
-//!      else if #[cfg(feature = "with-sqlite")] {
-//!        fn db_url() -> &'static str {
-//!            "sqlite://sakila.db"
-//!        }
-//!      }
-//!      else {
-//!        fn db_url() -> &'static str {
-//!            panic!("add --features flag, ie: --features=\"with-postgres\" ");
-//!        }
-//!      }
-//! }
 //!
+//! #[cfg(any(feature="with-postgres", feature = "with-sqlite"))]
 //! fn main() {
 //!     mod for_insert {
 //!         use super::*;
@@ -118,7 +92,11 @@
 //!     }
 //!
 //!     let mut pool = Pool::new();
-//!     let em = pool.em(db_url()).unwrap();
+//!     #[cfg(feature = "with-sqlite")]
+//!     let db_url = "sqlite://sakila.db";
+//!     #[cfg(feature = "with-postgres")]
+//!     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+//!     let em = pool.em(db_url).unwrap();
 //!     let tom_cruise = for_insert::Actor {
 //!         first_name: "TOM".into(),
 //!         last_name: "CRUISE".to_string(),
@@ -142,6 +120,10 @@
 //!     assert_eq!(tom_hanks.last_name, actors[1].last_name);
 //!     assert_eq!(today, actors[1].last_update.date());
 //! }
+//! #[cfg(feature="with-mysql")]
+//! fn main() {
+//!    println!("see examples for mysql usage, mysql has a little difference in the api");
+//! }
 //! ```
 //! Rustorm is wholly used by [diwata](https://github.com/ivanceras/diwata)
 
@@ -159,14 +141,20 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
     extern crate rusqlite;
     mod sq;
 }}
+cfg_if! {if #[cfg(feature = "with-mysql")]{
+    mod my;
+}}
 
 pub mod column;
 pub mod common;
 mod dao_manager;
 mod database;
+mod database_mut;
 mod entity;
+mod entity_mut;
 pub mod error;
 mod platform;
+mod platform_mut;
 pub mod pool;
 pub mod table;
 pub mod types;
@@ -180,7 +168,10 @@ pub use database::{
     Database,
     DatabaseName,
 };
+
+pub use database_mut::DatabaseMut;
 pub use entity::EntityManager;
+pub use entity_mut::EntityManagerMut;
 pub use error::{
     DataError,
     DbError,
@@ -198,6 +189,7 @@ pub use codegen::{
 };
 
 pub use rustorm_dao::{
+    self,
     Array,
     ColumnName,
     Dao,

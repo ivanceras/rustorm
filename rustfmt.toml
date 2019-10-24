@@ -1,0 +1,25 @@
+# Use unstable features
+unstable_features = true
+
+## columns size is 100 before wrapping
+max_width = 100
+
+## reorder the imports,  Default is true
+reorder_imports = true
+##
+reorder_impl_items = true
+## Merge the imports statements
+merge_imports = true
+## I want to be able to add and delete unused imports easily
+imports_layout = "Vertical"
+## Default value is false, yet clipy keeps nagging on this
+use_field_init_shorthand = true
+
+## also format macro
+format_macro_matchers = true
+force_multiline_blocks = true
+
+overflow_delimited_expr = true
+fn_single_line = true
+## reorder impl blocks
+blank_lines_upper_bound = 3

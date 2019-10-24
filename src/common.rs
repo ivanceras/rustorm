@@ -9,9 +9,7 @@ use log::*;
 use num_traits::ToPrimitive;
 use std::str::FromStr;
 
-pub fn extract_datatype_with_capacity(
-    data_type: &str,
-) -> (String, Option<Capacity>) {
+pub fn extract_datatype_with_capacity(data_type: &str) -> (String, Option<Capacity>) {
     let start = data_type.find('(');
     let end = data_type.find(')');
     if let Some(start) = start {
@@ -29,9 +27,9 @@ pub fn extract_datatype_with_capacity(
                             Ok(r2) => Some(Capacity::Range(r1, r2)),
                             Err(e) => {
                                 info!(
-                                "error: {} when parsing range2 for data_type: {:?}",
-                                e, data_type
-                            );
+                                    "error: {} when parsing range2 for data_type: {:?}",
+                                    e, data_type
+                                );
                                 None
                             }
                         }
@@ -103,8 +101,7 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
                     SqlType::Smallint => Value::Smallint(v as i16),
                     SqlType::Int => Value::Int(v as i32),
                     SqlType::Numeric => {
-                        let bigdecimal =
-                            BigDecimal::from_str(&format!("{}", v));
+                        let bigdecimal = BigDecimal::from_str(&format!("{}", v));
                         assert!(bigdecimal.is_ok());
                         Value::BigDecimal(bigdecimal.unwrap())
                     }
@@ -137,17 +134,11 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
             Value::Text(ref v) => {
                 match *required_type {
                     SqlType::Timestamp => {
-                        let ts = NaiveDateTime::parse_from_str(
-                            &v,
-                            "%Y-%m-%d %H:%M:%S",
-                        );
+                        let ts = NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S");
                         let ts = if let Ok(ts) = ts {
                             ts
                         } else {
-                            let ts = NaiveDateTime::parse_from_str(
-                                &v,
-                                "%Y-%m-%d %H:%M:%S.%f",
-                            );
+                            let ts = NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S.%f");
                             if let Ok(ts) = ts {
                                 ts
                             } else {

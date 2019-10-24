@@ -157,15 +157,9 @@ impl HasType for Value {
             Value::Timestamp(_) => Some(SqlType::Timestamp),
             Value::Interval(_) => Some(SqlType::Interval),
             Value::Point(_) => Some(SqlType::Point),
-            Value::Array(Array::Int(_)) => {
-                Some(SqlType::Array(Box::new(SqlType::Int)))
-            }
-            Value::Array(Array::Float(_)) => {
-                Some(SqlType::Array(Box::new(SqlType::Float)))
-            }
-            Value::Array(Array::Text(_)) => {
-                Some(SqlType::Array(Box::new(SqlType::Text)))
-            }
+            Value::Array(Array::Int(_)) => Some(SqlType::Array(Box::new(SqlType::Int))),
+            Value::Array(Array::Float(_)) => Some(SqlType::Array(Box::new(SqlType::Float))),
+            Value::Array(Array::Text(_)) => Some(SqlType::Array(Box::new(SqlType::Text))),
         }
     }
 }

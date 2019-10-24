@@ -1,5 +1,3 @@
-#![deny(warnings)]
-
 use chrono::NaiveDateTime;
 use rustorm::{
     DbError,

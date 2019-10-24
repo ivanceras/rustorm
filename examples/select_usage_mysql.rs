@@ -13,9 +13,12 @@ struct Actor {
 }
 
 fn main() {
-    let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+    let db_url = "mysql://root:r00tpwdh3r3@localhost/sakila";
     let mut pool = Pool::new();
-    let em = pool.em(db_url).unwrap();
+    pool.ensure(db_url);
+    let mut em = pool
+        .em_mut(db_url)
+        .expect("Should be able to get a connection here..");
     let sql = "SELECT * FROM actor LIMIT 10";
     let actors: Result<Vec<Actor>, DbError> = em.execute_sql_with_return(sql, &[]);
     println!("Actor: {:#?}", actors);

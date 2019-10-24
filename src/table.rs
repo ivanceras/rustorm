@@ -22,17 +22,11 @@ pub struct Table {
 }
 
 impl Table {
-    pub fn complete_name(&self) -> String {
-        self.name.complete_name()
-    }
+    pub fn complete_name(&self) -> String { self.name.complete_name() }
 
-    pub fn safe_name(&self) -> String {
-        self.name.safe_name()
-    }
+    pub fn safe_name(&self) -> String { self.name.safe_name() }
 
-    pub fn safe_complete_name(&self) -> String {
-        self.name.safe_complete_name()
-    }
+    pub fn safe_complete_name(&self) -> String { self.name.safe_complete_name() }
 
     pub fn get_primary_column_names(&self) -> Vec<&ColumnName> {
         let mut primary: Vec<&ColumnName> = vec![];
@@ -79,10 +73,7 @@ impl Table {
         foreign
     }
 
-    pub fn get_foreign_key_to_table(
-        &self,
-        table_name: &TableName,
-    ) -> Option<&ForeignKey> {
+    pub fn get_foreign_key_to_table(&self, table_name: &TableName) -> Option<&ForeignKey> {
         let foreign_keys: Vec<&ForeignKey> = self.get_foreign_keys();
         for fk in foreign_keys {
             if fk.foreign_table == *table_name {
@@ -112,30 +103,21 @@ impl Table {
         vec![]
     }
 
-    fn get_foreign_columns_to_table(
-        &self,
-        table_name: &TableName,
-    ) -> Vec<&Column> {
+    fn get_foreign_columns_to_table(&self, table_name: &TableName) -> Vec<&Column> {
         self.get_foreign_column_names_to_table(table_name)
             .iter()
             .filter_map(|column_name| self.get_column(column_name))
             .collect()
     }
 
-    pub fn get_foreign_column_types_to_table(
-        &self,
-        table_name: &TableName,
-    ) -> Vec<&SqlType> {
+    pub fn get_foreign_column_types_to_table(&self, table_name: &TableName) -> Vec<&SqlType> {
         self.get_foreign_columns_to_table(table_name)
             .iter()
             .map(|column| &column.specification.sql_type)
             .collect()
     }
 
-    pub fn get_foreign_column_names_to_table(
-        &self,
-        table_name: &TableName,
-    ) -> Vec<&ColumnName> {
+    pub fn get_foreign_column_names_to_table(&self, table_name: &TableName) -> Vec<&ColumnName> {
         let mut foreign_columns = vec![];
         let foreign_keys = self.get_foreign_key_to_table(table_name);
         for fk in &foreign_keys {

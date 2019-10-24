@@ -38,20 +38,14 @@ impl EntityManager {
                 match result.len() {
                     0 => Ok(None),
                     1 => Ok(Some(result.remove(0))),
-                    _ => {
-                        Err(DbError::DataError(
-                            DataError::MoreThan1RecordReturned,
-                        ))
-                    }
+                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
                 }
             }
             Err(e) => Err(e),
         }
     }
 
-    pub fn db(&self) -> &dyn Database {
-        &*self.0
-    }
+    pub fn db(&self) -> &dyn Database { &*self.0 }
 
     /// get all the records of this table
     pub fn get_all<T>(&self) -> Result<Vec<T>, DbError>
@@ -91,10 +85,7 @@ impl EntityManager {
     }
 
     /// Get the total count of records
-    pub fn get_total_records(
-        &self,
-        table_name: &TableName,
-    ) -> Result<usize, DbError> {
+    pub fn get_total_records(&self, table_name: &TableName) -> Result<usize, DbError> {
         #[derive(crate::FromDao)]
         struct Count {
             count: i64,
@@ -103,14 +94,11 @@ impl EntityManager {
             "SELECT COUNT(*) AS count FROM {}",
             table_name.complete_name()
         );
-        let count: Result<Count, DbError> =
-            self.execute_sql_with_one_return(&sql, &[]);
+        let count: Result<Count, DbError> = self.execute_sql_with_one_return(&sql, &[]);
         count.map(|c| c.count as usize)
     }
 
-    pub fn get_users(&self) -> Result<Vec<User>, DbError> {
-        self.0.get_users(self)
-    }
+    pub fn get_users(&self) -> Result<Vec<User>, DbError> { self.0.get_users(self) }
 
     pub fn get_database_name(&self) -> Result<Option<DatabaseName>, DbError> {
         self.0.get_database_name(self)
@@ -130,9 +118,7 @@ impl EntityManager {
             #[cfg(feature = "with-sqlite")]
             DBPlatform::Sqlite(_) => self.insert_simple(_entities),
             #[cfg(feature = "with-postgres")]
-            DBPlatform::Postgres(_) => {
-                self.insert_bulk_with_returning_support(_entities)
-            }
+            DBPlatform::Postgres(_) => self.insert_bulk_with_returning_support(_entities),
         }
     }
 
@@ -150,8 +136,7 @@ impl EntityManager {
         let return_columns = R::to_column_names();
         sql += &self.build_returning_clause(return_columns);
 
-        let mut values: Vec<Value> =
-            Vec::with_capacity(entities.len() * columns.len());
+        let mut values: Vec<Value> = Vec::with_capacity(entities.len() * columns.len());
         for entity in entities {
             let dao = entity.to_dao();
             for col in columns.iter() {
@@ -195,10 +180,7 @@ impl EntityManager {
     }
 
     /// this is soly for use with sqlite since sqlite doesn't support bulk insert
-    pub fn insert_simple<T, R>(
-        &self,
-        entities: &[&T],
-    ) -> Result<Vec<R>, DbError>
+    pub fn insert_simple<T, R>(&self, entities: &[&T]) -> Result<Vec<R>, DbError>
     where
         T: ToTableName + ToColumnNames + ToDao,
         R: FromDao + ToColumnNames,
@@ -226,18 +208,14 @@ impl EntityManager {
         println!("sql: {}", last_insert_sql);
         for entity in entities {
             self.single_insert(*entity)?;
-            let retrieved =
-                self.execute_sql_with_return(&last_insert_sql, &[])?;
+            let retrieved = self.execute_sql_with_return(&last_insert_sql, &[])?;
             retrieved_entities.extend(retrieved);
         }
         Ok(retrieved_entities)
     }
 
     /// build the returning clause
-    fn build_returning_clause(
-        &self,
-        return_columns: Vec<rustorm_dao::ColumnName>,
-    ) -> String {
+    fn build_returning_clause(&self, return_columns: Vec<rustorm_dao::ColumnName>) -> String {
         format!(
             "\nRETURNING \n{}",
             return_columns
@@ -309,18 +287,13 @@ impl EntityManager {
     where
         R: FromDao,
     {
-        let result: Result<Vec<R>, DbError> =
-            self.execute_sql_with_return(sql, &params);
+        let result: Result<Vec<R>, DbError> = self.execute_sql_with_return(sql, &params);
         match result {
             Ok(mut result) => {
                 match result.len() {
                     0 => Err(DbError::DataError(DataError::ZeroRecordReturned)),
                     1 => Ok(result.remove(0)),
-                    _ => {
-                        Err(DbError::DataError(
-                            DataError::MoreThan1RecordReturned,
-                        ))
-                    }
+                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
                 }
             }
             Err(e) => Err(e),
@@ -335,24 +308,20 @@ impl EntityManager {
     where
         R: FromDao,
     {
-        let result: Result<Vec<R>, DbError> =
-            self.execute_sql_with_return(sql, &params);
+        let result: Result<Vec<R>, DbError> = self.execute_sql_with_return(sql, &params);
         match result {
             Ok(mut result) => {
                 match result.len() {
                     0 => Ok(None),
                     1 => Ok(Some(result.remove(0))),
-                    _ => {
-                        Err(DbError::DataError(
-                            DataError::MoreThan1RecordReturned,
-                        ))
-                    }
+                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
                 }
             }
             Err(e) => Err(e),
         }
     }
 }
+
 
 #[cfg(test)]
 #[cfg(feature = "with-postgres")]
@@ -389,9 +358,7 @@ mod test_pg {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(
-            Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName,
-        )]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName)]
         struct Sample {
             vnil: Option<String>,
             vbool: bool,
@@ -455,9 +422,7 @@ mod test_pg {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(
-            Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName,
-        )]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName)]
         struct Sample {
             vnil: Option<String>,
             vbool: Option<bool>,
@@ -517,9 +482,7 @@ mod test_pg {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(
-            Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName,
-        )]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName)]
         struct Sample {
             vchar: String,
         }
@@ -544,9 +507,7 @@ mod test_pg {
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
         let mut pool = Pool::new();
         let em = pool.em(db_url).unwrap();
-        #[derive(
-            Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName,
-        )]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName)]
         struct Sample {
             vchar: char,
         }
@@ -568,9 +529,7 @@ mod test_pg {
 
     #[test]
     fn insert_some_data() {
-        #[derive(
-            Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName,
-        )]
+        #[derive(Debug, PartialEq, FromDao, ToDao, ToColumnNames, ToTableName)]
         struct Actor {
             first_name: String,
             last_name: String,
@@ -587,8 +546,7 @@ mod test_pg {
             last_name: "HANKS".to_string(),
         };
 
-        let actors: Result<Vec<Actor>, DbError> =
-            em.insert(&[&tom_cruise, &tom_hanks]);
+        let actors: Result<Vec<Actor>, DbError> = em.insert(&[&tom_cruise, &tom_hanks]);
         info!("Actor: {:#?}", actors);
         assert!(actors.is_ok());
         let actors = actors.unwrap();
@@ -680,5 +638,4 @@ mod test_pg {
         let table = em.db().get_table(&em, &actor);
         assert!(table.is_ok());
     }
-
 }

@@ -15,6 +15,10 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use rusqlite;
 }}
 
+cfg_if! {if #[cfg(feature = "with-mysql")]{
+    use crate::my::MysqlError;
+}}
+
 #[derive(Debug)]
 pub enum ConnectError {
     NoSuchPoolConnection,
@@ -26,9 +30,7 @@ pub enum ConnectError {
 impl Error for ConnectError {}
 
 impl fmt::Display for ConnectError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.description())
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{}", self.description()) }
 }
 
 #[derive(Debug)]
@@ -42,20 +44,18 @@ pub enum PlatformError {
     PostgresError(PostgresError),
     #[cfg(feature = "with-sqlite")]
     SqliteError(SqliteError),
+    #[cfg(feature = "with-mysql")]
+    MysqlError(MysqlError),
 }
 
 #[cfg(feature = "with-postgres")]
 impl From<PostgresError> for PlatformError {
-    fn from(e: PostgresError) -> Self {
-        PlatformError::PostgresError(e)
-    }
+    fn from(e: PostgresError) -> Self { PlatformError::PostgresError(e) }
 }
 
 #[cfg(feature = "with-postgres")]
 impl From<PostgresError> for DbError {
-    fn from(e: PostgresError) -> Self {
-        DbError::PlatformError(PlatformError::from(e))
-    }
+    fn from(e: PostgresError) -> Self { DbError::PlatformError(PlatformError::from(e)) }
 }
 
 #[cfg(feature = "with-sqlite")]
@@ -67,16 +67,22 @@ impl From<rusqlite::Error> for DbError {
 
 #[cfg(feature = "with-sqlite")]
 impl From<SqliteError> for PlatformError {
-    fn from(e: SqliteError) -> Self {
-        PlatformError::SqliteError(e)
-    }
+    fn from(e: SqliteError) -> Self { PlatformError::SqliteError(e) }
 }
 
 #[cfg(feature = "with-sqlite")]
 impl From<SqliteError> for DbError {
-    fn from(e: SqliteError) -> Self {
-        DbError::PlatformError(PlatformError::from(e))
-    }
+    fn from(e: SqliteError) -> Self { DbError::PlatformError(PlatformError::from(e)) }
+}
+
+#[cfg(feature = "with-mysql")]
+impl From<MysqlError> for PlatformError {
+    fn from(e: MysqlError) -> Self { PlatformError::MysqlError(e) }
+}
+
+#[cfg(feature = "with-mysql")]
+impl From<MysqlError> for DbError {
+    fn from(e: MysqlError) -> Self { DbError::PlatformError(PlatformError::from(e)) }
 }
 
 #[derive(Debug)]
@@ -90,9 +96,7 @@ pub enum DbError {
 }
 
 impl From<PlatformError> for DbError {
-    fn from(e: PlatformError) -> Self {
-        DbError::PlatformError(e)
-    }
+    fn from(e: PlatformError) -> Self { DbError::PlatformError(e) }
 }
 
 #[derive(Debug)]

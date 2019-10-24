@@ -48,13 +48,9 @@ impl Column {
         })
     }
 
-    pub fn get_sql_type(&self) -> SqlType {
-        self.specification.sql_type.clone()
-    }
+    pub fn get_sql_type(&self) -> SqlType { self.specification.sql_type.clone() }
 
-    pub fn cast_as(&self) -> Option<SqlType> {
-        self.get_sql_type().cast_as()
-    }
+    pub fn cast_as(&self) -> Option<SqlType> { self.get_sql_type().cast_as() }
 
     pub fn has_generated_default(&self) -> bool {
         self.specification.constraints.iter().any(|c| {
@@ -148,19 +144,13 @@ pub struct ColumnStat {
 }
 
 impl From<i64> for Literal {
-    fn from(i: i64) -> Self {
-        Literal::Integer(i)
-    }
+    fn from(i: i64) -> Self { Literal::Integer(i) }
 }
 
 impl From<String> for Literal {
-    fn from(s: String) -> Self {
-        Literal::String(s)
-    }
+    fn from(s: String) -> Self { Literal::String(s) }
 }
 
 impl<'a> From<&'a str> for Literal {
-    fn from(s: &'a str) -> Self {
-        Literal::String(String::from(s))
-    }
+    fn from(s: &'a str) -> Self { Literal::String(String::from(s)) }
 }

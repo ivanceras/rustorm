@@ -18,6 +18,7 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use crate::sq::SqliteDB;
 }}
 
+
 pub enum DBPlatform {
     #[cfg(feature = "with-postgres")]
     Postgres(Box<PostgresDB>),
@@ -38,11 +39,14 @@ impl Deref for DBPlatform {
     }
 }
 
+
 pub(crate) enum Platform {
     #[cfg(feature = "with-postgres")]
     Postgres,
     #[cfg(feature = "with-sqlite")]
     Sqlite(String),
+    #[cfg(feature = "with-mysql")]
+    Mysql,
     Unsupported(String),
 }
 
@@ -68,6 +72,8 @@ impl<'a> TryFrom<&'a str> for Platform {
                         let db_file = format!("{}{}", host, path);
                         Ok(Platform::Sqlite(db_file))
                     }
+                    #[cfg(feature = "with-mysql")]
+                    "mysql" => Ok(Platform::Mysql),
                     _ => Ok(Platform::Unsupported(scheme.to_string())),
                 }
             }
