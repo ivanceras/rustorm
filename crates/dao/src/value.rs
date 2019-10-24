@@ -3,7 +3,7 @@ use crate::{
     interval::Interval,
     ConvertError,
 };
-use bigdecimal::BigDecimal;
+use bigdecimal::{BigDecimal, ToPrimitive};
 use chrono::{
     DateTime,
     NaiveDate,
@@ -213,6 +213,25 @@ macro_rules! impl_tryfrom {
     }
 }
 
+macro_rules! impl_tryfrom_numeric {
+    ($ty: ty, $method:ident, $ty_name: tt, $($variant: ident),*) => {
+        /// try from to owned
+        impl<'a> TryFrom<&'a Value> for $ty {
+            type Error = ConvertError;
+
+            fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+                match *value {
+                    $(Value::$variant(ref v) => Ok(v.to_owned() as $ty),
+                    )*
+                    Value::BigDecimal(ref v) => Ok(v.$method().unwrap()),
+                    _ => Err(ConvertError::NotSupported(format!("{:?}",value), $ty_name.into())),
+                }
+            }
+        }
+
+    }
+}
+
 macro_rules! impl_tryfrom_option {
     ($ty:ty) => {
         /// try from to Option<T>
@@ -258,16 +277,16 @@ impl<'a> TryFrom<&'a Value> for String {
 }
 
 impl_tryfrom!(bool, "bool", Bool);
-impl_tryfrom!(i8, "i8", Tinyint);
-impl_tryfrom!(i16, "i16", Tinyint, Smallint);
-impl_tryfrom!(i32, "i32", Tinyint, Smallint, Int, Bigint);
-impl_tryfrom!(i64, "i64", Tinyint, Smallint, Int, Bigint);
-impl_tryfrom!(f32, "f32", Float);
-impl_tryfrom!(f64, "f64", Float, Double);
 impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
 impl_tryfrom!(char, "char", Char);
 impl_tryfrom!(Uuid, "Uuid", Uuid);
 impl_tryfrom!(NaiveDate, "NaiveDate", Date);
+impl_tryfrom_numeric!(i8, to_i8, "i8", Tinyint);
+impl_tryfrom_numeric!(i16, to_i16, "i16", Tinyint, Smallint);
+impl_tryfrom_numeric!(i32, to_i32, "i32", Tinyint, Smallint, Int, Bigint);
+impl_tryfrom_numeric!(i64, to_i64, "i64", Tinyint, Smallint, Int, Bigint);
+impl_tryfrom_numeric!(f32, to_f32, "f32", Float);
+impl_tryfrom_numeric!(f64, to_f64, "f64", Float, Double);
 
 impl<'a> TryFrom<&'a Value> for NaiveDateTime {
     type Error = ConvertError;

@@ -295,7 +295,12 @@ fn into_record(
 
             match column_type {
                 ColumnType::MYSQL_TYPE_DECIMAL | ColumnType::MYSQL_TYPE_NEWDECIMAL => {
-                    fvo(cell).map(|v: i64| Value::BigDecimal(bigdecimal::BigDecimal::from(v)))
+                    fvo(cell)
+                        .and_then(|v: Vec<u8>| {
+                            bigdecimal::BigDecimal::parse_bytes(&v, 10)
+                                .ok_or(mysql::FromValueError(mysql::Value::Bytes(v)))
+                        })
+                        .map(Value::BigDecimal)
                 }
                 ColumnType::MYSQL_TYPE_TINY => fvo(cell).map(Value::Tinyint),
                 ColumnType::MYSQL_TYPE_SHORT | ColumnType::MYSQL_TYPE_YEAR => {
