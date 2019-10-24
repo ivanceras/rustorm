@@ -1,4 +1,3 @@
-#![deny(warnings)]
 use chrono::{
     offset::Utc,
     DateTime,

@@ -12,7 +12,7 @@
 //!
 //! Selecting records
 //!
-//! ```rust
+//! ```rust,ignore
 //! use cfg_if::cfg_if;
 //! use rustorm::{
 //!     DbError,
@@ -28,26 +28,13 @@
 //!     first_name: String,
 //! }
 //!
-//! cfg_if! {
-//!      if #[cfg(feature="with-postgres")] {
-//!        fn db_url() -> &'static str {
-//!            "postgres://postgres:p0stgr3s@localhost/sakila"
-//!        }
-//!      }
-//!      else if #[cfg(feature = "with-sqlite")] {
-//!        fn db_url() -> &'static str{
-//!            "sqlite://sakila.db"
-//!        }
-//!      }
-//!      else {
-//!        fn db_url() -> &'static str {
-//!            panic!("add --features flag, ie: --features=\"with-postgres\" ");
-//!        }
-//!      }
-//! }
 //! fn main() {
 //!     let mut pool = Pool::new();
-//!     let em = pool.em(db_url()).unwrap();
+//!     #[cfg(feature = "with-sqlite")]
+//!     let db_url = "sqlite://sakila.db";
+//!     #[cfg(feature = "with-postgres")]
+//!     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+//!     let em = pool.em(db_url).unwrap();
 //!     let sql = "SELECT * FROM actor LIMIT 10";
 //!     let actors: Result<Vec<Actor>, DbError> =
 //!         em.execute_sql_with_return(sql, &[]);
@@ -61,7 +48,7 @@
 //! ```
 //! Inserting and displaying the inserted records
 //!
-//! ```rust
+//! ```rust,ignore
 //! use cfg_if::cfg_if;
 //! use chrono::{
 //!     offset::Utc,
@@ -78,23 +65,6 @@
 //!     ToTableName,
 //! };
 //!
-//! cfg_if! {
-//!      if #[cfg(feature="with-postgres")] {
-//!        fn db_url() -> &'static str {
-//!            "postgres://postgres:p0stgr3s@localhost/sakila"
-//!        }
-//!      }
-//!      else if #[cfg(feature = "with-sqlite")] {
-//!        fn db_url() -> &'static str {
-//!            "sqlite://sakila.db"
-//!        }
-//!      }
-//!      else {
-//!        fn db_url() -> &'static str {
-//!            panic!("add --features flag, ie: --features=\"with-postgres\" ");
-//!        }
-//!      }
-//! }
 //!
 //! fn main() {
 //!     mod for_insert {
@@ -118,7 +88,11 @@
 //!     }
 //!
 //!     let mut pool = Pool::new();
-//!     let em = pool.em(db_url()).unwrap();
+//!     #[cfg(feature = "with-sqlite")]
+//!     let db_url = "sqlite://sakila.db";
+//!     #[cfg(feature = "with-postgres")]
+//!     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+//!     let em = pool.em(db_url).unwrap();
 //!     let tom_cruise = for_insert::Actor {
 //!         first_name: "TOM".into(),
 //!         last_name: "CRUISE".to_string(),

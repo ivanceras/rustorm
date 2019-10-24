@@ -492,7 +492,7 @@ mod test {
                     assert_eq!(l, "life");
                 }
             }
-            #[cfg(any(feature = "with-sqlite"))]
+            #[cfg(any(feature = "with-sqlite", feature = "with-mysql"))]
             _ => unreachable!(),
         }
     }
@@ -514,7 +514,7 @@ mod test {
                     assert_eq!(l, "life");
                 }
             }
-            #[cfg(any(feature = "with-sqlite"))]
+            #[cfg(any(feature = "with-sqlite", feature = "with-mysql"))]
             _ => unreachable!(),
         }
     }
