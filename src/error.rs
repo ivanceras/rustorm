@@ -1,9 +1,6 @@
 use cfg_if::cfg_if;
 use r2d2;
-use std::{
-    error::Error,
-    fmt,
-};
+use thiserror::Error;
 use url;
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
@@ -19,38 +16,35 @@ cfg_if! {if #[cfg(feature = "with-mysql")]{
     use crate::my::MysqlError;
 }}
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ConnectError {
+    #[error("No such pool connection")]
     NoSuchPoolConnection,
-    ParseError(ParseError),
+    #[error("{0}")]
+    ParseError(#[from] ParseError),
+    #[error("Database not supported: {0}")]
     UnsupportedDb(String),
-    R2d2Error(r2d2::Error),
+    #[error("{0}")]
+    R2d2Error(#[from] r2d2::Error),
 }
 
-impl Error for ConnectError {}
-
-impl fmt::Display for ConnectError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{}", self.description()) }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ParseError {
-    DbUrlParseError(url::ParseError),
+    #[error("Database url parse error: {0}")]
+    DbUrlParseError(#[from] url::ParseError),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum PlatformError {
     #[cfg(feature = "with-postgres")]
-    PostgresError(PostgresError),
+    #[error("{0}")]
+    PostgresError(#[from] PostgresError),
     #[cfg(feature = "with-sqlite")]
-    SqliteError(SqliteError),
+    #[error("{0}")]
+    SqliteError(#[from] SqliteError),
     #[cfg(feature = "with-mysql")]
-    MysqlError(MysqlError),
-}
-
-#[cfg(feature = "with-postgres")]
-impl From<PostgresError> for PlatformError {
-    fn from(e: PostgresError) -> Self { PlatformError::PostgresError(e) }
+    #[error("{0}")]
+    MysqlError(#[from] MysqlError),
 }
 
 #[cfg(feature = "with-postgres")]
@@ -66,18 +60,8 @@ impl From<rusqlite::Error> for DbError {
 }
 
 #[cfg(feature = "with-sqlite")]
-impl From<SqliteError> for PlatformError {
-    fn from(e: SqliteError) -> Self { PlatformError::SqliteError(e) }
-}
-
-#[cfg(feature = "with-sqlite")]
 impl From<SqliteError> for DbError {
     fn from(e: SqliteError) -> Self { DbError::PlatformError(PlatformError::from(e)) }
-}
-
-#[cfg(feature = "with-mysql")]
-impl From<MysqlError> for PlatformError {
-    fn from(e: MysqlError) -> Self { PlatformError::MysqlError(e) }
 }
 
 #[cfg(feature = "with-mysql")]
@@ -85,28 +69,34 @@ impl From<MysqlError> for DbError {
     fn from(e: MysqlError) -> Self { DbError::PlatformError(PlatformError::from(e)) }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum DbError {
+    #[error("Sql injection attempt error: {0}")]
     SqlInjectionAttempt(String),
+    #[error("{0}")]
     DataError(DataError),
+    #[error("{0}")]
     PlatformError(PlatformError),
+    #[error("{0}")]
     ConvertError(ConvertError),
+    #[error("{0}")]
     ConnectError(ConnectError), //agnostic connection error
+    #[error("Unsupported operation: {0}")]
     UnsupportedOperation(String),
 }
 
-impl From<PlatformError> for DbError {
-    fn from(e: PlatformError) -> Self { DbError::PlatformError(e) }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ConvertError {
+    #[error("Unknown data type")]
     UnknownDataType,
+    #[error("Unsupported data type {0}")]
     UnsupportedDataType(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum DataError {
+    #[error("Zero record returned")]
     ZeroRecordReturned,
+    #[error("More than one record returned")]
     MoreThan1RecordReturned,
 }
