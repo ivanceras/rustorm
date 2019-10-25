@@ -21,6 +21,7 @@ use rustorm_dao::{
     FromDao,
     Rows,
 };
+use thiserror::Error;
 
 pub fn init_pool(
     db_url: &str,
@@ -348,28 +349,22 @@ fn into_record(
         .collect()
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum MysqlError {
+    #[error("{1}")]
     GenericError(String, mysql::Error),
-    UrlError(mysql::UrlError),
+    #[error("{0}")]
+    UrlError(#[from] mysql::UrlError),
+    #[error("Error executing {1}: {0}")]
     SqlError(mysql::Error, String),
-    Utf8Error(std::str::Utf8Error),
-    ConvertError(mysql::FromValueError),
-    PoolInitializationError(r2d2::Error),
+    #[error("{0}")]
+    Utf8Error(#[from] std::str::Utf8Error),
+    #[error("{0}")]
+    ConvertError(#[from] mysql::FromValueError),
+    #[error("Pool initialization error: {0}")]
+    PoolInitializationError(#[from] r2d2::Error),
 }
 
 impl From<mysql::Error> for MysqlError {
     fn from(e: mysql::Error) -> Self { MysqlError::GenericError("From conversion".into(), e) }
-}
-
-impl From<r2d2::Error> for MysqlError {
-    fn from(e: r2d2::Error) -> Self { MysqlError::PoolInitializationError(e) }
-}
-
-impl From<mysql::UrlError> for MysqlError {
-    fn from(e: mysql::error::UrlError) -> Self { MysqlError::UrlError(e) }
-}
-
-impl From<mysql::FromValueError> for MysqlError {
-    fn from(e: mysql::FromValueError) -> Self { MysqlError::ConvertError(e) }
 }

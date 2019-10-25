@@ -38,6 +38,7 @@ use r2d2::{
 };
 use r2d2_sqlite;
 use rusqlite;
+use thiserror::Error;
 use uuid::Uuid;
 
 pub fn init_pool(
@@ -469,23 +470,15 @@ fn get_foreign_keys(em: &EntityManager, table: &TableName) -> Result<Vec<Foreign
     Ok(foreign_keys)
 }
 
-
-
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum SqliteError {
-    GenericError(rusqlite::Error),
+    #[error("{0}")]
+    GenericError(#[from] rusqlite::Error),
+    #[error("Error executing {1}: {0}")]
     SqlError(rusqlite::Error, String),
-    PoolInitializationError(r2d2::Error),
+    #[error("Pool initialization error: {0}")]
+    PoolInitializationError(#[from] r2d2::Error),
 }
-
-impl From<r2d2::Error> for SqliteError {
-    fn from(e: r2d2::Error) -> Self { SqliteError::PoolInitializationError(e) }
-}
-
-impl From<rusqlite::Error> for SqliteError {
-    fn from(e: rusqlite::Error) -> Self { SqliteError::GenericError(e) }
-}
-
 
 #[cfg(test)]
 mod test {
