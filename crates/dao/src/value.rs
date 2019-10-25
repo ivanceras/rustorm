@@ -3,7 +3,10 @@ use crate::{
     interval::Interval,
     ConvertError,
 };
-use bigdecimal::{BigDecimal, ToPrimitive};
+use bigdecimal::{
+    BigDecimal,
+    ToPrimitive,
+};
 use chrono::{
     DateTime,
     NaiveDate,
@@ -169,6 +172,7 @@ impl_from!(Uuid, Uuid);
 impl_from!(NaiveDate, Date);
 impl_from!(NaiveTime, Time);
 impl_from!(DateTime<Utc>, Timestamp);
+impl_from!(NaiveDateTime, DateTime);
 
 impl<'a> From<&'a str> for Value {
     fn from(f: &'a str) -> Value { Value::Text(f.to_string()) }
@@ -265,7 +269,7 @@ impl<'a> TryFrom<&'a Value> for String {
                 String::from_utf8(v.to_owned()).map_err(|e| {
                     ConvertError::NotSupported(format!("{:?}", value), format!("String: {}", e))
                 })
-            },
+            }
             _ => {
                 Err(ConvertError::NotSupported(
                     format!("{:?}", value),

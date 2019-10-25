@@ -167,9 +167,9 @@ impl Table {
 /// if the table in context is product and the foreign table is category
 /// ForeignKey{
 ///     name: product_category_fkey
-///     columns: [category_id]
+///     columns: _category_id_
 ///     foreign_table: category
-///     referred_columns: [id]
+///     referred_columns: _id_
 /// }
 #[derive(Debug, PartialEq, Clone)]
 pub struct ForeignKey {
