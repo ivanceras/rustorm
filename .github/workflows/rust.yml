@@ -14,8 +14,8 @@ jobs:
     - name: Checkout sakila
       run: |
           git clone https://github.com/ivanceras/sakila.git
-          sqlite3 sakila.db < ../sakila/sqlite-sakila-db/sqlite-sakila-schema.sql
-          sqlite3 sakila.db < ../sakila/sqlite-sakila-db/sqlite-sakila-insert-data.sql
+          sqlite3 sakila.db < sakila/sqlite-sakila-db/sqlite-sakila-schema.sql
+          sqlite3 sakila.db < sakila/sqlite-sakila-db/sqlite-sakila-insert-data.sql
     - name: Build
       run: cargo build --all --all-features
     - name: Run tests
