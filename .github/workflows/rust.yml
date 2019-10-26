@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Install dependencies
-      run: sudo apt install -y sqlite3
+      run: sudo apt install -y sqlite3 libsqlite3 libsqlite3-dev
     - name: Checkout sakila
       run: |
           git clone https://github.com/ivanceras/sakila.git
