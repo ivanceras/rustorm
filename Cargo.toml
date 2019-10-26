@@ -38,8 +38,8 @@ tree_magic = "0.2"
 base64 = "0.9"
 geo = "0.4"
 time = "0.1.14"
-rustorm_dao = { path = "crates/dao" }
-rustorm_codegen = { path = "crates/codegen" }
+rustorm_dao = { path = "crates/dao", version = "0.4.0" }
+rustorm_codegen = { path = "crates/codegen", version = "0.3.0" }
 r2d2_mysql = {version = "16.0.0", optional = true}
 thiserror = "1.0.3"
 
