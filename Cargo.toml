@@ -1,6 +1,6 @@
 [package]
 name = "rustorm"
-version = "0.15.0"
+version = "0.15.1"
 authors = [ "Jovansonlee Cesar <ivanceras@gmail.com>" ]
 license = "MIT"
 description = "A complete rewrite of rustorm"
