@@ -45,6 +45,11 @@ pub enum PlatformError {
     #[cfg(feature = "with-mysql")]
     #[error("{0}")]
     MysqlError(#[from] MysqlError),
+    /// FIXME: this is a placeholder error
+    /// such that thiserror::Error will not complain
+    /// for fmt::Display not implemented, when no feature is enabled
+    #[error("{0}")]
+    Other(String),
 }
 
 #[cfg(feature = "with-postgres")]
