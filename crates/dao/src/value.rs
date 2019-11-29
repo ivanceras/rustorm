@@ -120,6 +120,11 @@ macro_rules! impl_from {
             fn from(f: &'a $ty) -> Self { Value::$variant(f.to_owned()) }
         }
 
+        /// For dobule borrowed types
+        impl<'a> From<&&'a $ty> for Value {
+            fn from(f: &&'a $ty) -> Self { Value::$variant(f.to_owned().to_owned()) }
+        }
+
         /// for borrowed option types
         impl<'a> From<&'a Option<$ty>> for Value {
             fn from(f: &'a Option<$ty>) -> Self {
@@ -178,6 +183,10 @@ impl<'a> From<&'a str> for Value {
     fn from(f: &'a str) -> Value { Value::Text(f.to_string()) }
 }
 
+impl<'a> From<&&'a str> for Value {
+    fn from(f: &&'a str) -> Value { Value::Text(f.to_string()) }
+}
+
 impl ToValue for &str {
     fn to_value(&self) -> Value { Value::Text(self.to_string()) }
 }
@@ -232,7 +241,6 @@ macro_rules! impl_tryfrom_numeric {
                 }
             }
         }
-
     }
 }
 
@@ -251,6 +259,7 @@ macro_rules! impl_tryfrom_option {
         }
     };
 }
+
 
 /// Char can be casted into String
 /// and they havea separate implementation for extracting data
@@ -280,7 +289,6 @@ impl<'a> TryFrom<&'a Value> for String {
     }
 }
 
-impl_tryfrom!(bool, "bool", Bool);
 impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
 impl_tryfrom!(char, "char", Char);
 impl_tryfrom!(Uuid, "Uuid", Uuid);
@@ -291,6 +299,26 @@ impl_tryfrom_numeric!(i32, to_i32, "i32", Tinyint, Smallint, Int, Bigint);
 impl_tryfrom_numeric!(i64, to_i64, "i64", Tinyint, Smallint, Int, Bigint);
 impl_tryfrom_numeric!(f32, to_f32, "f32", Float);
 impl_tryfrom_numeric!(f64, to_f64, "f64", Float, Double);
+
+impl<'a> TryFrom<&'a Value> for bool {
+   type Error = ConvertError;
+
+   fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+        match *value {
+            Value::Bool(v) => Ok(v),
+            Value::Tinyint(v) => Ok(v == 1),
+            Value::Smallint(v) => Ok(v == 1),
+            Value::Int(v) => Ok(v == 1),
+            Value::Bigint(v) => Ok(v == 1),
+            _ => {
+                Err(ConvertError::NotSupported(
+                    format!("{:?}", value),
+                    "bool".to_string(),
+                ))
+            }
+        }
+   }
+}
 
 impl<'a> TryFrom<&'a Value> for NaiveDateTime {
     type Error = ConvertError;

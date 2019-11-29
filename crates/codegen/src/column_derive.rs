@@ -3,6 +3,7 @@ use syn;
 
 pub fn impl_to_column_names(ast: &syn::MacroInput) -> quote::Tokens {
     let name = &ast.ident;
+    let generics = &ast.generics;
     let fields: Vec<(&syn::Ident, &syn::Ty)> = match ast.body {
         syn::Body::Struct(ref data) => match *data {
             syn::VariantData::Struct(ref fields) => fields
@@ -31,8 +32,7 @@ pub fn impl_to_column_names(ast: &syn::MacroInput) -> quote::Tokens {
         .collect();
 
     quote! {
-        impl rustorm_dao::ToColumnNames for  #name {
-
+        impl #generics rustorm_dao::ToColumnNames for #name #generics {
             fn to_column_names() -> Vec<rustorm_dao::ColumnName> {
                 vec![
                     #(#from_fields)*

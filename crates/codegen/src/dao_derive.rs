@@ -39,6 +39,7 @@ pub fn impl_from_dao(ast: &syn::MacroInput) -> quote::Tokens {
 
 pub fn impl_to_dao(ast: &syn::MacroInput) -> quote::Tokens {
     let name = &ast.ident;
+    let generics = &ast.generics;
     let fields: Vec<(&syn::Ident, &syn::Ty)> = match ast.body {
         syn::Body::Struct(ref data) => match *data {
             syn::VariantData::Struct(ref fields) => fields
@@ -61,8 +62,7 @@ pub fn impl_to_dao(ast: &syn::MacroInput) -> quote::Tokens {
         .collect();
 
     quote! {
-        impl rustorm_dao::ToDao for  #name {
-
+        impl #generics rustorm_dao::ToDao for #name #generics {
             fn to_dao(&self) -> rustorm_dao::Dao {
                 let mut dao = rustorm_dao::Dao::new();
                 #(#from_fields)*
