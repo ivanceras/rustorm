@@ -101,6 +101,10 @@ macro_rules! impl_to_value {
         impl<'a> ToValue for &'a $ty {
             fn to_value(&self) -> Value { (*self).into() }
         }
+
+        impl<'a> ToValue for &'a Option<$ty> {
+            fn to_value(&self) -> Value { (*self).into() }
+        }
     };
 }
 
@@ -122,7 +126,7 @@ macro_rules! impl_from {
 
         /// For dobule borrowed types
         impl<'a> From<&&'a $ty> for Value {
-            fn from(f: &&'a $ty) -> Self { Value::$variant(f.to_owned().to_owned()) }
+            fn from(f: &&'a $ty) -> Self { (*f).into() }
         }
 
         /// for borrowed option types
@@ -132,6 +136,13 @@ macro_rules! impl_from {
                     Some(ref f) => From::from(f),
                     None => Value::Nil,
                 }
+            }
+        }
+
+        /// for dobule borrowed option types
+        impl<'a> From<&&'a Option<$ty>> for Value {
+            fn from(f: &&'a Option<$ty>) -> Self {
+                (*f).into()
             }
         }
 
@@ -187,8 +198,21 @@ impl<'a> From<&&'a str> for Value {
     fn from(f: &&'a str) -> Value { Value::Text(f.to_string()) }
 }
 
+impl<'a> From<&'a Option<&'a str>> for Value {
+    fn from(f: &'a Option<&'a str>) -> Value {
+        match f {
+            Some(f) => Value::Text(f.to_string()),
+            None => Value::Nil
+        }
+    }
+}
+
 impl ToValue for &str {
     fn to_value(&self) -> Value { Value::Text(self.to_string()) }
+}
+
+impl ToValue for Option<&str> {
+    fn to_value(&self) -> Value { self.into() }
 }
 
 impl From<Vec<String>> for Value {
