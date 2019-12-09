@@ -215,6 +215,15 @@ impl FromValue for String {
     }
 }
 
+impl FromValue for Vec<String> {
+    fn from_value(v: &Value) -> Result<Self, ConvertError> {
+        match *v {
+            Value::Array(Array::Text(ref t)) => Ok(t.to_owned()),
+            _ => panic!("unable to convert {:?} to Vec<String>", v),
+        }
+    }
+}
+
 impl FromValue for bool {
    fn from_value(v: &Value) -> Result<Self, ConvertError> {
         match *v {
