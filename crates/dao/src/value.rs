@@ -19,7 +19,6 @@ use serde_derive::{
     Deserialize,
     Serialize,
 };
-use std::convert::TryFrom;
 use uuid::Uuid;
 
 /// Generic value storage 32 byte in size
@@ -93,205 +92,108 @@ pub trait ToValue {
 }
 
 macro_rules! impl_to_value {
-    ($ty:ty) => {
+    ($ty:ty, $variant:ident) => {
         impl ToValue for $ty {
-            fn to_value(&self) -> Value { self.into() }
-        }
-
-        impl<'a> ToValue for &'a $ty {
-            fn to_value(&self) -> Value { (*self).into() }
-        }
-
-        impl<'a> ToValue for &'a Option<$ty> {
-            fn to_value(&self) -> Value { (*self).into() }
+            fn to_value(&self) -> Value { Value::$variant(self.to_owned()) }
         }
     };
+}
+
+impl_to_value!(bool, Bool);
+impl_to_value!(i8, Tinyint);
+impl_to_value!(i16, Smallint);
+impl_to_value!(i32, Int);
+impl_to_value!(i64, Bigint);
+impl_to_value!(f32, Float);
+impl_to_value!(f64, Double);
+impl_to_value!(Vec<u8>, Blob);
+impl_to_value!(char, Char);
+impl_to_value!(String, Text);
+impl_to_value!(Uuid, Uuid);
+impl_to_value!(NaiveDate, Date);
+impl_to_value!(NaiveTime, Time);
+impl_to_value!(DateTime<Utc>, Timestamp);
+impl_to_value!(NaiveDateTime, DateTime);
+
+impl ToValue for &str {
+    fn to_value(&self) -> Value { Value::Text(self.to_string()) }
 }
 
 impl ToValue for Vec<String> {
     fn to_value(&self) -> Value { Value::Array(Array::Text(self.to_owned())) }
 }
 
-macro_rules! impl_from {
-    ($ty:ty, $variant:ident) => {
-        /// Owned types
-        impl From<$ty> for Value {
-            fn from(f: $ty) -> Self { Value::$variant(f) }
-        }
-
-        /// For borrowed types
-        impl<'a> From<&'a $ty> for Value {
-            fn from(f: &'a $ty) -> Self { Value::$variant(f.to_owned()) }
-        }
-
-        /// For dobule borrowed types
-        impl<'a> From<&&'a $ty> for Value {
-            fn from(f: &&'a $ty) -> Self { (*f).into() }
-        }
-
-        /// for borrowed option types
-        impl<'a> From<&'a Option<$ty>> for Value {
-            fn from(f: &'a Option<$ty>) -> Self {
-                match *f {
-                    Some(ref f) => From::from(f),
-                    None => Value::Nil,
-                }
-            }
-        }
-
-        /// for dobule borrowed option types
-        impl<'a> From<&&'a Option<$ty>> for Value {
-            fn from(f: &&'a Option<$ty>) -> Self {
-                (*f).into()
-            }
-        }
-
-        impl_to_value!($ty);
-    };
-
-    ($ty:ty, $variant:ident, $fn:ident) => {
-        /// Owned types
-        impl From<$ty> for Value {
-            fn from(f: $ty) -> Self { Value::$variant(f.$fn()) }
-        }
-
-        /// For borrowed types
-        impl<'a> From<&'a $ty> for Value {
-            fn from(f: &'a $ty) -> Self { Value::$variant(f.$fn()) }
-        }
-
-        /// for borrowed option types
-        impl<'a> From<&'a Option<$ty>> for Value {
-            fn from(f: &'a Option<$ty>) -> Self {
-                match *f {
-                    Some(ref f) => From::from(f),
-                    None => Value::Nil,
-                }
-            }
-        }
-
-        impl_to_value!($ty);
-    };
-}
-
-impl_from!(bool, Bool);
-impl_from!(i8, Tinyint);
-impl_from!(i16, Smallint);
-impl_from!(i32, Int);
-impl_from!(i64, Bigint);
-impl_from!(f32, Float);
-impl_from!(f64, Double);
-impl_from!(Vec<u8>, Blob);
-impl_from!(char, Char);
-impl_from!(String, Text);
-impl_from!(Uuid, Uuid);
-impl_from!(NaiveDate, Date);
-impl_from!(NaiveTime, Time);
-impl_from!(DateTime<Utc>, Timestamp);
-impl_from!(NaiveDateTime, DateTime);
-
-impl<'a> From<&'a str> for Value {
-    fn from(f: &'a str) -> Value { Value::Text(f.to_string()) }
-}
-
-impl<'a> From<&&'a str> for Value {
-    fn from(f: &&'a str) -> Value { Value::Text(f.to_string()) }
-}
-
-impl<'a> From<&'a Option<&'a str>> for Value {
-    fn from(f: &'a Option<&'a str>) -> Value {
-        match f {
-            Some(f) => Value::Text(f.to_string()),
-            None => Value::Nil
+impl<T> ToValue for Option<T> where T: ToValue {
+    fn to_value(&self) -> Value {
+        match self {
+            Some(v) => v.to_value(),
+            None => Value::Nil,
         }
     }
 }
 
-impl ToValue for &str {
-    fn to_value(&self) -> Value { Value::Text(self.to_string()) }
-}
-
-impl ToValue for Option<&str> {
-    fn to_value(&self) -> Value { self.into() }
-}
-
-impl From<Vec<String>> for Value {
-    fn from(f: Vec<String>) -> Value { Value::Array(Array::Text(f)) }
-}
-
-impl<'a> From<&'a Vec<String>> for Value {
-    fn from(f: &Vec<String>) -> Value { Value::Array(Array::Text(f.to_owned())) }
-}
-
-impl<'a> From<&'a Value> for Vec<String> {
-    fn from(v: &'a Value) -> Vec<String> {
-        match *v {
-            Value::Array(Array::Text(ref t)) => t.to_owned(),
-            _ => panic!("unable to convert {:?} to Vec<String>", v),
-        }
+impl<T> ToValue for &T where T: ToValue {
+    fn to_value(&self) -> Value {
+        (*self).to_value()
     }
 }
 
-macro_rules! impl_tryfrom {
+impl <T> From<T> for Value where T: ToValue {
+    fn from(v: T) -> Value {
+        v.to_value()
+    }
+}
+
+pub trait FromValue: Sized {
+    fn from_value(v: &Value) -> Result<Self, ConvertError>;
+}
+
+macro_rules! impl_from_value {
     ($ty: ty, $ty_name: tt, $($variant: ident),*) => {
         /// try from to owned
-        impl<'a> TryFrom<&'a Value> for $ty {
-            type Error = ConvertError;
-
-            fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-                match *value {
+        impl FromValue for $ty {
+            fn from_value(v: &Value) -> Result<Self, ConvertError> {
+                match *v {
                     $(Value::$variant(ref v) => Ok(v.to_owned() as $ty),
                     )*
-                    _ => Err(ConvertError::NotSupported(format!("{:?}",value), $ty_name.into())),
+                    _ => Err(ConvertError::NotSupported(format!("{:?}",v), $ty_name.into())),
                 }
             }
         }
-
     }
 }
 
-macro_rules! impl_tryfrom_numeric {
+macro_rules! impl_from_value_numeric {
     ($ty: ty, $method:ident, $ty_name: tt, $($variant: ident),*) => {
-        /// try from to owned
-        impl<'a> TryFrom<&'a Value> for $ty {
-            type Error = ConvertError;
-
-            fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-                match *value {
+        impl FromValue for $ty {
+            fn from_value(v: &Value) -> Result<Self, ConvertError> {
+                match *v {
                     $(Value::$variant(ref v) => Ok(v.to_owned() as $ty),
                     )*
                     Value::BigDecimal(ref v) => Ok(v.$method().unwrap()),
-                    _ => Err(ConvertError::NotSupported(format!("{:?}",value), $ty_name.into())),
+                    _ => Err(ConvertError::NotSupported(format!("{:?}", v), $ty_name.into())),
                 }
             }
         }
     }
 }
 
-macro_rules! impl_tryfrom_option {
-    ($ty:ty) => {
-        /// try from to Option<T>
-        impl<'a> TryFrom<&'a Value> for Option<$ty> {
-            type Error = ConvertError;
-
-            fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-                match *value {
-                    Value::Nil => Ok(None),
-                    _ => TryFrom::try_from(value).map(Some),
-                }
-            }
-        }
-    };
-}
-
+impl_from_value!(Vec<u8>, "Vec<u8>", Blob);
+impl_from_value!(char, "char", Char);
+impl_from_value!(Uuid, "Uuid", Uuid);
+impl_from_value!(NaiveDate, "NaiveDate", Date);
+impl_from_value_numeric!(i8, to_i8, "i8", Tinyint);
+impl_from_value_numeric!(i16, to_i16, "i16", Tinyint, Smallint);
+impl_from_value_numeric!(i32, to_i32, "i32", Tinyint, Smallint, Int, Bigint);
+impl_from_value_numeric!(i64, to_i64, "i64", Tinyint, Smallint, Int, Bigint);
+impl_from_value_numeric!(f32, to_f32, "f32", Float);
+impl_from_value_numeric!(f64, to_f64, "f64", Float, Double);
 
 /// Char can be casted into String
 /// and they havea separate implementation for extracting data
-impl<'a> TryFrom<&'a Value> for String {
-    type Error = ConvertError;
-
-    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-        match *value {
+impl FromValue for String {
+    fn from_value(v: &Value) -> Result<Self, ConvertError> {
+        match *v {
             Value::Text(ref v) => Ok(v.to_owned()),
             Value::Char(ref v) => {
                 let mut s = String::new();
@@ -300,12 +202,12 @@ impl<'a> TryFrom<&'a Value> for String {
             }
             Value::Blob(ref v) => {
                 String::from_utf8(v.to_owned()).map_err(|e| {
-                    ConvertError::NotSupported(format!("{:?}", value), format!("String: {}", e))
+                    ConvertError::NotSupported(format!("{:?}", v), format!("String: {}", e))
                 })
             }
             _ => {
                 Err(ConvertError::NotSupported(
-                    format!("{:?}", value),
+                    format!("{:?}", v),
                     "String".to_string(),
                 ))
             }
@@ -313,22 +215,9 @@ impl<'a> TryFrom<&'a Value> for String {
     }
 }
 
-impl_tryfrom!(Vec<u8>, "Vec<u8>", Blob);
-impl_tryfrom!(char, "char", Char);
-impl_tryfrom!(Uuid, "Uuid", Uuid);
-impl_tryfrom!(NaiveDate, "NaiveDate", Date);
-impl_tryfrom_numeric!(i8, to_i8, "i8", Tinyint);
-impl_tryfrom_numeric!(i16, to_i16, "i16", Tinyint, Smallint);
-impl_tryfrom_numeric!(i32, to_i32, "i32", Tinyint, Smallint, Int, Bigint);
-impl_tryfrom_numeric!(i64, to_i64, "i64", Tinyint, Smallint, Int, Bigint);
-impl_tryfrom_numeric!(f32, to_f32, "f32", Float);
-impl_tryfrom_numeric!(f64, to_f64, "f64", Float, Double);
-
-impl<'a> TryFrom<&'a Value> for bool {
-   type Error = ConvertError;
-
-   fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
-        match *value {
+impl FromValue for bool {
+   fn from_value(v: &Value) -> Result<Self, ConvertError> {
+        match *v {
             Value::Bool(v) => Ok(v),
             Value::Tinyint(v) => Ok(v == 1),
             Value::Smallint(v) => Ok(v == 1),
@@ -336,7 +225,7 @@ impl<'a> TryFrom<&'a Value> for bool {
             Value::Bigint(v) => Ok(v == 1),
             _ => {
                 Err(ConvertError::NotSupported(
-                    format!("{:?}", value),
+                    format!("{:?}", v),
                     "bool".to_string(),
                 ))
             }
@@ -344,19 +233,42 @@ impl<'a> TryFrom<&'a Value> for bool {
    }
 }
 
-impl<'a> TryFrom<&'a Value> for NaiveDateTime {
-    type Error = ConvertError;
+impl FromValue for DateTime<Utc> {
+    fn from_value(v: &Value) -> Result<Self, ConvertError> {
+        match *v {
+            Value::Text(ref v) => Ok(DateTime::<Utc>::from_utc(parse_naive_date_time(v), Utc)),
+            Value::DateTime(v) => Ok(DateTime::<Utc>::from_utc(v, Utc)),
+            Value::Timestamp(v) => Ok(v),
+            _ => {
+                Err(ConvertError::NotSupported(
+                    format!("{:?}", v),
+                    "DateTime".to_string(),
+                ))
+            }
+        }
+    }
+}
 
-    fn try_from(value: &Value) -> Result<Self, Self::Error> {
-        match *value {
+impl FromValue for NaiveDateTime {
+    fn from_value(v: &Value) -> Result<Self, ConvertError> {
+        match *v {
             Value::Text(ref v) => Ok(parse_naive_date_time(v)),
             Value::DateTime(v) => Ok(v),
             _ => {
                 Err(ConvertError::NotSupported(
-                    format!("{:?}", value),
+                    format!("{:?}", v),
                     "NaiveDateTime".to_string(),
                 ))
             }
+        }
+    }
+}
+
+impl<T> FromValue for Option<T> where T: FromValue {
+    fn from_value(v: &Value) -> Result<Self, ConvertError> {
+        match *v {
+            Value::Nil => Ok(None),
+            _ => FromValue::from_value(v).map(Some),
         }
     }
 }
@@ -374,39 +286,6 @@ fn parse_naive_date_time(v: &str) -> NaiveDateTime {
         }
     }
 }
-
-impl<'a> TryFrom<&'a Value> for DateTime<Utc> {
-    type Error = ConvertError;
-
-    fn try_from(value: &Value) -> Result<Self, Self::Error> {
-        match *value {
-            Value::Text(ref v) => Ok(DateTime::<Utc>::from_utc(parse_naive_date_time(v), Utc)),
-            Value::DateTime(v) => Ok(DateTime::<Utc>::from_utc(v, Utc)),
-            Value::Timestamp(v) => Ok(v),
-            _ => {
-                Err(ConvertError::NotSupported(
-                    format!("{:?}", value),
-                    "DateTime".to_string(),
-                ))
-            }
-        }
-    }
-}
-
-impl_tryfrom_option!(bool);
-impl_tryfrom_option!(i8);
-impl_tryfrom_option!(i16);
-impl_tryfrom_option!(i32);
-impl_tryfrom_option!(i64);
-impl_tryfrom_option!(f32);
-impl_tryfrom_option!(f64);
-impl_tryfrom_option!(Vec<u8>);
-impl_tryfrom_option!(char);
-impl_tryfrom_option!(String);
-impl_tryfrom_option!(Uuid);
-impl_tryfrom_option!(NaiveDate);
-impl_tryfrom_option!(NaiveDateTime);
-impl_tryfrom_option!(DateTime<Utc>);
 
 #[cfg(test)]
 mod tests {
@@ -426,17 +305,17 @@ mod tests {
 
     #[test]
     fn test_types() {
-        let _: Value = 127i8.into();
-        let _: Value = 2222i16.into();
-        let _: Value = 4444i32.into();
-        let _: Value = 10000i64.into();
-        let _v1: Value = 1.0f32.into();
-        let _v2: Value = 100.0f64.into();
-        let _v3: Value = Utc::now().into();
-        let _v7: Value = Utc::today().naive_utc().into();
-        let _v4: Value = "hello world!".into();
-        let _v5: Value = "hello world!".to_string().into();
-        let _v6: Value = vec![1u8, 2, 255, 3].into();
+        let _: Value = 127i8.to_value();
+        let _: Value = 2222i16.to_value();
+        let _: Value = 4444i32.to_value();
+        let _: Value = 10000i64.to_value();
+        let _v1: Value = 1.0f32.to_value();
+        let _v2: Value = 100.0f64.to_value();
+        let _v3: Value = Utc::now().to_value();
+        let _v7: Value = Utc::today().naive_utc().to_value();
+        let _v4: Value = "hello world!".to_value();
+        let _v5: Value = "hello world!".to_string().to_value();
+        let _v6: Value = vec![1u8, 2, 255, 3].to_value();
     }
 
     #[test]

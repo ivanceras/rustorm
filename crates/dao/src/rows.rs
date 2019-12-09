@@ -5,7 +5,7 @@ use std::slice;
 
 /// use this to store data retrieved from the database
 /// This is also slimmer than Vec<Dao> when serialized
-#[derive(Debug,PartialEq,  Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Rows {
     pub columns: Vec<String>,
     pub data: Vec<Vec<Value>>,
@@ -54,7 +54,7 @@ impl<'a> Iterator for Iter<'a> {
                 let mut dao = Dao::new();
                 for (i, column) in self.columns.iter().enumerate() {
                     if let Some(value) = row.get(i) {
-                        dao.insert(column, value.clone());
+                        dao.insert_value(column, value);
                     }
                 }
                 Some(dao)
@@ -142,5 +142,4 @@ mod test {
         dao2.insert("username", "lee");
         assert_eq!(dao2, iter.next().unwrap());
     }
-
 }

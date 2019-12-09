@@ -1,10 +1,9 @@
 use crate::error::DaoError;
-use crate::Value;
+use crate::{FromValue, ToValue, Value};
 use serde::ser::{Serialize, Serializer};
 use serde::Deserialize;
 use serde::Deserializer;
 use std::collections::BTreeMap;
-use std::convert::TryFrom;
 use std::fmt::Debug;
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -18,9 +17,9 @@ impl Dao {
     pub fn insert<K, V>(&mut self, k: K, v: V)
     where
         K: ToString,
-        V: Into<Value>,
+        V: ToValue,
     {
-        self.0.insert(k.to_string(), v.into());
+        self.0.insert(k.to_string(), v.to_value());
     }
 
     pub fn insert_value<K>(&mut self, k: K, value: &Value)
@@ -30,14 +29,13 @@ impl Dao {
         self.0.insert(k.to_string(), value.clone());
     }
 
-    pub fn get<'a, T>(&'a self, s: &str) -> Result<T, DaoError<T>>
+    pub fn get<'a, T>(&'a self, s: &str) -> Result<T, DaoError>
     where
-        T: TryFrom<&'a Value>,
-        T::Error: Debug,
+        T: FromValue,
     {
         let value: Option<&'a Value> = self.0.get(s);
         match value {
-            Some(v) => TryFrom::try_from(v).map_err(DaoError::ConvertError),
+            Some(v) => FromValue::from_value(v).map_err(DaoError::ConvertError),
             None => Err(DaoError::NoSuchValueError(s.into())),
         }
     }
@@ -91,7 +89,7 @@ mod tests {
     fn insert_double() {
         let mut dao = Dao::new();
         dao.insert("life", 42.0f64);
-        let life: Result<f64, DaoError<f64>> = dao.get("life");
+        let life: Result<f64, DaoError> = dao.get("life");
         assert_eq!(life.unwrap(), 42.0f64);
     }
 
@@ -99,7 +97,7 @@ mod tests {
     fn insert_float() {
         let mut dao = Dao::new();
         dao.insert("life", 42.0f32);
-        let life: Result<f64, DaoError<f64>> = dao.get("life");
+        let life: Result<f64, DaoError> = dao.get("life");
         assert_eq!(life.unwrap(), 42.0f64);
     }
 
@@ -144,5 +142,4 @@ mod tests {
         assert!(life.is_some());
         assert_eq!(life.unwrap(), 42);
     }
-
 }
