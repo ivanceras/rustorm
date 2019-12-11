@@ -196,7 +196,9 @@ pub use rustorm_dao::{
     Rows,
     TableName,
     ToValue,
+    FromValue,
     Value,
+    ConvertError
 };
 
 /// Wrap the rustorm_dao exports to avoid name conflict with the rustorm_codegen

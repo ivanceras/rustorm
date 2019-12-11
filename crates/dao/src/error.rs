@@ -1,5 +1,3 @@
-use crate::Value;
-use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt;
 use std::fmt::Debug;
@@ -13,7 +11,6 @@ impl Error for ConvertError {
     fn description(&self) -> &str {
         "Conversion is not supported"
     }
-
 }
 
 impl fmt::Display for ConvertError {
@@ -23,11 +20,7 @@ impl fmt::Display for ConvertError {
 }
 
 #[derive(Debug)]
-pub enum DaoError<'a, T>
-where
-    T: TryFrom<&'a Value>,
-    T::Error: Debug,
-{
-    ConvertError(T::Error),
+pub enum DaoError {
+    ConvertError(ConvertError),
     NoSuchValueError(String),
 }
