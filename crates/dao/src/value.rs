@@ -205,12 +205,7 @@ impl FromValue for String {
                     ConvertError::NotSupported(format!("{:?}", v), format!("String: {}", e))
                 })
             }
-            _ => {
-                Err(ConvertError::NotSupported(
-                    format!("{:?}", v),
-                    "String".to_string(),
-                ))
-            }
+            _ => Err(ConvertError::NotSupported(format!("{:?}", v), "String".to_string()))
         }
     }
 }
@@ -219,7 +214,7 @@ impl FromValue for Vec<String> {
     fn from_value(v: &Value) -> Result<Self, ConvertError> {
         match *v {
             Value::Array(Array::Text(ref t)) => Ok(t.to_owned()),
-            _ => panic!("unable to convert {:?} to Vec<String>", v),
+            _ => Err(ConvertError::NotSupported(format!("{:?}", v), "Vec<String>".to_string()))
         }
     }
 }
@@ -232,12 +227,7 @@ impl FromValue for bool {
             Value::Smallint(v) => Ok(v == 1),
             Value::Int(v) => Ok(v == 1),
             Value::Bigint(v) => Ok(v == 1),
-            _ => {
-                Err(ConvertError::NotSupported(
-                    format!("{:?}", v),
-                    "bool".to_string(),
-                ))
-            }
+            _ => Err(ConvertError::NotSupported(format!("{:?}", v), "bool".to_string()))
         }
    }
 }
@@ -248,12 +238,7 @@ impl FromValue for DateTime<Utc> {
             Value::Text(ref v) => Ok(DateTime::<Utc>::from_utc(parse_naive_date_time(v), Utc)),
             Value::DateTime(v) => Ok(DateTime::<Utc>::from_utc(v, Utc)),
             Value::Timestamp(v) => Ok(v),
-            _ => {
-                Err(ConvertError::NotSupported(
-                    format!("{:?}", v),
-                    "DateTime".to_string(),
-                ))
-            }
+            _ => Err(ConvertError::NotSupported(format!("{:?}", v), "DateTime".to_string()))
         }
     }
 }
@@ -263,12 +248,7 @@ impl FromValue for NaiveDateTime {
         match *v {
             Value::Text(ref v) => Ok(parse_naive_date_time(v)),
             Value::DateTime(v) => Ok(v),
-            _ => {
-                Err(ConvertError::NotSupported(
-                    format!("{:?}", v),
-                    "NaiveDateTime".to_string(),
-                ))
-            }
+            _ => Err(ConvertError::NotSupported(format!("{:?}", v), "NaiveDateTime".to_string()))
         }
     }
 }
