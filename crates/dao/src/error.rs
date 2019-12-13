@@ -1,6 +1,7 @@
-use std::error::Error;
-use std::fmt;
-use std::fmt::Debug;
+use std::{
+    error::Error,
+    fmt,
+};
 
 #[derive(Debug)]
 pub enum ConvertError {
@@ -8,15 +9,11 @@ pub enum ConvertError {
 }
 
 impl Error for ConvertError {
-    fn description(&self) -> &str {
-        "Conversion is not supported"
-    }
+    fn description(&self) -> &str { "Conversion is not supported" }
 }
 
 impl fmt::Display for ConvertError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.description())
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{}", self.description()) }
 }
 
 #[derive(Debug)]

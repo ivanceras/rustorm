@@ -1,18 +1,24 @@
-use crate::error::DaoError;
-use crate::{FromValue, ToValue, Value};
-use serde::ser::{Serialize, Serializer};
-use serde::Deserialize;
-use serde::Deserializer;
+use crate::{
+    error::DaoError,
+    FromValue,
+    ToValue,
+    Value,
+};
+use serde::{
+    ser::{
+        Serialize,
+        Serializer,
+    },
+    Deserialize,
+    Deserializer,
+};
 use std::collections::BTreeMap;
-use std::fmt::Debug;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct Dao(pub BTreeMap<String, Value>);
 
 impl Dao {
-    pub fn new() -> Self {
-        Dao::default()
-    }
+    pub fn new() -> Self { Dao::default() }
 
     pub fn insert<K, V>(&mut self, k: K, v: V)
     where
@@ -40,13 +46,9 @@ impl Dao {
         }
     }
 
-    pub fn get_value(&self, s: &str) -> Option<&Value> {
-        self.0.get(s)
-    }
+    pub fn get_value(&self, s: &str) -> Option<&Value> { self.0.get(s) }
 
-    pub fn remove(&mut self, s: &str) -> Option<Value> {
-        self.0.remove(s)
-    }
+    pub fn remove(&mut self, s: &str) -> Option<Value> { self.0.remove(s) }
 }
 
 impl<'a> Serialize for Dao {
