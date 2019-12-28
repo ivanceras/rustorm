@@ -1,23 +1,16 @@
-use std::{
-    error::Error,
-    fmt,
-};
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum ConvertError {
+    #[error("Conversion not supported {0} to {1}")]
     NotSupported(String, String),
 }
 
-impl Error for ConvertError {
-    fn description(&self) -> &str { "Conversion is not supported" }
-}
 
-impl fmt::Display for ConvertError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{}", self.description()) }
-}
-
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum DaoError {
+    #[error("ConvertError {0}")]
     ConvertError(ConvertError),
+    #[error("No such value {0}")]
     NoSuchValueError(String),
 }
