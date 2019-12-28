@@ -15,6 +15,7 @@ addons:
 
 services:
     - postgresql
+    - mysql
 
 before_script:
     - ./gather-prerequisites.sh
