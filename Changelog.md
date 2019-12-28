@@ -1,3 +1,6 @@
+# 0.15.4
+    - use thiserror for implementing Error in rustorm_dao
+    - rename sq module to a more appropriate sqlite since it does not conflict with the used crate name of sqlite which is rustqlite
 # 0.15.3
     - implement FromValue for converting types that are not in the users' crate
     - remove panics on conversions
