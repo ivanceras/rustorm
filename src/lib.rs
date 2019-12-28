@@ -139,7 +139,7 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
     extern crate r2d2_sqlite;
     extern crate rusqlite;
-    mod sq;
+    mod sqlite;
 }}
 cfg_if! {if #[cfg(feature = "with-mysql")]{
     mod my;
@@ -192,13 +192,13 @@ pub use rustorm_dao::{
     self,
     Array,
     ColumnName,
+    ConvertError,
     Dao,
+    FromValue,
     Rows,
     TableName,
     ToValue,
-    FromValue,
     Value,
-    ConvertError
 };
 
 /// Wrap the rustorm_dao exports to avoid name conflict with the rustorm_codegen

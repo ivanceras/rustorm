@@ -8,7 +8,7 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 }}
 
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
-    use crate::sq::SqliteError;
+    use crate::sqlite::SqliteError;
     use rusqlite;
 }}
 

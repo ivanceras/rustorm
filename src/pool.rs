@@ -9,7 +9,7 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 }}
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
     use r2d2_sqlite::SqliteConnectionManager;
-    use crate::sq::{self, SqliteDB};
+    use crate::sqlite::{self, SqliteDB};
 }}
 cfg_if! {if #[cfg(feature = "with-mysql")]{
     use r2d2_mysql::MysqlConnectionManager;
@@ -77,7 +77,7 @@ impl Pool {
                     #[cfg(feature = "with-sqlite")]
                     Platform::Sqlite(path) => {
                         info!("matched sqlite");
-                        let pool_sq = sq::init_pool(&path)?;
+                        let pool_sq = sqlite::init_pool(&path)?;
                         if self.0.get(db_url).is_none() {
                             self.0.insert(db_url.to_string(), ConnPool::PoolSq(pool_sq));
                         }
@@ -312,7 +312,7 @@ pub fn test_connection(db_url: &str) -> Result<(), DbError> {
                 #[cfg(feature = "with-sqlite")]
                 Platform::Sqlite(path) => {
                     info!("testing connection: {}", path);
-                    sq::test_connection(&path)?;
+                    sqlite::test_connection(&path)?;
                     Ok(())
                 }
                 #[cfg(feature = "with-mysql")]

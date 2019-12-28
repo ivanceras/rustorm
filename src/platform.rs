@@ -15,7 +15,7 @@ cfg_if! {if #[cfg(feature = "with-postgres")]{
 }}
 
 cfg_if! {if #[cfg(feature = "with-sqlite")]{
-    use crate::sq::SqliteDB;
+    use crate::sqlite::SqliteDB;
 }}
 
 
@@ -34,7 +34,7 @@ impl Deref for DBPlatform {
             #[cfg(feature = "with-postgres")]
             DBPlatform::Postgres(ref pg) => pg.deref(),
             #[cfg(feature = "with-sqlite")]
-            DBPlatform::Sqlite(ref sq) => sq.deref(),
+            DBPlatform::Sqlite(ref sqlite) => sqlite.deref(),
         }
     }
 }
