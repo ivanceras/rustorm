@@ -19,6 +19,7 @@ use serde_derive::{
     Deserialize,
     Serialize,
 };
+use std::fmt;
 use uuid::Uuid;
 
 /// Generic value storage 32 byte in size
@@ -58,6 +59,32 @@ pub enum Value {
 
 impl Value {
     pub fn is_nil(&self) -> bool { *self == Value::Nil }
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Value::Nil => write!(f, ""),
+            Value::Bool(v) => write!(f, "{}", v),
+            Value::Tinyint(v) => write!(f, "{}", v),
+            Value::Smallint(v) => write!(f, "{}", v),
+            Value::Int(v) => write!(f, "{}", v),
+            Value::Bigint(v) => write!(f, "{}", v),
+            Value::Float(v) => write!(f, "{}", v),
+            Value::Double(v) => write!(f, "{}", v),
+            Value::BigDecimal(v) => write!(f, "{}", v),
+            Value::ImageUri(v) => write!(f, "{}", v),
+            Value::Char(v) => write!(f, "{}", v),
+            Value::Text(v) => write!(f, "{}", v),
+            Value::Json(v) => write!(f, "{}", v),
+            Value::Uuid(v) => write!(f, "{}", v),
+            Value::Date(v) => write!(f, "{}", v),
+            Value::Time(v) => write!(f, "{}", v),
+            Value::DateTime(v) => write!(f, "{}", v.format("%Y-%m-%d %H:%M:%S").to_string()),
+            Value::Timestamp(v) => write!(f, "{}", v.to_rfc3339()),
+            _ => todo!(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -123,7 +150,10 @@ impl ToValue for Vec<String> {
     fn to_value(&self) -> Value { Value::Array(Array::Text(self.to_owned())) }
 }
 
-impl<T> ToValue for Option<T> where T: ToValue {
+impl<T> ToValue for Option<T>
+where
+    T: ToValue,
+{
     fn to_value(&self) -> Value {
         match self {
             Some(v) => v.to_value(),
@@ -132,16 +162,18 @@ impl<T> ToValue for Option<T> where T: ToValue {
     }
 }
 
-impl<T> ToValue for &T where T: ToValue {
-    fn to_value(&self) -> Value {
-        (*self).to_value()
-    }
+impl<T> ToValue for &T
+where
+    T: ToValue,
+{
+    fn to_value(&self) -> Value { (*self).to_value() }
 }
 
-impl <T> From<T> for Value where T: ToValue {
-    fn from(v: T) -> Value {
-        v.to_value()
-    }
+impl<T> From<T> for Value
+where
+    T: ToValue,
+{
+    fn from(v: T) -> Value { v.to_value() }
 }
 
 pub trait FromValue: Sized {
@@ -205,7 +237,12 @@ impl FromValue for String {
                     ConvertError::NotSupported(format!("{:?}", v), format!("String: {}", e))
                 })
             }
-            _ => Err(ConvertError::NotSupported(format!("{:?}", v), "String".to_string()))
+            _ => {
+                Err(ConvertError::NotSupported(
+                    format!("{:?}", v),
+                    "String".to_string(),
+                ))
+            }
         }
     }
 }
@@ -214,22 +251,32 @@ impl FromValue for Vec<String> {
     fn from_value(v: &Value) -> Result<Self, ConvertError> {
         match *v {
             Value::Array(Array::Text(ref t)) => Ok(t.to_owned()),
-            _ => Err(ConvertError::NotSupported(format!("{:?}", v), "Vec<String>".to_string()))
+            _ => {
+                Err(ConvertError::NotSupported(
+                    format!("{:?}", v),
+                    "Vec<String>".to_string(),
+                ))
+            }
         }
     }
 }
 
 impl FromValue for bool {
-   fn from_value(v: &Value) -> Result<Self, ConvertError> {
+    fn from_value(v: &Value) -> Result<Self, ConvertError> {
         match *v {
             Value::Bool(v) => Ok(v),
             Value::Tinyint(v) => Ok(v == 1),
             Value::Smallint(v) => Ok(v == 1),
             Value::Int(v) => Ok(v == 1),
             Value::Bigint(v) => Ok(v == 1),
-            _ => Err(ConvertError::NotSupported(format!("{:?}", v), "bool".to_string()))
+            _ => {
+                Err(ConvertError::NotSupported(
+                    format!("{:?}", v),
+                    "bool".to_string(),
+                ))
+            }
         }
-   }
+    }
 }
 
 impl FromValue for DateTime<Utc> {
@@ -238,7 +285,12 @@ impl FromValue for DateTime<Utc> {
             Value::Text(ref v) => Ok(DateTime::<Utc>::from_utc(parse_naive_date_time(v), Utc)),
             Value::DateTime(v) => Ok(DateTime::<Utc>::from_utc(v, Utc)),
             Value::Timestamp(v) => Ok(v),
-            _ => Err(ConvertError::NotSupported(format!("{:?}", v), "DateTime".to_string()))
+            _ => {
+                Err(ConvertError::NotSupported(
+                    format!("{:?}", v),
+                    "DateTime".to_string(),
+                ))
+            }
         }
     }
 }
@@ -248,12 +300,20 @@ impl FromValue for NaiveDateTime {
         match *v {
             Value::Text(ref v) => Ok(parse_naive_date_time(v)),
             Value::DateTime(v) => Ok(v),
-            _ => Err(ConvertError::NotSupported(format!("{:?}", v), "NaiveDateTime".to_string()))
+            _ => {
+                Err(ConvertError::NotSupported(
+                    format!("{:?}", v),
+                    "NaiveDateTime".to_string(),
+                ))
+            }
         }
     }
 }
 
-impl<T> FromValue for Option<T> where T: FromValue {
+impl<T> FromValue for Option<T>
+where
+    T: FromValue,
+{
     fn from_value(v: &Value) -> Result<Self, ConvertError> {
         match *v {
             Value::Nil => Ok(None),
