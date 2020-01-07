@@ -162,15 +162,15 @@ pub mod util;
 pub use column::Column;
 pub use dao_manager::DaoManager;
 pub use database::{
-    DatabaseMut,
+    Database,
     DatabaseName,
 };
-pub use entity::EntityManagerMut;
+pub use entity::EntityManager;
 pub use error::{
     DataError,
     DbError,
 };
-pub use platform::DBPlatformMut;
+pub use platform::DBPlatform;
 pub use pool::Pool;
 pub use table::Table;
 

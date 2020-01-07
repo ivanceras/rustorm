@@ -1,6 +1,6 @@
 use crate::{
     error::ParseError,
-    DatabaseMut,
+    Database,
 };
 use cfg_if::cfg_if;
 use std::{
@@ -19,33 +19,33 @@ cfg_if! {if #[cfg(feature = "with-mysql")]{
 }}
 
 
-pub enum DBPlatformMut {
+pub enum DBPlatform {
     #[cfg(feature = "with-postgres")]
     Postgres(Box<PostgresDB>),
     #[cfg(feature = "with-mysql")]
     Mysql(Box<MysqlDB>),
 }
 
-impl Deref for DBPlatformMut {
-    type Target = dyn DatabaseMut;
+impl Deref for DBPlatform {
+    type Target = dyn Database;
 
     fn deref(&self) -> &Self::Target {
         match *self {
             #[cfg(feature = "with-postgres")]
-            DBPlatformMut::Postgres(ref pg) => pg.deref(),
+            DBPlatform::Postgres(ref pg) => pg.deref(),
             #[cfg(feature = "with-mysql")]
-            DBPlatformMut::Mysql(ref my) => my.deref(),
+            DBPlatform::Mysql(ref my) => my.deref(),
         }
     }
 }
 
-impl std::ops::DerefMut for DBPlatformMut {
+impl std::ops::DerefMut for DBPlatform {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match *self {
             #[cfg(feature = "with-postgres")]
-            DBPlatformMut::Postgres(ref mut pg) => pg.deref_mut(),
+            DBPlatform::Postgres(ref mut pg) => pg.deref_mut(),
             #[cfg(feature = "with-mysql")]
-            DBPlatformMut::Mysql(ref mut my) => my.deref_mut(),
+            DBPlatform::Mysql(ref mut my) => my.deref_mut(),
         }
     }
 }

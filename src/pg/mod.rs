@@ -81,7 +81,7 @@ pub fn test_connection(db_url: &str) -> Result<(), PostgresError> {
 
 pub struct PostgresDB(pub r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>);
 
-impl DatabaseMut for PostgresDB {
+impl Database for PostgresDB {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
         let stmt = self.0.prepare(&sql);
         match stmt {
@@ -145,25 +145,25 @@ impl DatabaseMut for PostgresDB {
 
     fn get_table(
         &mut self,
-        em: &mut EntityManagerMut,
+        em: &mut EntityManager,
         table_name: &TableName,
     ) -> Result<Table, DbError> {
         table_info::get_table(em, table_name)
     }
 
-    fn get_all_tables(&mut self, em: &mut EntityManagerMut) -> Result<Vec<Table>, DbError> {
+    fn get_all_tables(&mut self, em: &mut EntityManager) -> Result<Vec<Table>, DbError> {
         table_info::get_all_tables(em)
     }
 
     fn get_grouped_tables(
         &mut self,
-        em: &mut EntityManagerMut,
+        em: &mut EntityManager,
     ) -> Result<Vec<SchemaContent>, DbError> {
         table_info::get_organized_tables(em)
     }
 
     /// get the list of database users
-    fn get_users(&mut self, em: &mut EntityManagerMut) -> Result<Vec<User>, DbError> {
+    fn get_users(&mut self, em: &mut EntityManager) -> Result<Vec<User>, DbError> {
         let sql = "SELECT oid::int AS sysid,
                rolname AS username,
                rolsuper AS is_superuser,
@@ -184,11 +184,7 @@ impl DatabaseMut for PostgresDB {
     }
 
     /// get the list of roles for this user
-    fn get_roles(
-        &mut self,
-        em: &mut EntityManagerMut,
-        username: &str,
-    ) -> Result<Vec<Role>, DbError> {
+    fn get_roles(&mut self, em: &mut EntityManager, username: &str) -> Result<Vec<Role>, DbError> {
         let sql = "SELECT
             (SELECT rolname FROM pg_roles WHERE oid = m.roleid) AS role_name
             FROM pg_auth_members m
@@ -201,7 +197,7 @@ impl DatabaseMut for PostgresDB {
 
     fn get_database_name(
         &mut self,
-        em: &mut EntityManagerMut,
+        em: &mut EntityManager,
     ) -> Result<Option<DatabaseName>, DbError> {
         let sql = "SELECT current_database() AS name,
                         description FROM pg_database

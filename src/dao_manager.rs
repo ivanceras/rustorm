@@ -1,5 +1,5 @@
 use crate::{
-    DBPlatformMut,
+    DBPlatform,
     Dao,
     DataError,
     DbError,
@@ -7,7 +7,7 @@ use crate::{
     Value,
 };
 
-pub struct DaoManager(pub DBPlatformMut);
+pub struct DaoManager(pub DBPlatform);
 
 impl DaoManager {
     pub fn execute_sql_with_return(

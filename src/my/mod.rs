@@ -10,10 +10,10 @@ use crate::{
     Column,
     ColumnName,
     DataError,
-    DatabaseMut,
+    Database,
     DatabaseName,
     DbError,
-    EntityManagerMut,
+    EntityManager,
     FromDao,
     Table,
     TableName,
@@ -52,7 +52,7 @@ pub fn test_connection(db_url: &str) -> Result<(), MysqlError> {
 
 pub struct MysqlDB(pub r2d2::PooledConnection<r2d2_mysql::MysqlConnectionManager>);
 
-impl DatabaseMut for MysqlDB {
+impl Database for MysqlDB {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
         fn collect(mut rows: mysql::QueryResult) -> Result<Rows, DbError> {
             let column_types: Vec<_> = rows.columns_ref().iter().map(|c| c.column_type()).collect();
@@ -104,7 +104,7 @@ impl DatabaseMut for MysqlDB {
 
     fn get_table(
         &mut self,
-        _em: &mut EntityManagerMut,
+        _em: &mut EntityManager,
         table_name: &TableName,
     ) -> Result<Table, DbError> {
         #[derive(Debug, FromDao)]
@@ -249,22 +249,20 @@ impl DatabaseMut for MysqlDB {
         })
     }
 
-    fn get_all_tables(&mut self, _em: &mut EntityManagerMut) -> Result<Vec<Table>, DbError> {
-        todo!()
-    }
+    fn get_all_tables(&mut self, _em: &mut EntityManager) -> Result<Vec<Table>, DbError> { todo!() }
 
     fn get_grouped_tables(
         &mut self,
-        _em: &mut EntityManagerMut,
+        _em: &mut EntityManager,
     ) -> Result<Vec<SchemaContent>, DbError> {
         todo!()
     }
 
-    fn get_users(&mut self, _em: &mut EntityManagerMut) -> Result<Vec<User>, DbError> { todo!() }
+    fn get_users(&mut self, _em: &mut EntityManager) -> Result<Vec<User>, DbError> { todo!() }
 
     fn get_roles(
         &mut self,
-        _em: &mut EntityManagerMut,
+        _em: &mut EntityManager,
         _username: &str,
     ) -> Result<Vec<Role>, DbError> {
         todo!()
@@ -272,7 +270,7 @@ impl DatabaseMut for MysqlDB {
 
     fn get_database_name(
         &mut self,
-        _em: &mut EntityManagerMut,
+        _em: &mut EntityManager,
     ) -> Result<Option<DatabaseName>, DbError> {
         todo!()
     }

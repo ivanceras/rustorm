@@ -4,9 +4,9 @@ use crate::{
         Role,
         User,
     },
-    DBPlatformMut,
+    DBPlatform,
     DataError,
-    DatabaseMut,
+    Database,
     DatabaseName,
     DbError,
     Table,
@@ -23,9 +23,9 @@ use rustorm_dao::{
 };
 
 
-pub struct EntityManagerMut(pub DBPlatformMut);
+pub struct EntityManager(pub DBPlatform);
 
-impl EntityManagerMut {
+impl EntityManager {
     pub fn set_session_user(&mut self, username: &str) -> Result<(), DbError> {
         let sql = format!("SET SESSION ROLE '{}'", username);
         self.0.execute_sql_with_return(&sql, &[])?;
@@ -50,7 +50,7 @@ impl EntityManagerMut {
     //     }
     // }
 
-    pub fn db(&mut self) -> &mut dyn DatabaseMut { &mut *self.0 }
+    pub fn db(&mut self) -> &mut dyn Database { &mut *self.0 }
 
     /// get all the records of this table
     pub fn get_all<T>(&mut self) -> Result<Vec<T>, DbError>
@@ -81,7 +81,7 @@ impl EntityManagerMut {
     /// get the table from database based on this column name
     pub fn get_table(
         &mut self,
-        em: &mut EntityManagerMut,
+        em: &mut EntityManager,
         table_name: &TableName,
     ) -> Result<Table, DbError> {
         self.0.get_table(em, table_name)
@@ -133,9 +133,9 @@ impl EntityManagerMut {
             // #[cfg(feature = "with-sqlite")]
             // DBPlatform::Sqlite(_) => self.insert_simple(_entities),
             #[cfg(feature = "with-postgres")]
-            DBPlatformMut::Postgres(_) => self.insert_bulk_with_returning_support(_entities),
+            DBPlatform::Postgres(_) => self.insert_bulk_with_returning_support(_entities),
             #[cfg(feature = "with-mysql")]
-            DBPlatformMut::Mysql(_) => self.insert_simple(_entities),
+            DBPlatform::Mysql(_) => self.insert_simple(_entities),
         }
     }
 
@@ -279,7 +279,7 @@ impl EntityManagerMut {
                                 // #[cfg(feature = "with-postgres")]
                                 // DBPlatform::Postgres(_) => format!("${}", _y * columns_len + _x + 1),
                                 #[cfg(feature = "with-mysql")]
-                                DBPlatformMut::Mysql(_) => "?".to_string(),
+                                DBPlatform::Mysql(_) => "?".to_string(),
                                 _ => format!("${}", y * columns_len + x + 1),
                             }
                         })

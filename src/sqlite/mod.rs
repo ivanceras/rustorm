@@ -21,10 +21,10 @@ use crate::{
     },
     util,
     ColumnName,
-    DatabaseMut,
+    Database,
     DatabaseName,
     DbError,
-    EntityManagerMut,
+    EntityManager,
     FromDao,
     Rows,
     Table,
@@ -97,7 +97,7 @@ fn to_sq_values(params: &[&Value]) -> Vec<rusqlite::types::Value> {
     sql_values
 }
 
-impl DatabaseMut for SqliteDB {
+impl Database for SqliteDB {
     fn execute_sql_with_return(&mut self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
         info!("executing sql: {}", sql);
         info!("params: {:?}", params);
@@ -147,7 +147,7 @@ impl DatabaseMut for SqliteDB {
     #[allow(unused_variables)]
     fn get_table(
         &mut self,
-        em: &mut EntityManagerMut,
+        em: &mut EntityManager,
         table_name: &TableName,
     ) -> Result<Table, DbError> {
         #[derive(Debug)]
@@ -377,7 +377,7 @@ impl DatabaseMut for SqliteDB {
         Ok(table)
     }
 
-    fn get_all_tables(&mut self, em: &mut EntityManagerMut) -> Result<Vec<Table>, DbError> {
+    fn get_all_tables(&mut self, em: &mut EntityManager) -> Result<Vec<Table>, DbError> {
         #[derive(Debug, FromDao)]
         struct TableNameSimple {
             tbl_name: String,
@@ -398,7 +398,7 @@ impl DatabaseMut for SqliteDB {
 
     fn get_grouped_tables(
         &mut self,
-        em: &mut EntityManagerMut,
+        em: &mut EntityManager,
     ) -> Result<Vec<SchemaContent>, DbError> {
         let table_names = get_table_names(em, &"table".to_string())?;
         let view_names = get_table_names(em, &"view".to_string())?;
@@ -411,7 +411,7 @@ impl DatabaseMut for SqliteDB {
     }
 
     /// there are no users in sqlite
-    fn get_users(&mut self, _em: &mut EntityManagerMut) -> Result<Vec<User>, DbError> {
+    fn get_users(&mut self, _em: &mut EntityManager) -> Result<Vec<User>, DbError> {
         Err(DbError::UnsupportedOperation(
             "sqlite doesn't have operatio to extract users".to_string(),
         ))
@@ -420,7 +420,7 @@ impl DatabaseMut for SqliteDB {
     /// there are not roles in sqlite
     fn get_roles(
         &mut self,
-        _em: &mut EntityManagerMut,
+        _em: &mut EntityManager,
         _username: &str,
     ) -> Result<Vec<Role>, DbError> {
         Err(DbError::UnsupportedOperation(
@@ -431,7 +431,7 @@ impl DatabaseMut for SqliteDB {
     /// TODO: return the filename if possible
     fn get_database_name(
         &mut self,
-        _em: &mut EntityManagerMut,
+        _em: &mut EntityManager,
     ) -> Result<Option<DatabaseName>, DbError> {
         Ok(None)
     }
@@ -439,7 +439,7 @@ impl DatabaseMut for SqliteDB {
 
 
 
-fn get_table_names(em: &mut EntityManagerMut, kind: &str) -> Result<Vec<TableName>, DbError> {
+fn get_table_names(em: &mut EntityManager, kind: &str) -> Result<Vec<TableName>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableNameSimple {
         tbl_name: String,
@@ -455,10 +455,7 @@ fn get_table_names(em: &mut EntityManagerMut, kind: &str) -> Result<Vec<TableNam
 }
 
 /// get the foreign keys of table
-fn get_foreign_keys(
-    em: &mut EntityManagerMut,
-    table: &TableName,
-) -> Result<Vec<ForeignKey>, DbError> {
+fn get_foreign_keys(em: &mut EntityManager, table: &TableName) -> Result<Vec<ForeignKey>, DbError> {
     let sql = format!("PRAGMA foreign_key_list({});", table.complete_name());
     #[derive(Debug, FromDao)]
     struct ForeignSimple {
