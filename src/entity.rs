@@ -1,13 +1,13 @@
 use crate::{
-    database_mut::DatabaseName,
-    platform_mut::DBPlatformMut,
     table::SchemaContent,
     users::{
         Role,
         User,
     },
+    DBPlatformMut,
     DataError,
     DatabaseMut,
+    DatabaseName,
     DbError,
     Table,
     ToValue,

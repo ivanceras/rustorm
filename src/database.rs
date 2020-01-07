@@ -1,11 +1,11 @@
 use crate::{
-    entity_mut::EntityManagerMut,
     table::SchemaContent,
     users::{
         Role,
         User,
     },
     DbError,
+    EntityManagerMut,
     Rows,
     Table,
     TableName,

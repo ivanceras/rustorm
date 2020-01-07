@@ -148,10 +148,10 @@ cfg_if! {if #[cfg(feature = "with-mysql")]{
 pub mod column;
 pub mod common;
 mod dao_manager;
-mod database_mut;
-mod entity_mut;
+mod database;
+mod entity;
 pub mod error;
-mod platform_mut;
+mod platform;
 pub mod pool;
 pub mod table;
 pub mod types;
@@ -161,16 +161,16 @@ pub mod util;
 
 pub use column::Column;
 pub use dao_manager::DaoManager;
-pub use database_mut::{
+pub use database::{
     DatabaseMut,
     DatabaseName,
 };
-
-pub use entity_mut::EntityManagerMut;
+pub use entity::EntityManagerMut;
 pub use error::{
     DataError,
     DbError,
 };
+pub use platform::DBPlatformMut;
 pub use pool::Pool;
 pub use table::Table;
 

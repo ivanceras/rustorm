@@ -1,5 +1,5 @@
 use crate::{
-    platform_mut::DBPlatformMut,
+    DBPlatformMut,
     Dao,
     DataError,
     DbError,

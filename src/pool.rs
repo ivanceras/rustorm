@@ -21,10 +21,8 @@ use crate::{
         ConnectError,
         ParseError,
     },
-    platform_mut::{
-        DBPlatformMut,
-        Platform,
-    },
+    platform::Platform,
+    DBPlatformMut,
     DaoManager,
     DbError,
     EntityManagerMut,
