@@ -526,9 +526,9 @@ mod test {
     fn test_get_all_tables() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let all_tables = em.get_all_tables();
         assert!(all_tables.is_ok());
         let all_tables = all_tables.unwrap();
@@ -539,9 +539,9 @@ mod test {
     fn test_get_group_table() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let schema_content = em.get_grouped_tables();
         assert!(schema_content.is_ok());
         let schema_content = schema_content.unwrap();
@@ -564,12 +564,12 @@ mod test {
     fn test_get_table() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let film = "film";
         let film_table = TableName::from(film);
-        let table = em.get_table(&film_table);
+        let table = em.get_table(&mut em, &film_table);
         assert!(table.is_ok());
         let table = table.unwrap();
         info!("table: {:#?}", table);
@@ -770,12 +770,12 @@ mod test {
     fn test_get_table2() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let table = "actor";
         let table_name = TableName::from(table);
-        let table = em.get_table(&table_name);
+        let table = em.get_table(&mut em, &table_name);
         assert!(table.is_ok());
         let table = table.unwrap();
         info!("table: {:#?}", table);
@@ -880,12 +880,12 @@ mod test {
     fn test_get_table3() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let table = "film_actor";
         let table_name = TableName::from(table);
-        let table = em.get_table(&table_name);
+        let table = em.get_table(&mut em, &table_name);
         assert!(table.is_ok());
         let table = table.unwrap();
         info!("table: {:#?}", table);
@@ -1016,12 +1016,12 @@ mod test {
     fn test_get_foreign() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let film = "film_actor";
         let film_table = TableName::from(film);
-        let foreign_keys = get_foreign_keys(&em, &film_table);
+        let foreign_keys = get_foreign_keys(&mut em, &film_table);
         assert!(foreign_keys.is_ok());
         assert_eq!(foreign_keys.unwrap(), vec![
             ForeignKey {
@@ -1043,12 +1043,12 @@ mod test {
     fn test_get_foreign2() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let film = "film";
         let film_table = TableName::from(film);
-        let foreign_keys = get_foreign_keys(&em, &film_table);
+        let foreign_keys = get_foreign_keys(&mut em, &film_table);
         assert!(foreign_keys.is_ok());
         assert_eq!(foreign_keys.unwrap(), vec![
             ForeignKey {

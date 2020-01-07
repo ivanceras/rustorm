@@ -130,8 +130,8 @@ impl EntityManager {
         R: FromDao + ToColumnNames,
     {
         match self.0 {
-            // #[cfg(feature = "with-sqlite")]
-            // DBPlatform::Sqlite(_) => self.insert_simple(_entities),
+            #[cfg(feature = "with-sqlite")]
+            DBPlatform::Sqlite(_) => self.insert_simple(_entities),
             #[cfg(feature = "with-postgres")]
             DBPlatform::Postgres(_) => self.insert_bulk_with_returning_support(_entities),
             #[cfg(feature = "with-mysql")]

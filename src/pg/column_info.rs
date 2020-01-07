@@ -474,9 +474,9 @@ mod test {
         };
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let result: Result<Vec<RetrieveFilm>, DbError> = em.insert(&[&film1]);
         info!("result: {:#?}", result);
         assert!(result.is_ok());
@@ -486,12 +486,12 @@ mod test {
     fn column_specification_for_film_rating() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let table = TableName::from("film");
         let column = ColumnName::from("rating");
-        let specification = get_column_specification(&em, &table, &column.name);
+        let specification = get_column_specification(&mut em, &table, &column.name);
         info!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
@@ -514,12 +514,12 @@ mod test {
     fn column_specification_for_actor_id() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let actor_table = TableName::from("actor");
         let actor_id_column = ColumnName::from("actor_id");
-        let specification = get_column_specification(&em, &actor_table, &actor_id_column.name);
+        let specification = get_column_specification(&mut em, &actor_table, &actor_id_column.name);
         info!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
@@ -533,12 +533,12 @@ mod test {
     fn column_specification_for_actor_last_updated() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let actor_table = TableName::from("actor");
         let column = ColumnName::from("last_update");
-        let specification = get_column_specification(&em, &actor_table, &column.name);
+        let specification = get_column_specification(&mut em, &actor_table, &column.name);
         info!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
@@ -556,11 +556,11 @@ mod test {
     fn column_for_actor() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let actor_table = TableName::from("actor");
-        let columns = get_columns(&em, &actor_table);
+        let columns = get_columns(&mut em, &actor_table);
         info!("columns: {:#?}", columns);
         assert!(columns.is_ok());
         let columns = columns.unwrap();
@@ -581,11 +581,11 @@ mod test {
     fn column_for_film() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let table = TableName::from("film");
-        let columns = get_columns(&em, &table);
+        let columns = get_columns(&mut em, &table);
         info!("columns: {:#?}", columns);
         assert!(columns.is_ok());
         let columns = columns.unwrap();

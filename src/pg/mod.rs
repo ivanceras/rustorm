@@ -614,7 +614,7 @@ mod test {
     fn test_get_users() {
         let mut pool = Pool::new();
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
-        let em = pool.em(db_url).unwrap();
+        let mut em = pool.em(db_url).unwrap();
         let users = em.get_users();
         info!("users: {:#?}", users);
         assert!(users.is_ok());

@@ -449,10 +449,10 @@ mod test {
     fn all_schemas() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
-        let schemas = get_schemas(&em);
+        let mut em = em.unwrap();
+        let schemas = get_schemas(&mut em);
         info!("schemas: {:#?}", schemas);
         assert!(schemas.is_ok());
         let schemas = schemas.unwrap();
@@ -463,10 +463,10 @@ mod test {
     fn all_tables() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
-        let tables = get_all_tables(&em);
+        let mut em = em.unwrap();
+        let tables = get_all_tables(&mut em);
         info!("tables: {:#?}", tables);
         assert!(tables.is_ok());
         assert_eq!(30, tables.unwrap().len());
@@ -476,11 +476,11 @@ mod test {
     fn table_actor() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let table = TableName::from("actor");
-        let table = get_table(&em, &table);
+        let table = get_table(&mut em, &table);
         info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(table.unwrap().table_key, vec![TableKey::PrimaryKey(Key {
@@ -497,11 +497,11 @@ mod test {
     fn foreign_key_with_different_referred_column() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let table = TableName::from("store");
-        let table = get_table(&em, &table);
+        let table = get_table(&mut em, &table);
         info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(table.unwrap().table_key, vec![
@@ -556,11 +556,11 @@ mod test {
     fn table_film_actor() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let table = TableName::from("film_actor");
-        let table = get_table(&em, &table);
+        let table = get_table(&mut em, &table);
         info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(table.unwrap().table_key, vec![
@@ -622,11 +622,11 @@ mod test {
     fn composite_foreign_key() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = em.unwrap();
         let table = TableName::from("film_actor_awards");
-        let table = get_table(&em, &table);
+        let table = get_table(&mut em, &table);
         info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(table.unwrap().table_key, vec![
@@ -689,10 +689,10 @@ mod test {
     fn organized_content() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
+        let mut em = pool.em(db_url);
         assert!(em.is_ok());
-        let em = em.unwrap();
-        let organized = get_organized_tables(&em);
+        let mut em = em.unwrap();
+        let organized = get_organized_tables(&mut em);
         //info!("organized: {:#?}", organized);
         assert!(organized.is_ok());
         let organized = organized.unwrap();

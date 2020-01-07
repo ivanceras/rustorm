@@ -174,7 +174,7 @@ impl Pool {
     }
 
     pub fn dm(&mut self, db_url: &str) -> Result<DaoManager, DbError> {
-        let db = self.db_mut(db_url)?;
+        let db = self.db(db_url)?;
         Ok(DaoManager(db))
     }
 
@@ -255,7 +255,7 @@ impl Pool {
     }
 
     /// get a database instance with a connection, ready to send sql statements
-    pub fn db_mut(&mut self, db_url: &str) -> Result<DBPlatform, DbError> {
+    pub fn db(&mut self, db_url: &str) -> Result<DBPlatform, DbError> {
         let pooled_conn = self.connect_mut(db_url)?;
 
         match pooled_conn {
@@ -263,14 +263,18 @@ impl Pool {
             PooledConn::PooledPg(pooled_pg) => {
                 Ok(DBPlatform::Postgres(Box::new(PostgresDB(*pooled_pg))))
             }
+            #[cfg(feature = "with-sqlite")]
+            PooledConn::PooledSq(pooled_sq) => {
+                Ok(DBPlatform::Sqlite(Box::new(SqliteDB(*pooled_sq))))
+            }
             #[cfg(feature = "with-mysql")]
-            PooledConn::PooledMy(pooled_sq) => Ok(DBPlatform::Mysql(Box::new(MysqlDB(*pooled_sq)))),
-            _ => panic!("postgres and sqlite unsupported in `db_mut()`"),
+            PooledConn::PooledMy(pooled_my) => Ok(DBPlatform::Mysql(Box::new(MysqlDB(*pooled_my)))),
+            _ => panic!("postgres and sqlite unsupported in `db()`"),
         }
     }
 
     pub fn em(&mut self, db_url: &str) -> Result<EntityManager, DbError> {
-        let db = self.db_mut(db_url)?;
+        let db = self.db(db_url)?;
         Ok(EntityManager(db))
     }
 }
