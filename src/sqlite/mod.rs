@@ -145,11 +145,7 @@ impl Database for SqliteDB {
     }
 
     #[allow(unused_variables)]
-    fn get_table(
-        &mut self,
-        em: &mut EntityManager,
-        table_name: &TableName,
-    ) -> Result<Table, DbError> {
+    fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
         #[derive(Debug)]
         struct ColumnSimple {
             name: String,
@@ -377,7 +373,7 @@ impl Database for SqliteDB {
         Ok(table)
     }
 
-    fn get_all_tables(&mut self, em: &mut EntityManager) -> Result<Vec<Table>, DbError> {
+    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
         #[derive(Debug, FromDao)]
         struct TableNameSimple {
             tbl_name: String,
@@ -388,18 +384,13 @@ impl Database for SqliteDB {
         for r in result {
             let table_name = TableName::from(&r.tbl_name);
             todo!();
-            /*
-            let table = em.get_table(em, &table_name)?;
+            let table = em.get_table(&table_name)?;
             tables.push(table);
-            */
         }
         Ok(tables)
     }
 
-    fn get_grouped_tables(
-        &mut self,
-        em: &mut EntityManager,
-    ) -> Result<Vec<SchemaContent>, DbError> {
+    fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> {
         let table_names = get_table_names(em, &"table".to_string())?;
         let view_names = get_table_names(em, &"view".to_string())?;
         let schema_content = SchemaContent {
@@ -411,30 +402,21 @@ impl Database for SqliteDB {
     }
 
     /// there are no users in sqlite
-    fn get_users(&mut self, _em: &mut EntityManager) -> Result<Vec<User>, DbError> {
+    fn get_users(&mut self) -> Result<Vec<User>, DbError> {
         Err(DbError::UnsupportedOperation(
             "sqlite doesn't have operatio to extract users".to_string(),
         ))
     }
 
     /// there are not roles in sqlite
-    fn get_roles(
-        &mut self,
-        _em: &mut EntityManager,
-        _username: &str,
-    ) -> Result<Vec<Role>, DbError> {
+    fn get_roles(&mut self, _username: &str) -> Result<Vec<Role>, DbError> {
         Err(DbError::UnsupportedOperation(
             "sqlite doesn't have operatio to extract roles".to_string(),
         ))
     }
 
     /// TODO: return the filename if possible
-    fn get_database_name(
-        &mut self,
-        _em: &mut EntityManager,
-    ) -> Result<Option<DatabaseName>, DbError> {
-        Ok(None)
-    }
+    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> { Ok(None) }
 }
 
 

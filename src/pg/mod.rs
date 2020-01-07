@@ -200,7 +200,7 @@ impl Database for PostgresDB {
     }
 
     /// get the list of roles for this user
-    fn get_roles(&mut self, em: &mut EntityManager, username: &str) -> Result<Vec<Role>, DbError> {
+    fn get_roles(&mut self, username: &str) -> Result<Vec<Role>, DbError> {
         let sql = "SELECT
             (SELECT rolname FROM pg_roles WHERE oid = m.roleid) AS role_name
             FROM pg_auth_members m
@@ -208,18 +208,42 @@ impl Database for PostgresDB {
             ON m.member = pg_roles.oid
             WHERE pg_roles.rolname = $1
         ";
-        em.execute_sql_with_return(&sql, &[&username.to_owned()])
+        self.execute_sql_with_return(&sql, &[&username.to_value()])
+            .map(|rows| {
+                rows.iter()
+                    .map(|row| {
+                        Role {
+                            role_name: row.get("role_name").expect("role_name"),
+                        }
+                    })
+                    .collect()
+            })
     }
 
-    fn get_database_name(
-        &mut self,
-        em: &mut EntityManager,
-    ) -> Result<Option<DatabaseName>, DbError> {
+    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> {
         let sql = "SELECT current_database() AS name,
                         description FROM pg_database
                         LEFT JOIN pg_shdescription ON objoid = pg_database.oid
                         WHERE datname = current_database()";
-        em.execute_sql_with_one_return(&sql, &[]).map(Some)
+        let mut database_names: Vec<Option<DatabaseName>> =
+            self.execute_sql_with_return(&sql, &[]).map(|rows| {
+                rows.iter()
+                    .map(|row| {
+                        row.get_opt("name").expect("must not error").map(|name| {
+                            DatabaseName {
+                                name,
+                                description: None,
+                            }
+                        })
+                    })
+                    .collect()
+            })?;
+
+        if database_names.len() > 0 {
+            Ok(database_names.remove(0))
+        } else {
+            Ok(None)
+        }
     }
 }
 

@@ -102,11 +102,7 @@ impl Database for MysqlDB {
         }
     }
 
-    fn get_table(
-        &mut self,
-        _em: &mut EntityManager,
-        table_name: &TableName,
-    ) -> Result<Table, DbError> {
+    fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
         #[derive(Debug, FromDao)]
         struct TableSpec {
             schema: String,
@@ -249,31 +245,15 @@ impl Database for MysqlDB {
         })
     }
 
-    fn get_all_tables(&mut self, _em: &mut EntityManager) -> Result<Vec<Table>, DbError> { todo!() }
+    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> { todo!() }
 
-    fn get_grouped_tables(
-        &mut self,
-        _em: &mut EntityManager,
-    ) -> Result<Vec<SchemaContent>, DbError> {
-        todo!()
-    }
+    fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> { todo!() }
 
-    fn get_users(&mut self, _em: &mut EntityManager) -> Result<Vec<User>, DbError> { todo!() }
+    fn get_users(&mut self) -> Result<Vec<User>, DbError> { todo!() }
 
-    fn get_roles(
-        &mut self,
-        _em: &mut EntityManager,
-        _username: &str,
-    ) -> Result<Vec<Role>, DbError> {
-        todo!()
-    }
+    fn get_roles(&mut self, _username: &str) -> Result<Vec<Role>, DbError> { todo!() }
 
-    fn get_database_name(
-        &mut self,
-        _em: &mut EntityManager,
-    ) -> Result<Option<DatabaseName>, DbError> {
-        todo!()
-    }
+    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> { todo!() }
 }
 
 #[derive(Debug)]

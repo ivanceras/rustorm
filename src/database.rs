@@ -18,8 +18,8 @@ use serde::Serialize;
 /// The current database name and its comment
 #[derive(Serialize, FromDao)]
 pub struct DatabaseName {
-    name: String,
-    description: Option<String>,
+    pub(crate) name: String,
+    pub(crate) description: Option<String>,
 }
 
 
@@ -35,10 +35,7 @@ pub trait Database {
 
     fn get_users(&mut self) -> Result<Vec<User>, DbError>;
 
-    fn get_roles(&mut self, em: &mut EntityManager, username: &str) -> Result<Vec<Role>, DbError>;
+    fn get_roles(&mut self, username: &str) -> Result<Vec<Role>, DbError>;
 
-    fn get_database_name(
-        &mut self,
-        em: &mut EntityManager,
-    ) -> Result<Option<DatabaseName>, DbError>;
+    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError>;
 }
