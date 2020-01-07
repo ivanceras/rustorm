@@ -1,5 +1,5 @@
 use crate::{
-    platform::DBPlatform,
+    platform_mut::DBPlatformMut,
     Dao,
     DataError,
     DbError,
@@ -7,16 +7,20 @@ use crate::{
     Value,
 };
 
-pub struct DaoManager(pub DBPlatform);
+pub struct DaoManager(pub DBPlatformMut);
 
 impl DaoManager {
-    pub fn execute_sql_with_return(&self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
+    pub fn execute_sql_with_return(
+        &mut self,
+        sql: &str,
+        params: &[&Value],
+    ) -> Result<Rows, DbError> {
         let rows = self.0.execute_sql_with_return(sql, params)?;
         Ok(rows)
     }
 
     pub fn execute_sql_with_records_return(
-        &self,
+        &mut self,
         sql: &str,
         params: &[&Value],
     ) -> Result<Vec<Dao>, DbError> {
@@ -26,7 +30,7 @@ impl DaoManager {
     }
 
     pub fn execute_sql_with_one_return(
-        &self,
+        &mut self,
         sql: &str,
         params: &[&Value],
     ) -> Result<Dao, DbError> {
@@ -44,7 +48,7 @@ impl DaoManager {
     }
 
     pub fn execute_sql_with_maybe_one_return(
-        &self,
+        &mut self,
         sql: &str,
         params: &[&Value],
     ) -> Result<Option<Dao>, DbError> {

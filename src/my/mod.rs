@@ -1,8 +1,6 @@
 use crate::{
     column,
     common,
-    database::DatabaseName,
-    entity_mut::EntityManagerMut,
     table::SchemaContent,
     types::SqlType,
     users::{
@@ -13,7 +11,9 @@ use crate::{
     ColumnName,
     DataError,
     DatabaseMut,
+    DatabaseName,
     DbError,
+    EntityManagerMut,
     FromDao,
     Table,
     TableName,

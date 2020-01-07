@@ -1,5 +1,5 @@
 use crate::{
-    database::DatabaseName,
+    database_mut::DatabaseName,
     platform_mut::DBPlatformMut,
     table::SchemaContent,
     users::{

@@ -21,10 +21,10 @@ use crate::{
     },
     util,
     ColumnName,
-    Database,
+    DatabaseMut,
     DatabaseName,
     DbError,
-    EntityManager,
+    EntityManagerMut,
     FromDao,
     Rows,
     Table,
@@ -97,9 +97,8 @@ fn to_sq_values(params: &[&Value]) -> Vec<rusqlite::types::Value> {
     sql_values
 }
 
-
-impl Database for SqliteDB {
-    fn execute_sql_with_return(&self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
+impl DatabaseMut for SqliteDB {
+    fn execute_sql_with_return(&mut self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
         info!("executing sql: {}", sql);
         info!("params: {:?}", params);
         let stmt = self.0.prepare(&sql);
@@ -146,7 +145,11 @@ impl Database for SqliteDB {
     }
 
     #[allow(unused_variables)]
-    fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
+    fn get_table(
+        &mut self,
+        em: &mut EntityManagerMut,
+        table_name: &TableName,
+    ) -> Result<Table, DbError> {
         #[derive(Debug)]
         struct ColumnSimple {
             name: String,
@@ -374,7 +377,7 @@ impl Database for SqliteDB {
         Ok(table)
     }
 
-    fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError> {
+    fn get_all_tables(&mut self, em: &mut EntityManagerMut) -> Result<Vec<Table>, DbError> {
         #[derive(Debug, FromDao)]
         struct TableNameSimple {
             tbl_name: String,
@@ -384,13 +387,19 @@ impl Database for SqliteDB {
         let mut tables = vec![];
         for r in result {
             let table_name = TableName::from(&r.tbl_name);
-            let table = em.get_table(&table_name)?;
+            todo!();
+            /*
+            let table = em.get_table(em, &table_name)?;
             tables.push(table);
+            */
         }
         Ok(tables)
     }
 
-    fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
+    fn get_grouped_tables(
+        &mut self,
+        em: &mut EntityManagerMut,
+    ) -> Result<Vec<SchemaContent>, DbError> {
         let table_names = get_table_names(em, &"table".to_string())?;
         let view_names = get_table_names(em, &"view".to_string())?;
         let schema_content = SchemaContent {
@@ -402,26 +411,35 @@ impl Database for SqliteDB {
     }
 
     /// there are no users in sqlite
-    fn get_users(&self, _em: &EntityManager) -> Result<Vec<User>, DbError> {
+    fn get_users(&mut self, _em: &mut EntityManagerMut) -> Result<Vec<User>, DbError> {
         Err(DbError::UnsupportedOperation(
             "sqlite doesn't have operatio to extract users".to_string(),
         ))
     }
 
     /// there are not roles in sqlite
-    fn get_roles(&self, _em: &EntityManager, _username: &str) -> Result<Vec<Role>, DbError> {
+    fn get_roles(
+        &mut self,
+        _em: &mut EntityManagerMut,
+        _username: &str,
+    ) -> Result<Vec<Role>, DbError> {
         Err(DbError::UnsupportedOperation(
             "sqlite doesn't have operatio to extract roles".to_string(),
         ))
     }
 
     /// TODO: return the filename if possible
-    fn get_database_name(&self, _em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {
+    fn get_database_name(
+        &mut self,
+        _em: &mut EntityManagerMut,
+    ) -> Result<Option<DatabaseName>, DbError> {
         Ok(None)
     }
 }
 
-fn get_table_names(em: &EntityManager, kind: &str) -> Result<Vec<TableName>, DbError> {
+
+
+fn get_table_names(em: &mut EntityManagerMut, kind: &str) -> Result<Vec<TableName>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableNameSimple {
         tbl_name: String,
@@ -437,7 +455,10 @@ fn get_table_names(em: &EntityManager, kind: &str) -> Result<Vec<TableName>, DbE
 }
 
 /// get the foreign keys of table
-fn get_foreign_keys(em: &EntityManager, table: &TableName) -> Result<Vec<ForeignKey>, DbError> {
+fn get_foreign_keys(
+    em: &mut EntityManagerMut,
+    table: &TableName,
+) -> Result<Vec<ForeignKey>, DbError> {
     let sql = format!("PRAGMA foreign_key_list({});", table.complete_name());
     #[derive(Debug, FromDao)]
     struct ForeignSimple {

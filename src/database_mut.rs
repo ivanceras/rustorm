@@ -1,19 +1,26 @@
 use crate::{
-    database::DatabaseName,
     entity_mut::EntityManagerMut,
     table::SchemaContent,
     users::{
         Role,
         User,
     },
+    DbError,
     Rows,
     Table,
     TableName,
     Value,
 };
+use rustorm_codegen::FromDao;
+use serde::Serialize;
 
 
-use crate::DbError;
+/// The current database name and its comment
+#[derive(Serialize, FromDao)]
+pub struct DatabaseName {
+    name: String,
+    description: Option<String>,
+}
 
 
 

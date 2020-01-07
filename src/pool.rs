@@ -21,14 +21,12 @@ use crate::{
         ConnectError,
         ParseError,
     },
-    platform::{
-        DBPlatform,
+    platform_mut::{
+        DBPlatformMut,
         Platform,
     },
-    platform_mut::DBPlatformMut,
     DaoManager,
     DbError,
-    EntityManager,
     EntityManagerMut,
 };
 use std::{
@@ -177,30 +175,8 @@ impl Pool {
         }
     }
 
-    /// get a database instance with a connection, ready to send sql statements
-    pub fn db(&mut self, db_url: &str) -> Result<DBPlatform, DbError> {
-        let pooled_conn = self.connect(db_url)?;
-        match pooled_conn {
-            #[cfg(feature = "with-postgres")]
-            PooledConn::PooledPg(pooled_pg) => {
-                Ok(DBPlatform::Postgres(Box::new(PostgresDB(*pooled_pg))))
-            }
-            #[cfg(feature = "with-sqlite")]
-            PooledConn::PooledSq(pooled_sq) => {
-                Ok(DBPlatform::Sqlite(Box::new(SqliteDB(*pooled_sq))))
-            }
-            #[cfg(feature = "with-mysql")]
-            _ => panic!("mysql unsupported in `db()`"),
-        }
-    }
-
-    pub fn em(&mut self, db_url: &str) -> Result<EntityManager, DbError> {
-        let db = self.db(db_url)?;
-        Ok(EntityManager(db))
-    }
-
     pub fn dm(&mut self, db_url: &str) -> Result<DaoManager, DbError> {
-        let db = self.db(db_url)?;
+        let db = self.db_mut(db_url)?;
         Ok(DaoManager(db))
     }
 

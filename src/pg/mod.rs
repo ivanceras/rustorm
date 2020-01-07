@@ -3,14 +3,12 @@ use self::{
     numeric::PgNumeric,
 };
 use crate::{
-    database::DatabaseName,
     error::PlatformError,
     table::SchemaContent,
     users::{
         Role,
         User,
     },
-    Database,
     DbError,
     Table,
     TableName,
@@ -213,37 +211,6 @@ impl DatabaseMut for PostgresDB {
     }
 }
 
-impl Database for PostgresDB {
-    fn execute_sql_with_return(&self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
-        panic!();
-    }
-
-    fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
-        panic!();
-    }
-
-    fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError> {
-        panic!();
-    }
-
-    fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
-        panic!();
-    }
-
-    /// get the list of database users
-    fn get_users(&self, em: &EntityManager) -> Result<Vec<User>, DbError> {
-        panic!();
-    }
-
-    /// get the list of roles for this user
-    fn get_roles(&self, em: &EntityManager, username: &str) -> Result<Vec<Role>, DbError> {
-        panic!();
-    }
-
-    fn get_database_name(&self, em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {
-        panic!();
-    }
-}
 
 fn to_pg_values<'a>(values: &[&'a Value]) -> Vec<PgValue<'a>> {
     values.iter().map(|v| PgValue(v)).collect()
