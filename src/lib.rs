@@ -34,7 +34,7 @@
 //!     let db_url = "sqlite://sakila.db";
 //!     #[cfg(feature = "with-postgres")]
 //!     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
-//!     let em = pool.em(db_url).unwrap();
+//!     let mut em = pool.em(db_url).unwrap();
 //!     let sql = "SELECT * FROM actor LIMIT 10";
 //!     let actors: Result<Vec<Actor>, DbError> =
 //!         em.execute_sql_with_return(sql, &[]);
@@ -96,7 +96,7 @@
 //!     let db_url = "sqlite://sakila.db";
 //!     #[cfg(feature = "with-postgres")]
 //!     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
-//!     let em = pool.em(db_url).unwrap();
+//!     let mut em = pool.em(db_url).unwrap();
 //!     let tom_cruise = for_insert::Actor {
 //!         first_name: "TOM".into(),
 //!         last_name: "CRUISE".to_string(),

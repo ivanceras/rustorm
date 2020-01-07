@@ -156,7 +156,7 @@ impl Database for PostgresDB {
     }
 
     /// get the list of database users
-    fn get_users(&mut self, em: &mut EntityManager) -> Result<Vec<User>, DbError> {
+    fn get_users(&mut self) -> Result<Vec<User>, DbError> {
         let sql = "SELECT oid::int AS sysid,
                rolname AS username,
                rolsuper AS is_superuser,
@@ -173,7 +173,30 @@ impl Database for PostgresDB {
                    ELSE rolvaliduntil
                    END AS valid_until
                FROM pg_authid";
-        em.execute_sql_with_return(&sql, &[])
+        let rows: Result<Rows, DbError> = self.execute_sql_with_return(&sql, &[]);
+
+        rows.map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    User {
+                        sysid: row.get("sysid").expect("sysid"),
+                        username: row.get("username").expect("username"),
+                        password: row.get("password").expect("password"),
+                        is_superuser: row.get("is_superuser").expect("is_superuser"),
+                        is_inherit: row.get("is_inherit").expect("is_inherit"),
+                        can_create_db: row.get("can_create_db").expect("can_create_db"),
+                        can_create_role: row.get("can_create_role").expect("can_create_role"),
+                        can_login: row.get("can_login").expect("can_login"),
+                        can_do_replication: row
+                            .get("can_do_replication")
+                            .expect("can_do_replication"),
+                        can_bypass_rls: row.get("can_bypass_rls").expect("can_bypass_rls"),
+                        valid_until: row.get("valid_until").expect("valid_until"),
+                        conn_limit: row.get("conn_limit").expect("conn_limit"),
+                    }
+                })
+                .collect()
+        })
     }
 
     /// get the list of roles for this user

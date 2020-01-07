@@ -104,10 +104,7 @@ impl EntityManager {
         count.map(|c| c.count as usize)
     }
 
-    pub fn get_users(&mut self) -> Result<Vec<User>, DbError> {
-        //self.0.get_users();
-        todo!()
-    }
+    pub fn get_users(&mut self) -> Result<Vec<User>, DbError> { self.0.get_users() }
 
     pub fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> {
         //self.0.get_database_name(self)

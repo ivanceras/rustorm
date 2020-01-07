@@ -33,7 +33,7 @@ pub trait Database {
 
     fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError>;
 
-    fn get_users(&mut self, em: &mut EntityManager) -> Result<Vec<User>, DbError>;
+    fn get_users(&mut self) -> Result<Vec<User>, DbError>;
 
     fn get_roles(&mut self, em: &mut EntityManager, username: &str) -> Result<Vec<Role>, DbError>;
 
