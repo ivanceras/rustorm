@@ -217,10 +217,9 @@ mod test {
     fn referred_columns() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut em = pool.em(db_url);
+        let em = pool.em(db_url);
         let mut db = pool.db(db_url).unwrap();
         assert!(em.is_ok());
-        let mut em = em.unwrap();
         let film_tablename = TableName::from("public.film");
         let film = db.get_table(&film_tablename);
         let film_actor_tablename = TableName::from("public.film_actor");
@@ -246,7 +245,7 @@ mod test {
     fn referred_columns_hero_id() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/dota";
         let mut pool = Pool::new();
-        let mut em = pool.em(db_url);
+        let em = pool.em(db_url);
         assert!(em.is_ok());
         let mut em = em.unwrap();
         let hero_tablename = TableName::from("public.hero");

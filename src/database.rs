@@ -5,7 +5,6 @@ use crate::{
         User,
     },
     DbError,
-    EntityManager,
     Rows,
     Table,
     TableName,

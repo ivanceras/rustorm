@@ -24,7 +24,6 @@ use crate::{
     Database,
     DatabaseName,
     DbError,
-    EntityManager,
     FromDao,
     Rows,
     Table,
@@ -429,7 +428,7 @@ impl Database for SqliteDB {
 
 
 
-fn get_table_names(db: &mut Database, kind: &str) -> Result<Vec<TableName>, DbError> {
+fn get_table_names(db: &mut dyn Database, kind: &str) -> Result<Vec<TableName>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableNameSimple {
         tbl_name: String,
@@ -453,7 +452,7 @@ fn get_table_names(db: &mut Database, kind: &str) -> Result<Vec<TableName>, DbEr
 }
 
 /// get the foreign keys of table
-fn get_foreign_keys(db: &mut Database, table: &TableName) -> Result<Vec<ForeignKey>, DbError> {
+fn get_foreign_keys(db: &mut dyn Database, table: &TableName) -> Result<Vec<ForeignKey>, DbError> {
     let sql = format!("PRAGMA foreign_key_list({});", table.complete_name());
     #[derive(Debug, FromDao)]
     struct ForeignSimple {
@@ -535,7 +534,7 @@ mod test {
     fn test_get_all_tables() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let all_tables = db.get_all_tables();
@@ -548,7 +547,7 @@ mod test {
     fn test_get_group_table() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let schema_content = db.get_grouped_tables();
@@ -573,7 +572,7 @@ mod test {
     fn test_get_table() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let film = "film";
@@ -779,7 +778,7 @@ mod test {
     fn test_get_table2() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = "actor";
@@ -889,7 +888,7 @@ mod test {
     fn test_get_table3() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = "film_actor";
@@ -1025,7 +1024,7 @@ mod test {
     fn test_get_foreign() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let film = "film_actor";
@@ -1052,7 +1051,7 @@ mod test {
     fn test_get_foreign2() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let film = "film";

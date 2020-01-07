@@ -13,7 +13,6 @@ use crate::{
     Database,
     DatabaseName,
     DbError,
-    EntityManager,
     FromDao,
     Table,
     TableName,

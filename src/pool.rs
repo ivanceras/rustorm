@@ -269,7 +269,6 @@ impl Pool {
             }
             #[cfg(feature = "with-mysql")]
             PooledConn::PooledMy(pooled_my) => Ok(DBPlatform::Mysql(Box::new(MysqlDB(*pooled_my)))),
-            _ => panic!("postgres and sqlite unsupported in `db()`"),
         }
     }
 

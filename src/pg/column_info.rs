@@ -15,14 +15,13 @@ use crate::{
     DbError,
     TableName,
     ToValue,
-    Value,
 };
 use log::*;
 use rustorm_dao;
 use uuid::Uuid;
 
 /// get all the columns of the table
-pub fn get_columns(db: &mut Database, table_name: &TableName) -> Result<Vec<Column>, DbError> {
+pub fn get_columns(db: &mut dyn Database, table_name: &TableName) -> Result<Vec<Column>, DbError> {
     /// column name and comment
     #[derive(Debug, crate::codegen::FromDao)]
     struct ColumnSimple {
@@ -115,7 +114,7 @@ pub fn get_columns(db: &mut Database, table_name: &TableName) -> Result<Vec<Colu
 
 /// get the contrainst of each of this column
 fn get_column_specification(
-    db: &mut Database,
+    db: &mut dyn Database,
     table_name: &TableName,
     column_name: &str,
 ) -> Result<ColumnSpecification, DbError> {
@@ -453,7 +452,7 @@ fn get_column_specification(
 }
 
 fn get_column_stat(
-    db: &mut Database,
+    db: &mut dyn Database,
     table_name: &TableName,
     column_name: &str,
 ) -> Result<Option<ColumnStat>, DbError> {
@@ -539,7 +538,7 @@ mod test {
     fn column_specification_for_film_rating() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = TableName::from("film");
@@ -567,7 +566,7 @@ mod test {
     fn column_specification_for_actor_id() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let actor_table = TableName::from("actor");
@@ -586,7 +585,7 @@ mod test {
     fn column_specification_for_actor_last_updated() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let actor_table = TableName::from("actor");
@@ -609,7 +608,7 @@ mod test {
     fn column_for_actor() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let actor_table = TableName::from("actor");
@@ -634,7 +633,7 @@ mod test {
     fn column_for_film() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = TableName::from("film");

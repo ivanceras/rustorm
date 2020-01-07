@@ -1,7 +1,6 @@
 use crate::{
     table::SchemaContent,
     users::{
-        Role,
         User,
     },
     DBPlatform,

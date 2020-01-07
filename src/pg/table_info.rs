@@ -22,7 +22,7 @@ use log::*;
 use rustorm_dao::value::ToValue;
 
 /// get all database tables and views except from special schema
-pub fn get_all_tables(db: &mut Database) -> Result<Vec<Table>, DbError> {
+pub fn get_all_tables(db: &mut dyn Database) -> Result<Vec<Table>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableNameSimple {
         name: String,
@@ -99,7 +99,7 @@ impl TableKind {
 
 /// get all database tables or views from this schema
 fn get_schema_tables(
-    db: &mut Database,
+    db: &mut dyn Database,
     schema: &str,
     kind: &TableKind,
 ) -> Result<Vec<TableName>, DbError> {
@@ -157,7 +157,7 @@ fn get_schema_tables(
 /// get all user created schema
 /// special tables such as: information_schema, pg_catalog, pg_toast, pg_temp_1, pg_toast_temp_1,
 /// etc. are excluded
-fn get_schemas(db: &mut Database) -> Result<Vec<String>, DbError> {
+fn get_schemas(db: &mut dyn Database) -> Result<Vec<String>, DbError> {
     let sql = r#"SELECT
              pg_namespace.nspname AS schema
         FROM pg_namespace
@@ -175,7 +175,7 @@ fn get_schemas(db: &mut Database) -> Result<Vec<String>, DbError> {
 }
 
 /// get the table and views of this database organized per schema
-pub fn get_organized_tables(db: &mut Database) -> Result<Vec<SchemaContent>, DbError> {
+pub fn get_organized_tables(db: &mut dyn Database) -> Result<Vec<SchemaContent>, DbError> {
     let schemas = get_schemas(db);
     match schemas {
         Ok(schemas) => {
@@ -197,7 +197,7 @@ pub fn get_organized_tables(db: &mut Database) -> Result<Vec<SchemaContent>, DbE
 }
 
 /// get the table definition, its columns and table_keys
-pub fn get_table(db: &mut Database, table_name: &TableName) -> Result<Table, DbError> {
+pub fn get_table(db: &mut dyn Database, table_name: &TableName) -> Result<Table, DbError> {
     #[derive(Debug, FromDao)]
     struct TableSimple {
         name: String,
@@ -281,7 +281,7 @@ impl ColumnNameSimple {
 
 /// get the column names involved in a Primary key or unique key
 fn get_columnname_from_key(
-    db: &mut Database,
+    db: &mut dyn Database,
     key_name: &str,
     table_name: &TableName,
 ) -> Result<Vec<ColumnName>, DbError> {
@@ -333,7 +333,7 @@ fn get_columnname_from_key(
 }
 
 /// get the Primary keys, Unique keys of this table
-fn get_table_key(db: &mut Database, table_name: &TableName) -> Result<Vec<TableKey>, DbError> {
+fn get_table_key(db: &mut dyn Database, table_name: &TableName) -> Result<Vec<TableKey>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableKeySimple {
         key_name: String,
@@ -343,7 +343,7 @@ fn get_table_key(db: &mut Database, table_name: &TableName) -> Result<Vec<TableK
     }
 
     impl TableKeySimple {
-        fn to_table_key(&self, db: &mut Database, table_name: &TableName) -> TableKey {
+        fn to_table_key(&self, db: &mut dyn Database, table_name: &TableName) -> TableKey {
             if self.is_primary_key {
                 let primary = Key {
                     name: Some(self.key_name.to_owned()),
@@ -419,7 +419,7 @@ fn get_table_key(db: &mut Database, table_name: &TableName) -> Result<Vec<TableK
 
 /// get the foreign key detail of this key name
 fn get_foreign_key(
-    db: &mut Database,
+    db: &mut dyn Database,
     foreign_key: &str,
     table_name: &TableName,
 ) -> Result<ForeignKey, DbError> {
@@ -456,7 +456,7 @@ fn get_foreign_key(
        WHERE pg_constraint.conname = $1
     "#;
 
-    let mut foreign_key_simple: Result<Vec<ForeignKeySimple>, DbError> = db
+    let foreign_key_simple: Result<Vec<ForeignKeySimple>, DbError> = db
         .execute_sql_with_return(&sql, &[&foreign_key.to_value()])
         .map(|rows| {
             rows.iter()
@@ -483,7 +483,7 @@ fn get_foreign_key(
 }
 
 fn get_referred_foreign_columns(
-    db: &mut Database,
+    db: &mut dyn Database,
     foreign_key: &str,
 ) -> Result<Vec<ColumnName>, DbError> {
     let sql = r#"SELECT DISTINCT conname AS key_name,
@@ -534,7 +534,7 @@ mod test {
     fn all_schemas() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let schemas = get_schemas(&mut *db);
@@ -548,7 +548,7 @@ mod test {
     fn all_tables() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let tables = get_all_tables(&mut *db);
@@ -561,7 +561,7 @@ mod test {
     fn table_actor() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = TableName::from("actor");
@@ -582,7 +582,7 @@ mod test {
     fn foreign_key_with_different_referred_column() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = TableName::from("store");
@@ -641,7 +641,7 @@ mod test {
     fn table_film_actor() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = TableName::from("film_actor");
@@ -707,7 +707,7 @@ mod test {
     fn composite_foreign_key() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = TableName::from("film_actor_awards");
@@ -774,7 +774,7 @@ mod test {
     fn organized_content() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let mut db = pool.db(db_url);
+        let db = pool.db(db_url);
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let organized = get_organized_tables(&mut *db);
