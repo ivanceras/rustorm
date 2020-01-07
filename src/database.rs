@@ -27,16 +27,11 @@ pub struct DatabaseName {
 pub trait Database {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError>;
 
-    fn get_table(
-        &mut self,
-        em: &mut EntityManager,
-        table_name: &TableName,
-    ) -> Result<Table, DbError>;
+    fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError>;
 
-    fn get_all_tables(&mut self, em: &mut EntityManager) -> Result<Vec<Table>, DbError>;
+    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError>;
 
-    fn get_grouped_tables(&mut self, em: &mut EntityManager)
-        -> Result<Vec<SchemaContent>, DbError>;
+    fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError>;
 
     fn get_users(&mut self, em: &mut EntityManager) -> Result<Vec<User>, DbError>;
 

@@ -143,23 +143,16 @@ impl Database for PostgresDB {
         }
     }
 
-    fn get_table(
-        &mut self,
-        em: &mut EntityManager,
-        table_name: &TableName,
-    ) -> Result<Table, DbError> {
-        table_info::get_table(em, table_name)
+    fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
+        table_info::get_table(&mut *self, table_name)
     }
 
-    fn get_all_tables(&mut self, em: &mut EntityManager) -> Result<Vec<Table>, DbError> {
-        table_info::get_all_tables(em)
+    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
+        table_info::get_all_tables(&mut *self)
     }
 
-    fn get_grouped_tables(
-        &mut self,
-        em: &mut EntityManager,
-    ) -> Result<Vec<SchemaContent>, DbError> {
-        table_info::get_organized_tables(em)
+    fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> {
+        table_info::get_organized_tables(&mut *self)
     }
 
     /// get the list of database users
@@ -466,7 +459,7 @@ mod test {
     fn test_character_array_data_type() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let dm = pool.dm(db_url).unwrap();
+        let mut dm = pool.dm(db_url).unwrap();
         let sql = format!("SELECT language_id, name FROM language",);
         let languages: Result<Rows, DbError> = dm.execute_sql_with_return(&sql, &[]);
         println!("languages: {:#?}", languages);
@@ -477,7 +470,7 @@ mod test {
     fn test_ts_vector() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let dm = pool.dm(db_url).unwrap();
+        let mut dm = pool.dm(db_url).unwrap();
         let sql = format!("SELECT film_id, title, fulltext::text FROM film LIMIT 40",);
         let films: Result<Rows, DbError> = dm.execute_sql_with_return(&sql, &[]);
         println!("film: {:#?}", films);
@@ -530,10 +523,10 @@ mod test {
     fn test_unknown_type() {
         let mut pool = Pool::new();
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
-        let db = pool.db(db_url).unwrap();
+        let mut db = pool.db(db_url).unwrap();
         let values: Vec<Value> = vec!["hi".into(), true.into(), 42.into(), 1.0.into()];
         let bvalues: Vec<&Value> = values.iter().collect();
-        let rows: Result<Rows, DbError> = (&db).execute_sql_with_return(
+        let rows: Result<Rows, DbError> = db.execute_sql_with_return(
             "select 'Hello', $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT",
             &bvalues,
         );
@@ -545,10 +538,10 @@ mod test {
     fn test_unknown_type_i32_f32() {
         let mut pool = Pool::new();
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
-        let db = pool.db(db_url).unwrap();
+        let mut db = pool.db(db_url).unwrap();
         let values: Vec<Value> = vec![42.into(), 1.0.into()];
         let bvalues: Vec<&Value> = values.iter().collect();
-        let rows: Result<Rows, DbError> = (&db).execute_sql_with_return("select $1, $2", &bvalues);
+        let rows: Result<Rows, DbError> = db.execute_sql_with_return("select $1, $2", &bvalues);
         info!("rows: {:#?}", rows);
         assert!(!rows.is_ok());
     }
@@ -557,10 +550,10 @@ mod test {
     fn using_values() {
         let mut pool = Pool::new();
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
-        let db = pool.db(db_url).unwrap();
+        let mut db = pool.db(db_url).unwrap();
         let values: Vec<Value> = vec!["hi".into(), true.into(), 42.into(), 1.0.into()];
         let bvalues: Vec<&Value> = values.iter().collect();
-        let rows: Result<Rows, DbError> = (&db).execute_sql_with_return(
+        let rows: Result<Rows, DbError> = db.execute_sql_with_return(
             "select 'Hello'::TEXT, $1::TEXT, $2::BOOL, $3::INT, $4::FLOAT",
             &bvalues,
         );
@@ -588,8 +581,8 @@ mod test {
     fn with_nulls() {
         let mut pool = Pool::new();
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
-        let db = pool.db(db_url).unwrap();
-        let rows:Result<Rows, DbError> = (&db).execute_sql_with_return("select 'rust'::TEXT AS name, NULL::TEXT AS schedule, NULL::TEXT AS specialty from actor", &[]);
+        let mut db = pool.db(db_url).unwrap();
+        let rows:Result<Rows, DbError> = db.execute_sql_with_return("select 'rust'::TEXT AS name, NULL::TEXT AS schedule, NULL::TEXT AS specialty from actor", &[]);
         info!("columns: {:#?}", rows);
         assert!(rows.is_ok());
         if let Ok(rows) = rows {

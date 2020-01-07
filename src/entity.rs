@@ -79,12 +79,8 @@ impl EntityManager {
     }
 
     /// get the table from database based on this column name
-    pub fn get_table(
-        &mut self,
-        em: &mut EntityManager,
-        table_name: &TableName,
-    ) -> Result<Table, DbError> {
-        self.0.get_table(em, table_name)
+    pub fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
+        self.0.get_table(table_name)
     }
 
     /// get all the user table and views from the database
@@ -109,7 +105,7 @@ impl EntityManager {
     }
 
     pub fn get_users(&mut self) -> Result<Vec<User>, DbError> {
-        //self.0.get_users(self)
+        //self.0.get_users();
         todo!()
     }
 

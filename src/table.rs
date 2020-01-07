@@ -218,12 +218,13 @@ mod test {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
         let mut em = pool.em(db_url);
+        let mut db = pool.db(db_url).unwrap();
         assert!(em.is_ok());
         let mut em = em.unwrap();
         let film_tablename = TableName::from("public.film");
-        let film = em.get_table(&film_tablename);
+        let film = db.get_table(&film_tablename);
         let film_actor_tablename = TableName::from("public.film_actor");
-        let film_actor = em.get_table(&film_actor_tablename);
+        let film_actor = db.get_table(&film_actor_tablename);
         assert!(film.is_ok());
         info!("film: {:#?}", film);
         info!("FILM ACTOR {:#?}", film_actor);
