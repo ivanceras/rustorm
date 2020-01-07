@@ -205,7 +205,7 @@ impl Pool {
     }
 
     /// get the pool for this specific db_url, create one if it doesn't have yet.
-    fn get_pool2(&self, db_url: &str) -> Result<&ConnPool, DbError> {
+    fn get_pool_mut(&self, db_url: &str) -> Result<&ConnPool, DbError> {
         let platform: Result<Platform, ParseError> = TryFrom::try_from(db_url);
         match platform {
             Ok(platform) => {
@@ -249,8 +249,8 @@ impl Pool {
     }
 
     /// get a usable database connection from
-    pub fn connect2(&self, db_url: &str) -> Result<PooledConn, DbError> {
-        let pool = self.get_pool2(db_url)?;
+    pub fn connect_mut(&self, db_url: &str) -> Result<PooledConn, DbError> {
+        let pool = self.get_pool_mut(db_url)?;
         match *pool {
             #[cfg(feature = "with-postgres")]
             ConnPool::PoolPg(ref pool_pg) => {
@@ -281,7 +281,7 @@ impl Pool {
 
     /// get a database instance with a connection, ready to send sql statements
     pub fn db_mut(&self, db_url: &str) -> Result<DBPlatformMut, DbError> {
-        let pooled_conn = self.connect2(db_url)?;
+        let pooled_conn = self.connect_mut(db_url)?;
 
         #[allow(unreachable_patterns)]
         match pooled_conn {
