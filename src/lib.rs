@@ -1,4 +1,4 @@
-#![deny(warnings)]
+//#![deny(warnings)]
 #![deny(clippy::all)]
 //!
 //! ## Rustorm
@@ -220,3 +220,6 @@ pub mod codegen {
         ToTableName,
     };
 }
+
+#[macro_use]
+extern crate log;

@@ -12,7 +12,6 @@ use crate::{
     },
     Database,
     DbError,
-    EntityManager,
     Table,
     TableName,
     Value,
@@ -84,8 +83,8 @@ pub fn test_connection(db_url: &str) -> Result<(), PostgresError> {
 
 pub struct PostgresDB(pub r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>);
 
-impl Database for PostgresDB {
-    fn execute_sql_with_return(&self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
+impl DatabaseMut for PostgresDB {
+    fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
         let stmt = self.0.prepare(&sql);
         match stmt {
             Ok(stmt) => {
@@ -146,20 +145,27 @@ impl Database for PostgresDB {
         }
     }
 
-    fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
+    fn get_table(
+        &mut self,
+        em: &mut EntityManagerMut,
+        table_name: &TableName,
+    ) -> Result<Table, DbError> {
         table_info::get_table(em, table_name)
     }
 
-    fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError> {
+    fn get_all_tables(&mut self, em: &mut EntityManagerMut) -> Result<Vec<Table>, DbError> {
         table_info::get_all_tables(em)
     }
 
-    fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
+    fn get_grouped_tables(
+        &mut self,
+        em: &mut EntityManagerMut,
+    ) -> Result<Vec<SchemaContent>, DbError> {
         table_info::get_organized_tables(em)
     }
 
     /// get the list of database users
-    fn get_users(&self, em: &EntityManager) -> Result<Vec<User>, DbError> {
+    fn get_users(&mut self, em: &mut EntityManagerMut) -> Result<Vec<User>, DbError> {
         let sql = "SELECT oid::int AS sysid,
                rolname AS username,
                rolsuper AS is_superuser,
@@ -180,7 +186,11 @@ impl Database for PostgresDB {
     }
 
     /// get the list of roles for this user
-    fn get_roles(&self, em: &EntityManager, username: &str) -> Result<Vec<Role>, DbError> {
+    fn get_roles(
+        &mut self,
+        em: &mut EntityManagerMut,
+        username: &str,
+    ) -> Result<Vec<Role>, DbError> {
         let sql = "SELECT
             (SELECT rolname FROM pg_roles WHERE oid = m.roleid) AS role_name
             FROM pg_auth_members m
@@ -191,12 +201,47 @@ impl Database for PostgresDB {
         em.execute_sql_with_return(&sql, &[&username.to_owned()])
     }
 
-    fn get_database_name(&self, em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {
+    fn get_database_name(
+        &mut self,
+        em: &mut EntityManagerMut,
+    ) -> Result<Option<DatabaseName>, DbError> {
         let sql = "SELECT current_database() AS name,
                         description FROM pg_database
                         LEFT JOIN pg_shdescription ON objoid = pg_database.oid
                         WHERE datname = current_database()";
         em.execute_sql_with_one_return(&sql, &[]).map(Some)
+    }
+}
+
+impl Database for PostgresDB {
+    fn execute_sql_with_return(&self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
+        panic!();
+    }
+
+    fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
+        panic!();
+    }
+
+    fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError> {
+        panic!();
+    }
+
+    fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
+        panic!();
+    }
+
+    /// get the list of database users
+    fn get_users(&self, em: &EntityManager) -> Result<Vec<User>, DbError> {
+        panic!();
+    }
+
+    /// get the list of roles for this user
+    fn get_roles(&self, em: &EntityManager, username: &str) -> Result<Vec<Role>, DbError> {
+        panic!();
+    }
+
+    fn get_database_name(&self, em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {
+        panic!();
     }
 }
 

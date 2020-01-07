@@ -15,7 +15,6 @@ struct Actor {
 fn main() {
     let db_url = "mysql://root:r00tpwdh3r3@localhost/sakila";
     let mut pool = Pool::new();
-    pool.ensure(db_url);
     let mut em = pool
         .em_mut(db_url)
         .expect("Should be able to get a connection here..");

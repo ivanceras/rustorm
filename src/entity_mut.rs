@@ -1,5 +1,11 @@
 use crate::{
+    database::DatabaseName,
     platform_mut::DBPlatformMut,
+    table::SchemaContent,
+    users::{
+        Role,
+        User,
+    },
     DataError,
     DatabaseMut,
     DbError,
@@ -73,15 +79,20 @@ impl EntityManagerMut {
     }
 
     /// get the table from database based on this column name
-    pub fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
-        self.0.get_table(table_name)
+    pub fn get_table(
+        &mut self,
+        em: &mut EntityManagerMut,
+        table_name: &TableName,
+    ) -> Result<Table, DbError> {
+        self.0.get_table(em, table_name)
     }
 
-    // /// get all the user table and views from the database
-    // pub fn get_all_tables(&self) -> Result<Vec<Table>, DbError> {
-    //     info!("EXPENSIVE DB OPERATION: get_all_tables");
-    //     self.0.get_all_tables(self)
-    // }
+    /// get all the user table and views from the database
+    pub fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
+        info!("EXPENSIVE DB OPERATION: get_all_tables");
+        //self.0.get_all_tables(self)
+        todo!();
+    }
 
     /// Get the total count of records
     pub fn get_total_records(&mut self, table_name: &TableName) -> Result<usize, DbError> {
@@ -97,18 +108,21 @@ impl EntityManagerMut {
         count.map(|c| c.count as usize)
     }
 
-    // pub fn get_users(&self) -> Result<Vec<User>, DbError> {
-    //     self.0.get_users(self)
-    // }
+    pub fn get_users(&mut self) -> Result<Vec<User>, DbError> {
+        //self.0.get_users(self)
+        todo!()
+    }
 
-    // pub fn get_database_name(&self) -> Result<Option<DatabaseName>, DbError> {
-    //     self.0.get_database_name(self)
-    // }
+    pub fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> {
+        //self.0.get_database_name(self)
+        todo!();
+    }
 
-    // /// get all table and views grouped per schema
-    // pub fn get_grouped_tables(&self) -> Result<Vec<SchemaContent>, DbError> {
-    //     self.0.get_grouped_tables(self)
-    // }
+    /// get all table and views grouped per schema
+    pub fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> {
+        //self.0.get_grouped_tables(self)
+        todo!();
+    }
 
     pub fn insert<T, R>(&mut self, _entities: &[&T]) -> Result<Vec<R>, DbError>
     where
@@ -118,10 +132,8 @@ impl EntityManagerMut {
         match self.0 {
             // #[cfg(feature = "with-sqlite")]
             // DBPlatform::Sqlite(_) => self.insert_simple(_entities),
-            // #[cfg(feature = "with-postgres")]
-            // DBPlatform::Postgres(_) => {
-            //     self.insert_bulk_with_returning_support(_entities)
-            // }
+            #[cfg(feature = "with-postgres")]
+            DBPlatformMut::Postgres(_) => self.insert_bulk_with_returning_support(_entities),
             #[cfg(feature = "with-mysql")]
             DBPlatformMut::Mysql(_) => self.insert_simple(_entities),
         }

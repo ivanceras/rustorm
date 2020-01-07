@@ -13,14 +13,14 @@ use crate::{
     Column,
     ColumnName,
     DbError,
-    EntityManager,
+    EntityManagerMut,
     FromDao,
     TableName,
 };
 use log::*;
 
 /// get all database tables and views except from special schema
-pub fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
+pub fn get_all_tables(em: &mut EntityManagerMut) -> Result<Vec<Table>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableNameSimple {
         name: String,
@@ -88,7 +88,7 @@ impl TableKind {
 
 /// get all database tables or views from this schema
 fn get_schema_tables(
-    em: &EntityManager,
+    em: &mut EntityManagerMut,
     schema: &str,
     kind: &TableKind,
 ) -> Result<Vec<TableName>, DbError> {
@@ -134,7 +134,7 @@ fn get_schema_tables(
 /// get all user created schema
 /// special tables such as: information_schema, pg_catalog, pg_toast, pg_temp_1, pg_toast_temp_1,
 /// etc. are excluded
-fn get_schemas(em: &EntityManager) -> Result<Vec<String>, DbError> {
+fn get_schemas(em: &mut EntityManagerMut) -> Result<Vec<String>, DbError> {
     #[derive(Debug, FromDao)]
     struct SchemaSimple {
         schema: String,
@@ -153,7 +153,7 @@ fn get_schemas(em: &EntityManager) -> Result<Vec<String>, DbError> {
 }
 
 /// get the table and views of this database organized per schema
-pub fn get_organized_tables(em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
+pub fn get_organized_tables(em: &mut EntityManagerMut) -> Result<Vec<SchemaContent>, DbError> {
     let schemas = get_schemas(em);
     match schemas {
         Ok(schemas) => {
@@ -175,7 +175,7 @@ pub fn get_organized_tables(em: &EntityManager) -> Result<Vec<SchemaContent>, Db
 }
 
 /// get the table definition, its columns and table_keys
-pub fn get_table(em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
+pub fn get_table(em: &mut EntityManagerMut, table_name: &TableName) -> Result<Table, DbError> {
     #[derive(Debug, FromDao)]
     struct TableSimple {
         name: String,
@@ -242,7 +242,7 @@ impl ColumnNameSimple {
 
 /// get the column names involved in a Primary key or unique key
 fn get_columnname_from_key(
-    em: &EntityManager,
+    em: &mut EntityManagerMut,
     key_name: &str,
     table_name: &TableName,
 ) -> Result<Vec<ColumnName>, DbError> {
@@ -281,7 +281,10 @@ fn get_columnname_from_key(
 }
 
 /// get the Primary keys, Unique keys of this table
-fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<TableKey>, DbError> {
+fn get_table_key(
+    em: &mut EntityManagerMut,
+    table_name: &TableName,
+) -> Result<Vec<TableKey>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableKeySimple {
         key_name: String,
@@ -291,7 +294,7 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
     }
 
     impl TableKeySimple {
-        fn to_table_key(&self, em: &EntityManager, table_name: &TableName) -> TableKey {
+        fn to_table_key(&self, em: &mut EntityManagerMut, table_name: &TableName) -> TableKey {
             if self.is_primary_key {
                 let primary = Key {
                     name: Some(self.key_name.to_owned()),
@@ -355,7 +358,7 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
 
 /// get the foreign key detail of this key name
 fn get_foreign_key(
-    em: &EntityManager,
+    em: &mut EntityManagerMut,
     foreign_key: &str,
     table_name: &TableName,
 ) -> Result<ForeignKey, DbError> {
@@ -407,7 +410,7 @@ fn get_foreign_key(
 }
 
 fn get_referred_foreign_columns(
-    em: &EntityManager,
+    em: &mut EntityManagerMut,
     foreign_key: &str,
 ) -> Result<Vec<ColumnName>, DbError> {
     let sql = r#"SELECT DISTINCT conname AS key_name,

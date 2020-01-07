@@ -12,7 +12,7 @@ use crate::{
     Column,
     ColumnName,
     DbError,
-    EntityManager,
+    EntityManagerMut,
     TableName,
 };
 use log::*;
@@ -20,7 +20,10 @@ use rustorm_dao;
 use uuid::Uuid;
 
 /// get all the columns of the table
-pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>, DbError> {
+pub fn get_columns(
+    em: &mut EntityManagerMut,
+    table_name: &TableName,
+) -> Result<Vec<Column>, DbError> {
     /// column name and comment
     #[derive(Debug, crate::codegen::FromDao)]
     struct ColumnSimple {
@@ -101,7 +104,7 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
 
 /// get the contrainst of each of this column
 fn get_column_specification(
-    em: &EntityManager,
+    em: &mut EntityManagerMut,
     table_name: &TableName,
     column_name: &str,
 ) -> Result<ColumnSpecification, DbError> {
@@ -416,7 +419,7 @@ fn get_column_specification(
 }
 
 fn get_column_stat(
-    em: &EntityManager,
+    em: &mut EntityManagerMut,
     table_name: &TableName,
     column_name: &str,
 ) -> Result<Option<ColumnStat>, DbError> {

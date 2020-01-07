@@ -31,6 +31,8 @@ pub trait Database {
 
     fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError>;
 
+    /// Diwata specific purposed, to allow using loging in to the system
+    /// using the database users instead of the users listed in a table.
     fn get_users(&self, em: &EntityManager) -> Result<Vec<User>, DbError>;
 
     fn get_roles(&self, em: &EntityManager, username: &str) -> Result<Vec<Role>, DbError>;
