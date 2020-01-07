@@ -7,7 +7,7 @@ use rustorm::{
 fn main() {
     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
     let mut pool = Pool::new();
-    let dm = pool.dm(db_url).unwrap();
+    let mut dm = pool.dm(db_url).unwrap();
     let sql = "SELECT * FROM actor LIMIT 10";
     let actors: Result<Rows, DbError> = dm.execute_sql_with_return(sql, &[]);
     println!("Actor: {:#?}", actors);

@@ -273,7 +273,7 @@ impl Pool {
         }
     }
 
-    pub fn em_mut(&mut self, db_url: &str) -> Result<EntityManagerMut, DbError> {
+    pub fn em(&mut self, db_url: &str) -> Result<EntityManagerMut, DbError> {
         let db = self.db_mut(db_url)?;
         Ok(EntityManagerMut(db))
     }

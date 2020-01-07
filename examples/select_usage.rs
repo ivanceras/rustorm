@@ -15,7 +15,7 @@ struct Actor {
 fn main() {
     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
     let mut pool = Pool::new();
-    let mut em = pool.em_mut(db_url).unwrap();
+    let mut em = pool.em(db_url).unwrap();
     let sql = "SELECT * FROM actor LIMIT 10";
     let actors: Result<Vec<Actor>, DbError> = em.execute_sql_with_return(sql, &[]);
     println!("Actor: {:#?}", actors);

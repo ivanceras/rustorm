@@ -17,7 +17,7 @@ fn main() {
     let mut pool = Pool::new();
     pool.ensure(db_url);
     let mut em = pool
-        .em_mut(db_url)
+        .em(db_url)
         .expect("Should be able to get a connection here..");
     let sql = "UPDATE actor SET last_name = ? WHERE first_name = ?".to_string();
     let rows: Result<Rows, DbError> = em

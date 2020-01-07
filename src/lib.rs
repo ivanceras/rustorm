@@ -148,12 +148,9 @@ cfg_if! {if #[cfg(feature = "with-mysql")]{
 pub mod column;
 pub mod common;
 mod dao_manager;
-//mod database;
 mod database_mut;
-//mod entity;
 mod entity_mut;
 pub mod error;
-//mod platform;
 mod platform_mut;
 pub mod pool;
 pub mod table;
