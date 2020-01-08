@@ -39,7 +39,7 @@ base64 = "0.9"
 geo = "0.4"
 time = "0.1.14"
 rustorm_dao = { path = "crates/dao", version = "0.5.0" }
-rustorm_codegen = { path = "crates/codegen", version = "0.3.1" }
+rustorm_codegen = { path = "crates/codegen", version = "0.5.0" }
 r2d2_mysql = {version = "16.0.0", optional = true}
 thiserror = "1.0.3"
 

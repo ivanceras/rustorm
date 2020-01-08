@@ -1,6 +1,9 @@
 use crate::{
     table::SchemaContent,
-    users::User,
+    users::{
+        Role,
+        User,
+    },
     DBPlatform,
     DataError,
     Database,
@@ -29,23 +32,19 @@ impl EntityManager {
         Ok(())
     }
 
-    // pub fn get_role(&self, username: &str) -> Result<Option<Role>, DbError> {
-    //     let result = self.0.get_roles(&self, username);
-    //     match result {
-    //         Ok(mut result) => {
-    //             match result.len() {
-    //                 0 => Ok(None),
-    //                 1 => Ok(Some(result.remove(0))),
-    //                 _ => {
-    //                     Err(DbError::DataError(
-    //                         DataError::MoreThan1RecordReturned,
-    //                     ))
-    //                 }
-    //             }
-    //         }
-    //         Err(e) => Err(e),
-    //     }
-    // }
+    pub fn get_role(&mut self, username: &str) -> Result<Option<Role>, DbError> {
+        let result = self.0.get_roles(username);
+        match result {
+            Ok(mut result) => {
+                match result.len() {
+                    0 => Ok(None),
+                    1 => Ok(Some(result.remove(0))),
+                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+                }
+            }
+            Err(e) => Err(e),
+        }
+    }
 
     pub fn db(&mut self) -> &mut dyn Database { &mut *self.0 }
 
@@ -83,7 +82,7 @@ impl EntityManager {
     /// get all the user table and views from the database
     pub fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
         info!("EXPENSIVE DB OPERATION: get_all_tables");
-        self.0.get_all_tables(self)
+        self.0.get_all_tables()
     }
 
     /// Get the total count of records
@@ -103,26 +102,26 @@ impl EntityManager {
     pub fn get_users(&mut self) -> Result<Vec<User>, DbError> { self.0.get_users() }
 
     pub fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> {
-        self.0.get_database_name(self)
+        self.0.get_database_name()
     }
 
     /// get all table and views grouped per schema
     pub fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> {
-        self.0.get_grouped_tables(self)
+        self.0.get_grouped_tables()
     }
 
-    pub fn insert<T, R>(&mut self, _entities: &[&T]) -> Result<Vec<R>, DbError>
+    pub fn insert<T, R>(&mut self, entities: &[&T]) -> Result<Vec<R>, DbError>
     where
         T: ToTableName + ToColumnNames + ToDao,
         R: FromDao + ToColumnNames,
     {
         match self.0 {
             #[cfg(feature = "with-sqlite")]
-            DBPlatform::Sqlite(_) => self.insert_simple(_entities),
+            DBPlatform::Sqlite(_) => self.insert_simple(entities),
             #[cfg(feature = "with-postgres")]
-            DBPlatform::Postgres(_) => self.insert_bulk_with_returning_support(_entities),
+            DBPlatform::Postgres(_) => self.insert_bulk_with_returning_support(entities),
             #[cfg(feature = "with-mysql")]
-            DBPlatform::Mysql(_) => self.insert_simple(_entities),
+            DBPlatform::Mysql(_) => self.insert_simple(entities),
         }
     }
 
@@ -261,10 +260,10 @@ impl EntityManager {
                         .map(|(x, _)| {
                             #[allow(unreachable_patterns)]
                             match self.0 {
-                                // #[cfg(feature = "with-sqlite")]
-                                // DBPlatform::Sqlite(_) => format!("${}", _y * columns_len + _x + 1),
-                                // #[cfg(feature = "with-postgres")]
-                                // DBPlatform::Postgres(_) => format!("${}", _y * columns_len + _x + 1),
+                                #[cfg(feature = "with-sqlite")]
+                                DBPlatform::Sqlite(_) => format!("${}", y * columns_len + x + 1),
+                                #[cfg(feature = "with-postgres")]
+                                DBPlatform::Postgres(_) => format!("${}", y * columns_len + x + 1),
                                 #[cfg(feature = "with-mysql")]
                                 DBPlatform::Mysql(_) => "?".to_string(),
                                 _ => format!("${}", y * columns_len + x + 1),
