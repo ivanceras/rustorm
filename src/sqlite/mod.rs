@@ -24,11 +24,11 @@ use crate::{
     Database,
     DatabaseName,
     DbError,
-    EntityManager,
     FromDao,
     Rows,
     Table,
     TableName,
+    ToValue,
     Value,
 };
 use log::*;
@@ -97,9 +97,8 @@ fn to_sq_values(params: &[&Value]) -> Vec<rusqlite::types::Value> {
     sql_values
 }
 
-
 impl Database for SqliteDB {
-    fn execute_sql_with_return(&self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
+    fn execute_sql_with_return(&mut self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
         info!("executing sql: {}", sql);
         info!("params: {:?}", params);
         let stmt = self.0.prepare(&sql);
@@ -146,7 +145,7 @@ impl Database for SqliteDB {
     }
 
     #[allow(unused_variables)]
-    fn get_table(&self, em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
+    fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
         #[derive(Debug)]
         struct ColumnSimple {
             name: String,
@@ -359,7 +358,7 @@ impl Database for SqliteDB {
             columns: primary_columns,
         };
         info!("primary key: {:#?}", primary_key);
-        let foreign_keys = get_foreign_keys(em, table_name)?;
+        let foreign_keys = get_foreign_keys(&mut *self, table_name)?;
         let table_key_foreign: Vec<TableKey> =
             foreign_keys.into_iter().map(TableKey::ForeignKey).collect();
         let mut table_keys = vec![TableKey::PrimaryKey(primary_key)];
@@ -374,25 +373,33 @@ impl Database for SqliteDB {
         Ok(table)
     }
 
-    fn get_all_tables(&self, em: &EntityManager) -> Result<Vec<Table>, DbError> {
+    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
         #[derive(Debug, FromDao)]
         struct TableNameSimple {
             tbl_name: String,
         }
         let sql = "SELECT tbl_name FROM sqlite_master WHERE type IN ('table', 'view')";
-        let result: Vec<TableNameSimple> = em.execute_sql_with_return(sql, &[])?;
+        let result: Vec<TableNameSimple> = self
+            .execute_sql_with_return(sql, &[])?
+            .iter()
+            .map(|row| {
+                TableNameSimple {
+                    tbl_name: row.get("tbl_name").expect("tbl_name"),
+                }
+            })
+            .collect();
         let mut tables = vec![];
         for r in result {
             let table_name = TableName::from(&r.tbl_name);
-            let table = em.get_table(&table_name)?;
+            let table = self.get_table(&table_name)?;
             tables.push(table);
         }
         Ok(tables)
     }
 
-    fn get_grouped_tables(&self, em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
-        let table_names = get_table_names(em, &"table".to_string())?;
-        let view_names = get_table_names(em, &"view".to_string())?;
+    fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> {
+        let table_names = get_table_names(&mut *self, &"table".to_string())?;
+        let view_names = get_table_names(&mut *self, &"view".to_string())?;
         let schema_content = SchemaContent {
             schema: "".to_string(),
             tablenames: table_names,
@@ -402,32 +409,40 @@ impl Database for SqliteDB {
     }
 
     /// there are no users in sqlite
-    fn get_users(&self, _em: &EntityManager) -> Result<Vec<User>, DbError> {
+    fn get_users(&mut self) -> Result<Vec<User>, DbError> {
         Err(DbError::UnsupportedOperation(
             "sqlite doesn't have operatio to extract users".to_string(),
         ))
     }
 
     /// there are not roles in sqlite
-    fn get_roles(&self, _em: &EntityManager, _username: &str) -> Result<Vec<Role>, DbError> {
+    fn get_roles(&mut self, _username: &str) -> Result<Vec<Role>, DbError> {
         Err(DbError::UnsupportedOperation(
             "sqlite doesn't have operatio to extract roles".to_string(),
         ))
     }
 
     /// TODO: return the filename if possible
-    fn get_database_name(&self, _em: &EntityManager) -> Result<Option<DatabaseName>, DbError> {
-        Ok(None)
-    }
+    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> { Ok(None) }
 }
 
-fn get_table_names(em: &EntityManager, kind: &str) -> Result<Vec<TableName>, DbError> {
+
+
+fn get_table_names(db: &mut dyn Database, kind: &str) -> Result<Vec<TableName>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableNameSimple {
         tbl_name: String,
     }
     let sql = "SELECT tbl_name FROM sqlite_master WHERE type = ?";
-    let result: Vec<TableNameSimple> = em.execute_sql_with_return(sql, &[&kind.to_string()])?;
+    let result: Vec<TableNameSimple> = db
+        .execute_sql_with_return(sql, &[&kind.to_value()])?
+        .iter()
+        .map(|row| {
+            TableNameSimple {
+                tbl_name: row.get("tbl_name").expect("tbl_name"),
+            }
+        })
+        .collect();
     let mut table_names = vec![];
     for r in result {
         let table_name = TableName::from(&r.tbl_name);
@@ -437,7 +452,7 @@ fn get_table_names(em: &EntityManager, kind: &str) -> Result<Vec<TableName>, DbE
 }
 
 /// get the foreign keys of table
-fn get_foreign_keys(em: &EntityManager, table: &TableName) -> Result<Vec<ForeignKey>, DbError> {
+fn get_foreign_keys(db: &mut dyn Database, table: &TableName) -> Result<Vec<ForeignKey>, DbError> {
     let sql = format!("PRAGMA foreign_key_list({});", table.complete_name());
     #[derive(Debug, FromDao)]
     struct ForeignSimple {
@@ -446,7 +461,18 @@ fn get_foreign_keys(em: &EntityManager, table: &TableName) -> Result<Vec<Foreign
         from: String,
         to: String,
     }
-    let result: Vec<ForeignSimple> = em.execute_sql_with_return(&sql, &[])?;
+    let result: Vec<ForeignSimple> = db
+        .execute_sql_with_return(&sql, &[])?
+        .iter()
+        .map(|row| {
+            ForeignSimple {
+                id: row.get("id").expect("id"),
+                table: row.get("table").expect("table"),
+                from: row.get("from").expect("from"),
+                to: row.get("to").expect("to"),
+            }
+        })
+        .collect();
     let mut foreign_tables: Vec<(i64, TableName)> = result
         .iter()
         .map(|f| (f.id, TableName::from(&f.table)))
@@ -508,10 +534,10 @@ mod test {
     fn test_get_all_tables() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
-        let all_tables = em.get_all_tables();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
+        let all_tables = db.get_all_tables();
         assert!(all_tables.is_ok());
         let all_tables = all_tables.unwrap();
         assert_eq!(all_tables.len(), 22);
@@ -521,10 +547,10 @@ mod test {
     fn test_get_group_table() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
-        let schema_content = em.get_grouped_tables();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
+        let schema_content = db.get_grouped_tables();
         assert!(schema_content.is_ok());
         let schema_content = schema_content.unwrap();
         let schema_content = &schema_content[0];
@@ -546,12 +572,12 @@ mod test {
     fn test_get_table() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let film = "film";
         let film_table = TableName::from(film);
-        let table = em.get_table(&film_table);
+        let table = db.get_table(&film_table);
         assert!(table.is_ok());
         let table = table.unwrap();
         info!("table: {:#?}", table);
@@ -752,12 +778,12 @@ mod test {
     fn test_get_table2() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let table = "actor";
         let table_name = TableName::from(table);
-        let table = em.get_table(&table_name);
+        let table = db.get_table(&table_name);
         assert!(table.is_ok());
         let table = table.unwrap();
         info!("table: {:#?}", table);
@@ -862,12 +888,12 @@ mod test {
     fn test_get_table3() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let table = "film_actor";
         let table_name = TableName::from(table);
-        let table = em.get_table(&table_name);
+        let table = db.get_table(&table_name);
         assert!(table.is_ok());
         let table = table.unwrap();
         info!("table: {:#?}", table);
@@ -998,12 +1024,12 @@ mod test {
     fn test_get_foreign() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let film = "film_actor";
         let film_table = TableName::from(film);
-        let foreign_keys = get_foreign_keys(&em, &film_table);
+        let foreign_keys = get_foreign_keys(&mut *db, &film_table);
         assert!(foreign_keys.is_ok());
         assert_eq!(foreign_keys.unwrap(), vec![
             ForeignKey {
@@ -1025,12 +1051,12 @@ mod test {
     fn test_get_foreign2() {
         let db_url = "sqlite://sakila.db";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let film = "film";
         let film_table = TableName::from(film);
-        let foreign_keys = get_foreign_keys(&em, &film_table);
+        let foreign_keys = get_foreign_keys(&mut *db, &film_table);
         assert!(foreign_keys.is_ok());
         assert_eq!(foreign_keys.unwrap(), vec![
             ForeignKey {

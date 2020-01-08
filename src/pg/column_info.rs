@@ -11,16 +11,17 @@ use crate::{
     util,
     Column,
     ColumnName,
+    Database,
     DbError,
-    EntityManager,
     TableName,
+    ToValue,
 };
 use log::*;
 use rustorm_dao;
 use uuid::Uuid;
 
 /// get all the columns of the table
-pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Column>, DbError> {
+pub fn get_columns(db: &mut dyn Database, table_name: &TableName) -> Result<Vec<Column>, DbError> {
     /// column name and comment
     #[derive(Debug, crate::codegen::FromDao)]
     struct ColumnSimple {
@@ -69,18 +70,30 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
         Some(ref schema) => schema.to_string(),
         None => "public".to_string(),
     };
-    let columns_simple: Result<Vec<ColumnSimple>, DbError> = em.execute_sql_with_return(&sql, &[
-        &table_name.name,
-        &schema,
-        &table_name.complete_name(),
-    ]);
+    let columns_simple: Result<Vec<ColumnSimple>, DbError> = db
+        .execute_sql_with_return(&sql, &[
+            &table_name.name.to_value(),
+            &schema.to_value(),
+            &table_name.complete_name().to_value(),
+        ])
+        .map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    ColumnSimple {
+                        number: row.get("number").expect("a number"),
+                        name: row.get("name").expect("a name"),
+                        comment: row.get_opt("comment").expect("a comment"),
+                    }
+                })
+                .collect()
+        });
 
     match columns_simple {
         Ok(columns_simple) => {
             let mut columns = vec![];
             for column_simple in columns_simple {
-                let specification = get_column_specification(em, table_name, &column_simple.name);
-                let column_stat = get_column_stat(em, table_name, &column_simple.name)?;
+                let specification = get_column_specification(db, table_name, &column_simple.name);
+                let column_stat = get_column_stat(db, table_name, &column_simple.name)?;
                 match specification {
                     Ok(specification) => {
                         let column =
@@ -101,7 +114,7 @@ pub fn get_columns(em: &EntityManager, table_name: &TableName) -> Result<Vec<Col
 
 /// get the contrainst of each of this column
 fn get_column_specification(
-    em: &EntityManager,
+    db: &mut dyn Database,
     table_name: &TableName,
     column_name: &str,
 ) -> Result<ColumnSpecification, DbError> {
@@ -410,13 +423,36 @@ fn get_column_specification(
         None => "public".to_string(),
     };
     //info!("sql: {} column_name: {}, table_name: {}", sql, column_name, table_name.name);
-    let column_constraint: Result<ColumnConstraintSimple, DbError> =
-        em.execute_sql_with_one_return(&sql, &[&column_name, &table_name.name, &schema]);
-    column_constraint.map(|c| c.to_column_specification(table_name, column_name))
+    let mut column_constraints: Vec<ColumnConstraintSimple> = db
+        .execute_sql_with_return(&sql, &[
+            &column_name.to_value(),
+            &table_name.name.to_value(),
+            &schema.to_value(),
+        ])
+        .map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    ColumnConstraintSimple {
+                        not_null: row.get("not_null").expect("a not_null"),
+                        data_type: row.get("data_type").expect("a data_type"),
+                        default: row.get_opt("default").expect("a default"),
+                        is_enum: row.get("is_enum").expect("a is_enum"),
+                        is_array_enum: row.get("is_array_enum").expect("a is_array_enum"),
+                        enum_choices: row.get("enum_choices").expect("enum_choices"),
+                        array_enum_choices: row
+                            .get("array_enum_choices")
+                            .expect("array of enum choices"),
+                    }
+                })
+                .collect()
+        })?;
+    assert_eq!(column_constraints.len(), 1);
+    let column_constraint = column_constraints.remove(0);
+    Ok(column_constraint.to_column_specification(table_name, column_name))
 }
 
 fn get_column_stat(
-    em: &EntityManager,
+    db: &mut dyn Database,
     table_name: &TableName,
     column_name: &str,
 ) -> Result<Option<ColumnStat>, DbError> {
@@ -433,9 +469,27 @@ fn get_column_stat(
         Some(ref schema) => schema.to_string(),
         None => "public".to_string(),
     };
-    let column_stat: Result<Option<ColumnStat>, DbError> =
-        em.execute_sql_with_maybe_one_return(&sql, &[&column_name, &table_name.name, &schema]);
-    column_stat
+    let mut column_stat: Vec<ColumnStat> = db
+        .execute_sql_with_return(&sql, &[
+            &column_name.to_value(),
+            &table_name.name.to_value(),
+            &schema.to_value(),
+        ])
+        .map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    ColumnStat {
+                        avg_width: row.get("avg_width").expect("avg_width"),
+                        n_distinct: row.get("n_distinct").expect("n_distinct"),
+                    }
+                })
+                .collect()
+        })?;
+    if column_stat.len() > 0 {
+        Ok(Some(column_stat.remove(0)))
+    } else {
+        Ok(None)
+    }
 }
 
 #[cfg(test)]
@@ -474,9 +528,7 @@ mod test {
         };
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let mut em = pool.em(db_url).unwrap();
         let result: Result<Vec<RetrieveFilm>, DbError> = em.insert(&[&film1]);
         info!("result: {:#?}", result);
         assert!(result.is_ok());
@@ -486,12 +538,12 @@ mod test {
     fn column_specification_for_film_rating() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let table = TableName::from("film");
         let column = ColumnName::from("rating");
-        let specification = get_column_specification(&em, &table, &column.name);
+        let specification = get_column_specification(&mut *db, &table, &column.name);
         info!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
@@ -514,12 +566,12 @@ mod test {
     fn column_specification_for_actor_id() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let actor_table = TableName::from("actor");
         let actor_id_column = ColumnName::from("actor_id");
-        let specification = get_column_specification(&em, &actor_table, &actor_id_column.name);
+        let specification = get_column_specification(&mut *db, &actor_table, &actor_id_column.name);
         info!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
@@ -533,12 +585,12 @@ mod test {
     fn column_specification_for_actor_last_updated() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let actor_table = TableName::from("actor");
         let column = ColumnName::from("last_update");
-        let specification = get_column_specification(&em, &actor_table, &column.name);
+        let specification = get_column_specification(&mut *db, &actor_table, &column.name);
         info!("specification: {:#?}", specification);
         assert!(specification.is_ok());
         let specification = specification.unwrap();
@@ -556,11 +608,11 @@ mod test {
     fn column_for_actor() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let actor_table = TableName::from("actor");
-        let columns = get_columns(&em, &actor_table);
+        let columns = get_columns(&mut *db, &actor_table);
         info!("columns: {:#?}", columns);
         assert!(columns.is_ok());
         let columns = columns.unwrap();
@@ -581,11 +633,11 @@ mod test {
     fn column_for_film() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let table = TableName::from("film");
-        let columns = get_columns(&em, &table);
+        let columns = get_columns(&mut *db, &table);
         info!("columns: {:#?}", columns);
         assert!(columns.is_ok());
         let columns = columns.unwrap();

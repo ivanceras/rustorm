@@ -34,7 +34,7 @@ fn main() {
 
     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
     let mut pool = Pool::new();
-    let em = pool.em(db_url).unwrap();
+    let mut em = pool.em(db_url).unwrap();
     let tom_cruise = for_insert::Actor {
         first_name: "TOM".into(),
         last_name: "CRUISE".to_string(),

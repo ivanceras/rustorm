@@ -21,15 +21,11 @@ use crate::{
         ConnectError,
         ParseError,
     },
-    platform::{
-        DBPlatform,
-        Platform,
-    },
-    platform_mut::DBPlatformMut,
+    platform::Platform,
+    DBPlatform,
     DaoManager,
     DbError,
     EntityManager,
-    EntityManagerMut,
 };
 use std::{
     collections::BTreeMap,
@@ -177,35 +173,14 @@ impl Pool {
         }
     }
 
-    /// get a database instance with a connection, ready to send sql statements
-    pub fn db(&mut self, db_url: &str) -> Result<DBPlatform, DbError> {
-        let pooled_conn = self.connect(db_url)?;
-        match pooled_conn {
-            #[cfg(feature = "with-postgres")]
-            PooledConn::PooledPg(pooled_pg) => {
-                Ok(DBPlatform::Postgres(Box::new(PostgresDB(*pooled_pg))))
-            }
-            #[cfg(feature = "with-sqlite")]
-            PooledConn::PooledSq(pooled_sq) => {
-                Ok(DBPlatform::Sqlite(Box::new(SqliteDB(*pooled_sq))))
-            }
-            #[cfg(feature = "with-mysql")]
-            _ => panic!("mysql unsupported in `db()`"),
-        }
-    }
-
-    pub fn em(&mut self, db_url: &str) -> Result<EntityManager, DbError> {
-        let db = self.db(db_url)?;
-        Ok(EntityManager(db))
-    }
-
     pub fn dm(&mut self, db_url: &str) -> Result<DaoManager, DbError> {
         let db = self.db(db_url)?;
         Ok(DaoManager(db))
     }
 
     /// get the pool for this specific db_url, create one if it doesn't have yet.
-    fn get_pool_mut(&self, db_url: &str) -> Result<&ConnPool, DbError> {
+    fn get_pool_mut(&mut self, db_url: &str) -> Result<&ConnPool, DbError> {
+        self.ensure(db_url)?;
         let platform: Result<Platform, ParseError> = TryFrom::try_from(db_url);
         match platform {
             Ok(platform) => {
@@ -249,7 +224,7 @@ impl Pool {
     }
 
     /// get a usable database connection from
-    pub fn connect_mut(&self, db_url: &str) -> Result<PooledConn, DbError> {
+    pub fn connect_mut(&mut self, db_url: &str) -> Result<PooledConn, DbError> {
         let pool = self.get_pool_mut(db_url)?;
         match *pool {
             #[cfg(feature = "with-postgres")]
@@ -280,22 +255,26 @@ impl Pool {
     }
 
     /// get a database instance with a connection, ready to send sql statements
-    pub fn db_mut(&self, db_url: &str) -> Result<DBPlatformMut, DbError> {
+    pub fn db(&mut self, db_url: &str) -> Result<DBPlatform, DbError> {
         let pooled_conn = self.connect_mut(db_url)?;
 
-        #[allow(unreachable_patterns)]
         match pooled_conn {
-            #[cfg(feature = "with-mysql")]
-            PooledConn::PooledMy(pooled_sq) => {
-                Ok(DBPlatformMut::Mysql(Box::new(MysqlDB(*pooled_sq))))
+            #[cfg(feature = "with-postgres")]
+            PooledConn::PooledPg(pooled_pg) => {
+                Ok(DBPlatform::Postgres(Box::new(PostgresDB(*pooled_pg))))
             }
-            _ => panic!("postgres and sqlite unsupported in `db_mut()`"),
+            #[cfg(feature = "with-sqlite")]
+            PooledConn::PooledSq(pooled_sq) => {
+                Ok(DBPlatform::Sqlite(Box::new(SqliteDB(*pooled_sq))))
+            }
+            #[cfg(feature = "with-mysql")]
+            PooledConn::PooledMy(pooled_my) => Ok(DBPlatform::Mysql(Box::new(MysqlDB(*pooled_my)))),
         }
     }
 
-    pub fn em_mut(&self, db_url: &str) -> Result<EntityManagerMut, DbError> {
-        let db = self.db_mut(db_url)?;
-        Ok(EntityManagerMut(db))
+    pub fn em(&mut self, db_url: &str) -> Result<EntityManager, DbError> {
+        let db = self.db(db_url)?;
+        Ok(EntityManager(db))
     }
 }
 

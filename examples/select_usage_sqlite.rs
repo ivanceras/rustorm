@@ -13,7 +13,7 @@ struct Actor {
 }
 
 fn main() {
-    let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";
+    let db_url = "sqlite://sakila.db";
     let mut pool = Pool::new();
     let mut em = pool.em(db_url).unwrap();
     let sql = "SELECT * FROM actor LIMIT 10";

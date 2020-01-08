@@ -14,18 +14,18 @@ mod previlege;
 /// This is the user object mapped from pg_authid
 #[derive(Debug, Serialize, Deserialize, FromDao)]
 pub struct User {
-    sysid: i32,
-    username: String,
-    password: String,
-    is_superuser: bool,
-    is_inherit: bool,
-    can_create_db: bool,
-    can_create_role: bool,
-    can_login: bool,
-    can_do_replication: bool,
-    can_bypass_rls: bool,
-    valid_until: Option<DateTime<Utc>>,
-    conn_limit: Option<i32>,
+    pub(crate) sysid: i32,
+    pub(crate) username: String,
+    pub(crate) password: String,
+    pub(crate) is_superuser: bool,
+    pub(crate) is_inherit: bool,
+    pub(crate) can_create_db: bool,
+    pub(crate) can_create_role: bool,
+    pub(crate) can_login: bool,
+    pub(crate) can_do_replication: bool,
+    pub(crate) can_bypass_rls: bool,
+    pub(crate) valid_until: Option<DateTime<Utc>>,
+    pub(crate) conn_limit: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromDao)]

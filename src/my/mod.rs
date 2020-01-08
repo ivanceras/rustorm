@@ -1,11 +1,17 @@
 use crate::{
     column,
     common,
+    table::SchemaContent,
     types::SqlType,
+    users::{
+        Role,
+        User,
+    },
     Column,
     ColumnName,
     DataError,
-    DatabaseMut,
+    Database,
+    DatabaseName,
     DbError,
     FromDao,
     Table,
@@ -45,7 +51,7 @@ pub fn test_connection(db_url: &str) -> Result<(), MysqlError> {
 
 pub struct MysqlDB(pub r2d2::PooledConnection<r2d2_mysql::MysqlConnectionManager>);
 
-impl DatabaseMut for MysqlDB {
+impl Database for MysqlDB {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
         fn collect(mut rows: mysql::QueryResult) -> Result<Rows, DbError> {
             let column_types: Vec<_> = rows.columns_ref().iter().map(|c| c.column_type()).collect();
@@ -237,6 +243,16 @@ impl DatabaseMut for MysqlDB {
             table_key: vec![],
         })
     }
+
+    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> { todo!() }
+
+    fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> { todo!() }
+
+    fn get_users(&mut self) -> Result<Vec<User>, DbError> { todo!() }
+
+    fn get_roles(&mut self, _username: &str) -> Result<Vec<Role>, DbError> { todo!() }
+
+    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> { todo!() }
 }
 
 #[derive(Debug)]

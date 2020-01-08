@@ -12,15 +12,17 @@ use crate::{
     },
     Column,
     ColumnName,
+    Database,
     DbError,
-    EntityManager,
     FromDao,
     TableName,
+    Value,
 };
 use log::*;
+use rustorm_dao::value::ToValue;
 
 /// get all database tables and views except from special schema
-pub fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
+pub fn get_all_tables(db: &mut dyn Database) -> Result<Vec<Table>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableNameSimple {
         name: String,
@@ -49,15 +51,24 @@ pub fn get_all_tables(em: &EntityManager) -> Result<Vec<Table>, DbError> {
              )
     ORDER BY nspname, relname
             "#;
-    let tablenames_simple: Result<Vec<TableNameSimple>, DbError> =
-        em.execute_sql_with_return(sql, &[]);
+
+    let rows = db.execute_sql_with_return(sql, &[]);
+    let tablenames_simple: Result<Vec<TableNameSimple>, DbError> = rows.map(|rows| {
+        rows.iter()
+            .map(|row| {
+                let name: String = row.get("name").expect("must have table name");
+                let schema: String = row.get("schema").expect("must have schema");
+                TableNameSimple { name, schema }
+            })
+            .collect()
+    });
     match tablenames_simple {
         Ok(simples) => {
             let mut tables = Vec::with_capacity(simples.len());
             for simple in simples {
                 let tablename = simple.to_tablename();
                 info!("  {}", tablename.complete_name());
-                let table: Result<Table, DbError> = get_table(em, &tablename);
+                let table: Result<Table, DbError> = get_table(db, &tablename);
                 match table {
                     Ok(table) => {
                         tables.push(table);
@@ -88,7 +99,7 @@ impl TableKind {
 
 /// get all database tables or views from this schema
 fn get_schema_tables(
-    em: &EntityManager,
+    db: &mut dyn Database,
     schema: &str,
     kind: &TableKind,
 ) -> Result<Vec<TableName>, DbError> {
@@ -117,8 +128,20 @@ fn get_schema_tables(
          AND pg_namespace.nspname = $1
     ORDER BY relname
             "#;
-    let tablenames_simple: Result<Vec<TableNameSimple>, DbError> =
-        em.execute_sql_with_return(sql, &[&schema, &kind.to_sql_char()]);
+    let tablenames_simple: Result<Vec<TableNameSimple>, DbError> = db
+        .execute_sql_with_return(sql, &[
+            &Value::Text(schema.to_string()),
+            &Value::Char(kind.to_sql_char()),
+        ])
+        .map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    let name: String = row.get("name").expect("must have table name");
+                    let schema: String = row.get("schema").expect("must have schema");
+                    TableNameSimple { name, schema }
+                })
+                .collect()
+        });
     match tablenames_simple {
         Ok(simples) => {
             let mut table_names = Vec::with_capacity(simples.len());
@@ -134,11 +157,7 @@ fn get_schema_tables(
 /// get all user created schema
 /// special tables such as: information_schema, pg_catalog, pg_toast, pg_temp_1, pg_toast_temp_1,
 /// etc. are excluded
-fn get_schemas(em: &EntityManager) -> Result<Vec<String>, DbError> {
-    #[derive(Debug, FromDao)]
-    struct SchemaSimple {
-        schema: String,
-    }
+fn get_schemas(db: &mut dyn Database) -> Result<Vec<String>, DbError> {
     let sql = r#"SELECT
              pg_namespace.nspname AS schema
         FROM pg_namespace
@@ -148,19 +167,22 @@ fn get_schemas(em: &EntityManager) -> Result<Vec<String>, DbError> {
          AND pg_namespace.nspname NOT LIKE 'pg_toast_temp_%'
     ORDER BY nspname
             "#;
-    let schema_simples: Result<Vec<SchemaSimple>, DbError> = em.execute_sql_with_return(sql, &[]);
-    schema_simples.map(|simple| simple.iter().map(|s| s.schema.to_string()).collect())
+    db.execute_sql_with_return(sql, &[]).map(|rows| {
+        rows.iter()
+            .map(|row| row.get("schema").expect("must have schema"))
+            .collect()
+    })
 }
 
 /// get the table and views of this database organized per schema
-pub fn get_organized_tables(em: &EntityManager) -> Result<Vec<SchemaContent>, DbError> {
-    let schemas = get_schemas(em);
+pub fn get_organized_tables(db: &mut dyn Database) -> Result<Vec<SchemaContent>, DbError> {
+    let schemas = get_schemas(db);
     match schemas {
         Ok(schemas) => {
             let mut contents = Vec::with_capacity(schemas.len());
             for schema in schemas {
-                let tables = get_schema_tables(em, &schema, &TableKind::Table)?;
-                let views = get_schema_tables(em, &schema, &TableKind::View)?;
+                let tables = get_schema_tables(db, &schema, &TableKind::Table)?;
+                let views = get_schema_tables(db, &schema, &TableKind::View)?;
                 info!("views: {:#?}", views);
                 contents.push(SchemaContent {
                     schema: schema.to_string(),
@@ -175,7 +197,7 @@ pub fn get_organized_tables(em: &EntityManager) -> Result<Vec<SchemaContent>, Db
 }
 
 /// get the table definition, its columns and table_keys
-pub fn get_table(em: &EntityManager, table_name: &TableName) -> Result<Table, DbError> {
+pub fn get_table(db: &mut dyn Database, table_name: &TableName) -> Result<Table, DbError> {
     #[derive(Debug, FromDao)]
     struct TableSimple {
         name: String,
@@ -217,10 +239,27 @@ pub fn get_table(em: &EntityManager, table_name: &TableName) -> Result<Table, Db
         None => "public".to_string(),
     };
 
-    let table_simple: TableSimple =
-        em.execute_sql_with_one_return(&sql, &[&table_name.name, &schema])?;
-    let columns: Vec<Column> = column_info::get_columns(em, table_name)?;
-    let keys: Vec<TableKey> = get_table_key(em, table_name)?;
+    let mut table_simples: Vec<TableSimple> = db
+        .execute_sql_with_return(&sql, &[
+            &Value::Text(table_name.name.to_string()),
+            &Value::Text(schema),
+        ])
+        .map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    TableSimple {
+                        name: row.get("name").expect("must have a table name"),
+                        schema: row.get("schema").expect("must have a schema"),
+                        comment: row.get_opt("comment").expect("must not error"),
+                        is_view: row.get("is_view").expect("must have is_view"),
+                    }
+                })
+                .collect()
+        })?;
+    assert_eq!(table_simples.len(), 1);
+    let table_simple = table_simples.remove(0);
+    let columns: Vec<Column> = column_info::get_columns(db, table_name)?;
+    let keys: Vec<TableKey> = get_table_key(db, table_name)?;
     let table: Table = table_simple.to_table(columns, keys);
     Ok(table)
 }
@@ -242,7 +281,7 @@ impl ColumnNameSimple {
 
 /// get the column names involved in a Primary key or unique key
 fn get_columnname_from_key(
-    em: &EntityManager,
+    db: &mut dyn Database,
     key_name: &str,
     table_name: &TableName,
 ) -> Result<Vec<ColumnName>, DbError> {
@@ -265,8 +304,21 @@ fn get_columnname_from_key(
         None => "public".to_string(),
     };
 
-    let column_name_simple: Result<Vec<ColumnNameSimple>, DbError> =
-        em.execute_sql_with_return(&sql, &[&key_name, &table_name.name, &schema]);
+    let column_name_simple: Result<Vec<ColumnNameSimple>, DbError> = db
+        .execute_sql_with_return(&sql, &[
+            &key_name.to_value(),
+            &table_name.name.to_value(),
+            &schema.to_value(),
+        ])
+        .map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    ColumnNameSimple {
+                        column: row.get("column").expect("a column"),
+                    }
+                })
+                .collect()
+        });
     match column_name_simple {
         Ok(column_name_simple) => {
             let mut column_names = vec![];
@@ -281,7 +333,7 @@ fn get_columnname_from_key(
 }
 
 /// get the Primary keys, Unique keys of this table
-fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<TableKey>, DbError> {
+fn get_table_key(db: &mut dyn Database, table_name: &TableName) -> Result<Vec<TableKey>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableKeySimple {
         key_name: String,
@@ -291,26 +343,26 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
     }
 
     impl TableKeySimple {
-        fn to_table_key(&self, em: &EntityManager, table_name: &TableName) -> TableKey {
+        fn to_table_key(&self, db: &mut dyn Database, table_name: &TableName) -> TableKey {
             if self.is_primary_key {
                 let primary = Key {
                     name: Some(self.key_name.to_owned()),
-                    columns: get_columnname_from_key(em, &self.key_name, table_name).unwrap(),
+                    columns: get_columnname_from_key(db, &self.key_name, table_name).unwrap(),
                 };
                 TableKey::PrimaryKey(primary)
             } else if self.is_unique_key {
                 let unique = Key {
                     name: Some(self.key_name.to_owned()),
-                    columns: get_columnname_from_key(em, &self.key_name, table_name).unwrap(),
+                    columns: get_columnname_from_key(db, &self.key_name, table_name).unwrap(),
                 };
                 TableKey::UniqueKey(unique)
             } else if self.is_foreign_key {
-                let foreign_key = get_foreign_key(em, &self.key_name, table_name).unwrap();
+                let foreign_key = get_foreign_key(db, &self.key_name, table_name).unwrap();
                 TableKey::ForeignKey(foreign_key)
             } else {
                 let key = table::Key {
                     name: Some(self.key_name.to_owned()),
-                    columns: get_columnname_from_key(em, &self.key_name, table_name).unwrap(),
+                    columns: get_columnname_from_key(db, &self.key_name, table_name).unwrap(),
                 };
                 TableKey::Key(key)
             }
@@ -338,13 +390,25 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
         None => "public".to_string(),
     };
 
-    let table_key_simple: Result<Vec<TableKeySimple>, DbError> =
-        em.execute_sql_with_return(&sql, &[&table_name.name, &schema]);
+    let table_key_simple: Result<Vec<TableKeySimple>, DbError> = db
+        .execute_sql_with_return(&sql, &[&table_name.name.to_value(), &schema.to_value()])
+        .map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    TableKeySimple {
+                        key_name: row.get("key_name").expect("a key_name"),
+                        is_primary_key: row.get("is_primary_key").expect("is_primary_key"),
+                        is_unique_key: row.get("is_unique_key").expect("is_unique_key"),
+                        is_foreign_key: row.get("is_foreign_key").expect("is_foreign_key"),
+                    }
+                })
+                .collect()
+        });
     match table_key_simple {
         Ok(table_key_simple) => {
             let mut table_keys = vec![];
             for simple in table_key_simple {
-                let table_key = simple.to_table_key(em, table_name);
+                let table_key = simple.to_table_key(db, table_name);
                 table_keys.push(table_key);
             }
             Ok(table_keys)
@@ -355,7 +419,7 @@ fn get_table_key(em: &EntityManager, table_name: &TableName) -> Result<Vec<Table
 
 /// get the foreign key detail of this key name
 fn get_foreign_key(
-    em: &EntityManager,
+    db: &mut dyn Database,
     foreign_key: &str,
     table_name: &TableName,
 ) -> Result<ForeignKey, DbError> {
@@ -392,13 +456,25 @@ fn get_foreign_key(
        WHERE pg_constraint.conname = $1
     "#;
 
-    let foreign_key_simple: Result<ForeignKeySimple, DbError> =
-        em.execute_sql_with_one_return(&sql, &[&foreign_key]);
-
+    let foreign_key_simple: Result<Vec<ForeignKeySimple>, DbError> = db
+        .execute_sql_with_return(&sql, &[&foreign_key.to_value()])
+        .map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    ForeignKeySimple {
+                        key_name: row.get("key_name").expect("key_name"),
+                        foreign_table: row.get("foreign_table").expect("foreign_table"),
+                        foreign_schema: row.get_opt("foreign_schema").expect("foreign_schema"),
+                    }
+                })
+                .collect()
+        });
     match foreign_key_simple {
-        Ok(simple) => {
-            let columns: Vec<ColumnName> = get_columnname_from_key(em, foreign_key, table_name)?;
-            let referred_columns: Vec<ColumnName> = get_referred_foreign_columns(em, foreign_key)?;
+        Ok(mut simple) => {
+            assert_eq!(simple.len(), 1);
+            let simple = simple.remove(0);
+            let columns: Vec<ColumnName> = get_columnname_from_key(db, foreign_key, table_name)?;
+            let referred_columns: Vec<ColumnName> = get_referred_foreign_columns(db, foreign_key)?;
             let foreign = simple.to_foreign_key(columns, referred_columns);
             Ok(foreign)
         }
@@ -407,7 +483,7 @@ fn get_foreign_key(
 }
 
 fn get_referred_foreign_columns(
-    em: &EntityManager,
+    db: &mut dyn Database,
     foreign_key: &str,
 ) -> Result<Vec<ColumnName>, DbError> {
     let sql = r#"SELECT DISTINCT conname AS key_name,
@@ -421,8 +497,17 @@ fn get_referred_foreign_columns(
        WHERE pg_constraint.conname = $1
     "#;
 
-    let foreign_columns: Result<Vec<ColumnNameSimple>, DbError> =
-        em.execute_sql_with_return(&sql, &[&foreign_key]);
+    let foreign_columns: Result<Vec<ColumnNameSimple>, DbError> = db
+        .execute_sql_with_return(&sql, &[&foreign_key.to_value()])
+        .map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    ColumnNameSimple {
+                        column: row.get("column").expect("a column"),
+                    }
+                })
+                .collect()
+        });
     match foreign_columns {
         Ok(foreign_columns) => {
             let mut column_names = vec![];
@@ -449,10 +534,10 @@ mod test {
     fn all_schemas() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
-        let schemas = get_schemas(&em);
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
+        let schemas = get_schemas(&mut *db);
         info!("schemas: {:#?}", schemas);
         assert!(schemas.is_ok());
         let schemas = schemas.unwrap();
@@ -463,10 +548,10 @@ mod test {
     fn all_tables() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
-        let tables = get_all_tables(&em);
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
+        let tables = get_all_tables(&mut *db);
         info!("tables: {:#?}", tables);
         assert!(tables.is_ok());
         assert_eq!(30, tables.unwrap().len());
@@ -476,11 +561,11 @@ mod test {
     fn table_actor() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let table = TableName::from("actor");
-        let table = get_table(&em, &table);
+        let table = get_table(&mut *db, &table);
         info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(table.unwrap().table_key, vec![TableKey::PrimaryKey(Key {
@@ -497,11 +582,11 @@ mod test {
     fn foreign_key_with_different_referred_column() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let table = TableName::from("store");
-        let table = get_table(&em, &table);
+        let table = get_table(&mut *db, &table);
         info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(table.unwrap().table_key, vec![
@@ -556,11 +641,11 @@ mod test {
     fn table_film_actor() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let table = TableName::from("film_actor");
-        let table = get_table(&em, &table);
+        let table = get_table(&mut *db, &table);
         info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(table.unwrap().table_key, vec![
@@ -622,11 +707,11 @@ mod test {
     fn composite_foreign_key() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
         let table = TableName::from("film_actor_awards");
-        let table = get_table(&em, &table);
+        let table = get_table(&mut *db, &table);
         info!("table: {:#?}", table);
         assert!(table.is_ok());
         assert_eq!(table.unwrap().table_key, vec![
@@ -689,10 +774,10 @@ mod test {
     fn organized_content() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();
-        let em = pool.em(db_url);
-        assert!(em.is_ok());
-        let em = em.unwrap();
-        let organized = get_organized_tables(&em);
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
+        let organized = get_organized_tables(&mut *db);
         //info!("organized: {:#?}", organized);
         assert!(organized.is_ok());
         let organized = organized.unwrap();

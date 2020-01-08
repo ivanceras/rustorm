@@ -38,7 +38,7 @@ fn main() {
 
     let db_url = "sqlite:///tmp/sqlite.db";
     let mut pool = Pool::new();
-    let em = pool.em(db_url).unwrap();
+    let mut em = pool.em(db_url).unwrap();
     let ret = em.db().execute_sql_with_return(create_sql, &[]);
     println!("ret: {:?}", ret);
     assert!(ret.is_ok());

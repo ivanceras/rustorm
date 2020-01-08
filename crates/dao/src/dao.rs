@@ -46,6 +46,26 @@ impl Dao {
         }
     }
 
+    pub fn get_opt<'a, T>(&'a self, s: &str) -> Result<Option<T>, DaoError>
+    where
+        T: FromValue,
+    {
+        let value: Option<&'a Value> = self.0.get(s);
+        match value {
+            Some(v) => {
+                match v {
+                    Value::Nil => Ok(None),
+                    _ => {
+                        Ok(Some(
+                            FromValue::from_value(v).map_err(DaoError::ConvertError)?,
+                        ))
+                    }
+                }
+            }
+            None => Ok(None),
+        }
+    }
+
     pub fn get_value(&self, s: &str) -> Option<&Value> { self.0.get(s) }
 
     pub fn remove(&mut self, s: &str) -> Option<Value> { self.0.remove(s) }
