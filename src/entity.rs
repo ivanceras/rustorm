@@ -110,6 +110,7 @@ impl EntityManager {
         self.0.get_grouped_tables()
     }
 
+    #[allow(unused_variables)]
     pub fn insert<T, R>(&mut self, entities: &[&T]) -> Result<Vec<R>, DbError>
     where
         T: ToTableName + ToColumnNames + ToDao,
