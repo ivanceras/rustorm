@@ -1,3 +1,7 @@
+# 0.16.0
+ - Unify the interface for DatabaseMut + Database, EntityMut +Entity into their original name,
+ - **Breaking change**: The query now requires the EntityManager to be passed as mutable.
+
 # 0.15.4
     - use thiserror for implementing Error in rustorm_dao
     - rename sq module to a more appropriate sqlite since it does not conflict with the used crate name of sqlite which is rustqlite
