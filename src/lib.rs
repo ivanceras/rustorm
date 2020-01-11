@@ -173,6 +173,7 @@ pub use error::{
 pub use platform::DBPlatform;
 pub use pool::Pool;
 pub use table::Table;
+pub use uuid;
 
 // we export the traits that has a derived proc macro
 // this are used in the apps
