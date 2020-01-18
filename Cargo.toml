@@ -53,4 +53,5 @@ travis-ci = { repository = "ivanceras/rustorm" }
 with-postgres = ["postgres", "r2d2_postgres", "postgres-shared"]
 with-sqlite = ["rusqlite","r2d2_sqlite"]
 with-mysql = ["r2d2_mysql"]
+db-auth = [] # Use the database as authentication server for the user
 

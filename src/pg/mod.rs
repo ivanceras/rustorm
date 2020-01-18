@@ -2,13 +2,14 @@ use self::{
     interval::PgInterval,
     numeric::PgNumeric,
 };
+#[cfg(feature = "db-auth")]
+use crate::db_auth::{
+    Role,
+    User,
+};
 use crate::{
     error::PlatformError,
     table::SchemaContent,
-    users::{
-        Role,
-        User,
-    },
     DbError,
     Table,
     TableName,
@@ -155,6 +156,7 @@ impl Database for PostgresDB {
         table_info::get_organized_tables(&mut *self)
     }
 
+    #[cfg(feature = "db-auth")]
     /// get the list of database users
     fn get_users(&mut self) -> Result<Vec<User>, DbError> {
         let sql = "SELECT oid::int AS sysid,
@@ -199,6 +201,54 @@ impl Database for PostgresDB {
         })
     }
 
+    #[cfg(feature = "db-auth")]
+    fn get_user_detail(&mut self, username: &str) -> Result<Vec<User>, DbError> {
+        let sql = "SELECT oid::int AS sysid,
+               rolname AS username,
+               rolsuper AS is_superuser,
+               rolinherit AS is_inherit,
+               rolcreaterole AS can_create_role,
+               rolcreatedb AS can_create_db,
+               rolcanlogin AS can_login,
+               rolreplication AS can_do_replication,
+               rolbypassrls AS can_bypass_rls,
+               CASE WHEN rolconnlimit < 0 THEN NULL
+                    ELSE rolconnlimit END AS conn_limit,
+               '*************' AS password,
+               CASE WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
+                   ELSE rolvaliduntil
+                   END AS valid_until
+               FROM pg_authid
+               WHERE rolname = $1
+               ";
+        let rows: Result<Rows, DbError> =
+            self.execute_sql_with_return(&sql, &[&username.to_value()]);
+
+        rows.map(|rows| {
+            rows.iter()
+                .map(|row| {
+                    User {
+                        sysid: row.get("sysid").expect("sysid"),
+                        username: row.get("username").expect("username"),
+                        password: row.get("password").expect("password"),
+                        is_superuser: row.get("is_superuser").expect("is_superuser"),
+                        is_inherit: row.get("is_inherit").expect("is_inherit"),
+                        can_create_db: row.get("can_create_db").expect("can_create_db"),
+                        can_create_role: row.get("can_create_role").expect("can_create_role"),
+                        can_login: row.get("can_login").expect("can_login"),
+                        can_do_replication: row
+                            .get("can_do_replication")
+                            .expect("can_do_replication"),
+                        can_bypass_rls: row.get("can_bypass_rls").expect("can_bypass_rls"),
+                        valid_until: row.get("valid_until").expect("valid_until"),
+                        conn_limit: row.get("conn_limit").expect("conn_limit"),
+                    }
+                })
+                .collect()
+        })
+    }
+
+    #[cfg(feature = "db-auth")]
     /// get the list of roles for this user
     fn get_roles(&mut self, username: &str) -> Result<Vec<Role>, DbError> {
         let sql = "SELECT
@@ -651,6 +701,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "db-auth")]
     fn test_get_users() {
         let mut pool = Pool::new();
         let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";

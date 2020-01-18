@@ -1,3 +1,8 @@
+#[cfg(feature = "db-auth")]
+use crate::db_auth::{
+    Role,
+    User,
+};
 use crate::{
     column::{
         Capacity,
@@ -15,10 +20,6 @@ use crate::{
         TableKey,
     },
     types::SqlType,
-    users::{
-        Role,
-        User,
-    },
     util,
     ColumnName,
     Database,
@@ -31,6 +32,7 @@ use crate::{
     ToValue,
     Value,
 };
+
 use log::*;
 use r2d2::{
     self,
@@ -213,10 +215,15 @@ impl Database for SqliteDB {
                                 if default_value.to_lowercase() == "null" {
                                     Literal::Null
                                 } else {
-                                    match util::eval_f64(default){
-                                            Ok(val) => Literal::Double(val),
-                                            Err(e) => panic!("unable to evaluate default value expression: {}, error: {}", default, e),
+                                    match util::eval_f64(default) {
+                                        Ok(val) => Literal::Double(val),
+                                        Err(e) => {
+                                            panic!(
+                                                "unable to evaluate default value expression: {}, error: {}",
+                                                default, e
+                                            )
                                         }
+                                    }
                                 }
                             }
                             SqlType::Uuid => {
@@ -408,6 +415,7 @@ impl Database for SqliteDB {
         Ok(vec![schema_content])
     }
 
+    #[cfg(feature = "db-auth")]
     /// there are no users in sqlite
     fn get_users(&mut self) -> Result<Vec<User>, DbError> {
         Err(DbError::UnsupportedOperation(
@@ -415,10 +423,18 @@ impl Database for SqliteDB {
         ))
     }
 
+    #[cfg(feature = "db-auth")]
     /// there are not roles in sqlite
     fn get_roles(&mut self, _username: &str) -> Result<Vec<Role>, DbError> {
         Err(DbError::UnsupportedOperation(
-            "sqlite doesn't have operatio to extract roles".to_string(),
+            "sqlite doesn't have operation to extract roles".to_string(),
+        ))
+    }
+
+    #[cfg(feature = "db-auth")]
+    fn get_user_detail(&mut self, _username: &str) -> Result<Vec<User>, DbError> {
+        Err(DbError::UnsupportedOperation(
+            "sqlite doesn't have operatio to user details".to_string(),
         ))
     }
 

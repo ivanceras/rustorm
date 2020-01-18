@@ -1,9 +1,10 @@
+#[cfg(feature = "db-auth")]
+use crate::db_auth::{
+    Role,
+    User,
+};
 use crate::{
     table::SchemaContent,
-    users::{
-        Role,
-        User,
-    },
     DBPlatform,
     DataError,
     Database,
@@ -32,9 +33,17 @@ impl EntityManager {
         Ok(())
     }
 
-    pub fn get_role(&mut self, username: &str) -> Result<Option<Role>, DbError> {
-        let result = self.0.get_roles(username);
-        match result {
+    #[cfg(feature = "db-auth")]
+    pub fn get_roles(&mut self, username: &str) -> Result<Vec<Role>, DbError> {
+        self.0.get_roles(username)
+    }
+
+    #[cfg(feature = "db-auth")]
+    pub fn get_users(&mut self) -> Result<Vec<User>, DbError> { self.0.get_users() }
+
+    #[cfg(feature = "db-auth")]
+    pub fn get_user_detail(&mut self, username: &str) -> Result<Option<User>, DbError> {
+        match self.0.get_user_detail(username) {
             Ok(mut result) => {
                 match result.len() {
                     0 => Ok(None),
@@ -98,8 +107,6 @@ impl EntityManager {
         let count: Result<Count, DbError> = self.execute_sql_with_one_return(&sql, &[]);
         count.map(|c| c.count as usize)
     }
-
-    pub fn get_users(&mut self) -> Result<Vec<User>, DbError> { self.0.get_users() }
 
     pub fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> {
         self.0.get_database_name()

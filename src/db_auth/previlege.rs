@@ -1,5 +1,5 @@
 use crate::{
-    users::User,
+    db_auth::User,
     ColumnName,
     TableName,
 };

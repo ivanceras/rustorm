@@ -1,12 +1,13 @@
+#[cfg(feature = "db-auth")]
+use crate::db_auth::{
+    Role,
+    User,
+};
 use crate::{
     column,
     common,
     table::SchemaContent,
     types::SqlType,
-    users::{
-        Role,
-        User,
-    },
     Column,
     ColumnName,
     DataError,
@@ -248,11 +249,16 @@ impl Database for MysqlDB {
 
     fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> { todo!() }
 
+    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> { todo!() }
+
+    #[cfg(feature = "db-auth")]
     fn get_users(&mut self) -> Result<Vec<User>, DbError> { todo!() }
 
-    fn get_roles(&mut self, _username: &str) -> Result<Vec<Role>, DbError> { todo!() }
+    #[cfg(feature = "db-auth")]
+    fn get_user_detail(&mut self, _username: &str) -> Result<Vec<User>, DbError> { todo!() }
 
-    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> { todo!() }
+    #[cfg(feature = "db-auth")]
+    fn get_roles(&mut self, _username: &str) -> Result<Vec<Role>, DbError> { todo!() }
 }
 
 #[derive(Debug)]

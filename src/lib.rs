@@ -149,13 +149,14 @@ pub mod column;
 pub mod common;
 mod dao_manager;
 mod database;
+#[cfg(feature = "db-auth")]
+mod db_auth;
 mod entity;
 pub mod error;
 mod platform;
 pub mod pool;
 pub mod table;
 pub mod types;
-mod users;
 
 pub mod util;
 

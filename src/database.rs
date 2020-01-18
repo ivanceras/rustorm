@@ -1,9 +1,10 @@
+#[cfg(feature = "db-auth")]
+use crate::db_auth::{
+    Role,
+    User,
+};
 use crate::{
     table::SchemaContent,
-    users::{
-        Role,
-        User,
-    },
     DbError,
     Rows,
     Table,
@@ -32,9 +33,14 @@ pub trait Database {
 
     fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError>;
 
+    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError>;
+
+    #[cfg(feature = "db-auth")]
     fn get_users(&mut self) -> Result<Vec<User>, DbError>;
 
-    fn get_roles(&mut self, username: &str) -> Result<Vec<Role>, DbError>;
+    #[cfg(feature = "db-auth")]
+    fn get_user_detail(&mut self, username: &str) -> Result<Vec<User>, DbError>;
 
-    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError>;
+    #[cfg(feature = "db-auth")]
+    fn get_roles(&mut self, username: &str) -> Result<Vec<Role>, DbError>;
 }
