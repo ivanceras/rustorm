@@ -2,6 +2,7 @@
 - Update rusqlite to 0.21
 - Update r2d2_sqlite to 0.14
 - Fix database pool being created every time a connection is requested.
+
 # 0.16.0
  - Unify the interface for DatabaseMut + Database, EntityMut +Entity into their original name,
  - **Breaking change**: The query now requires the EntityManager to be passed as mutable.
