@@ -64,8 +64,8 @@ impl Pool {
                 match platform {
                     #[cfg(feature = "with-postgres")]
                     Platform::Postgres => {
-                        let pool_pg = pg::init_pool(db_url)?;
                         if self.0.get(db_url).is_none() {
+                            let pool_pg = pg::init_pool(db_url)?;
                             self.0.insert(db_url.to_string(), ConnPool::PoolPg(pool_pg));
                         }
                         Ok(())
@@ -73,16 +73,16 @@ impl Pool {
                     #[cfg(feature = "with-sqlite")]
                     Platform::Sqlite(path) => {
                         info!("matched sqlite");
-                        let pool_sq = sqlite::init_pool(&path)?;
                         if self.0.get(db_url).is_none() {
+                            let pool_sq = sqlite::init_pool(&path)?;
                             self.0.insert(db_url.to_string(), ConnPool::PoolSq(pool_sq));
                         }
                         Ok(())
                     }
                     #[cfg(feature = "with-mysql")]
                     Platform::Mysql => {
-                        let pool_my = my::init_pool(db_url)?;
                         if self.0.get(db_url).is_none() {
+                            let pool_my = my::init_pool(db_url)?;
                             self.0.insert(db_url.to_string(), ConnPool::PoolMy(pool_my));
                         }
                         Ok(())
