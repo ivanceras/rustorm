@@ -98,8 +98,7 @@ impl Pool {
     }
 
     /// get the pool for this specific db_url, create one if it doesn't have yet.
-    fn get_pool(&mut self, db_url: &str) -> Result<&ConnPool, DbError> {
-        self.ensure(db_url)?;
+    fn get_pool(&self, db_url: &str) -> Result<&ConnPool, DbError> {
         let platform: Result<Platform, ParseError> = TryFrom::try_from(db_url);
         match platform {
             Ok(platform) => {
@@ -143,7 +142,7 @@ impl Pool {
     }
 
     /// get a usable database connection from
-    pub fn connect(&mut self, db_url: &str) -> Result<PooledConn, DbError> {
+    pub fn connect(&self, db_url: &str) -> Result<PooledConn, DbError> {
         let pool = self.get_pool(db_url)?;
         match *pool {
             #[cfg(feature = "with-postgres")]
@@ -173,90 +172,14 @@ impl Pool {
         }
     }
 
-    pub fn dm(&mut self, db_url: &str) -> Result<DaoManager, DbError> {
+    pub fn dm(&self, db_url: &str) -> Result<DaoManager, DbError> {
         let db = self.db(db_url)?;
         Ok(DaoManager(db))
     }
 
-    /// get the pool for this specific db_url, create one if it doesn't have yet.
-    fn get_pool_mut(&mut self, db_url: &str) -> Result<&ConnPool, DbError> {
-        self.ensure(db_url)?;
-        let platform: Result<Platform, ParseError> = TryFrom::try_from(db_url);
-        match platform {
-            Ok(platform) => {
-                match platform {
-                    #[cfg(feature = "with-postgres")]
-                    Platform::Postgres => {
-                        let conn: Option<&ConnPool> = self.0.get(db_url);
-                        if let Some(conn) = conn {
-                            Ok(conn)
-                        } else {
-                            Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
-                        }
-                    }
-                    #[cfg(feature = "with-sqlite")]
-                    Platform::Sqlite(_path) => {
-                        info!("getting sqlite pool");
-                        let conn: Option<&ConnPool> = self.0.get(db_url);
-                        if let Some(conn) = conn {
-                            Ok(conn)
-                        } else {
-                            Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
-                        }
-                    }
-                    #[cfg(feature = "with-mysql")]
-                    Platform::Mysql => {
-                        let conn: Option<&ConnPool> = self.0.get(db_url);
-                        if let Some(conn) = conn {
-                            Ok(conn)
-                        } else {
-                            Err(DbError::ConnectError(ConnectError::NoSuchPoolConnection))
-                        }
-                    }
-
-                    Platform::Unsupported(scheme) => {
-                        Err(DbError::ConnectError(ConnectError::UnsupportedDb(scheme)))
-                    }
-                }
-            }
-            Err(e) => Err(DbError::ConnectError(ConnectError::ParseError(e))),
-        }
-    }
-
-    /// get a usable database connection from
-    pub fn connect_mut(&mut self, db_url: &str) -> Result<PooledConn, DbError> {
-        let pool = self.get_pool_mut(db_url)?;
-        match *pool {
-            #[cfg(feature = "with-postgres")]
-            ConnPool::PoolPg(ref pool_pg) => {
-                let pooled_conn = pool_pg.get();
-                match pooled_conn {
-                    Ok(pooled_conn) => Ok(PooledConn::PooledPg(Box::new(pooled_conn))),
-                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
-                }
-            }
-            #[cfg(feature = "with-sqlite")]
-            ConnPool::PoolSq(ref pool_sq) => {
-                let pooled_conn = pool_sq.get();
-                match pooled_conn {
-                    Ok(pooled_conn) => Ok(PooledConn::PooledSq(Box::new(pooled_conn))),
-                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
-                }
-            }
-            #[cfg(feature = "with-mysql")]
-            ConnPool::PoolMy(ref pool_my) => {
-                let pooled_conn = pool_my.get();
-                match pooled_conn {
-                    Ok(pooled_conn) => Ok(PooledConn::PooledMy(Box::new(pooled_conn))),
-                    Err(e) => Err(DbError::ConnectError(ConnectError::R2d2Error(e))),
-                }
-            }
-        }
-    }
-
     /// get a database instance with a connection, ready to send sql statements
-    pub fn db(&mut self, db_url: &str) -> Result<DBPlatform, DbError> {
-        let pooled_conn = self.connect_mut(db_url)?;
+    pub fn db(&self, db_url: &str) -> Result<DBPlatform, DbError> {
+        let pooled_conn = self.connect(db_url)?;
 
         match pooled_conn {
             #[cfg(feature = "with-postgres")]
@@ -272,7 +195,7 @@ impl Pool {
         }
     }
 
-    pub fn em(&mut self, db_url: &str) -> Result<EntityManager, DbError> {
+    pub fn em(&self, db_url: &str) -> Result<EntityManager, DbError> {
         let db = self.db(db_url)?;
         Ok(EntityManager(db))
     }
