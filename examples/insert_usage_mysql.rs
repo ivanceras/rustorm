@@ -1,16 +1,5 @@
-use chrono::{
-    offset::Utc,
-    DateTime,
-};
-use rustorm::{
-    pool,
-    DbError,
-    FromDao,
-    Pool,
-    ToColumnNames,
-    ToDao,
-    ToTableName,
-};
+use chrono::{offset::Utc, DateTime};
+use rustorm::{pool, DbError, FromDao, Pool, ToColumnNames, ToDao, ToTableName};
 
 /// Run using:
 /// ```sh

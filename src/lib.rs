@@ -162,15 +162,9 @@ pub mod util;
 
 pub use column::Column;
 pub use dao_manager::DaoManager;
-pub use database::{
-    Database,
-    DatabaseName,
-};
+pub use database::{Database, DatabaseName};
 pub use entity::EntityManager;
-pub use error::{
-    DataError,
-    DbError,
-};
+pub use error::{DataError, DbError};
 pub use platform::DBPlatform;
 pub use pool::Pool;
 pub use table::Table;
@@ -178,44 +172,20 @@ pub use uuid;
 
 // we export the traits that has a derived proc macro
 // this are used in the apps
-pub use codegen::{
-    FromDao,
-    ToColumnNames,
-    ToDao,
-    ToTableName,
-};
+pub use codegen::{FromDao, ToColumnNames, ToDao, ToTableName};
 
 pub use rustorm_dao::{
-    self,
-    Array,
-    ColumnName,
-    ConvertError,
-    Dao,
-    FromValue,
-    Rows,
-    TableName,
-    ToValue,
-    Value,
+    self, Array, ColumnName, ConvertError, Dao, FromValue, Rows, TableName, ToValue, Value,
 };
 
 /// Wrap the rustorm_dao exports to avoid name conflict with the rustorm_codegen
 pub mod dao {
-    pub use rustorm_dao::{
-        FromDao,
-        ToColumnNames,
-        ToDao,
-        ToTableName,
-    };
+    pub use rustorm_dao::{FromDao, ToColumnNames, ToDao, ToTableName};
 }
 
 /// Wrap the rustorm_codegen exports to avoid name conflict with the rustorm_dao
 pub mod codegen {
-    pub use rustorm_codegen::{
-        FromDao,
-        ToColumnNames,
-        ToDao,
-        ToTableName,
-    };
+    pub use rustorm_codegen::{FromDao, ToColumnNames, ToDao, ToTableName};
 }
 
 #[macro_use]

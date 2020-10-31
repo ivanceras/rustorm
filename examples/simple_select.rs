@@ -1,8 +1,4 @@
-use rustorm::{
-    DbError,
-    Pool,
-    Rows,
-};
+use rustorm::{DbError, Pool, Rows};
 
 fn main() {
     let db_url = "postgres://postgres:p0stgr3s@localhost/sakila";

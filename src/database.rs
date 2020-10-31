@@ -1,19 +1,8 @@
 #[cfg(feature = "db-auth")]
-use crate::db_auth::{
-    Role,
-    User,
-};
-use crate::{
-    table::SchemaContent,
-    DbError,
-    Rows,
-    Table,
-    TableName,
-    Value,
-};
+use crate::db_auth::{Role, User};
+use crate::{table::SchemaContent, DbError, Rows, Table, TableName, Value};
 use rustorm_codegen::FromDao;
 use serde::Serialize;
-
 
 /// The current database name and its comment
 #[derive(Serialize, FromDao)]
@@ -21,8 +10,6 @@ pub struct DatabaseName {
     pub(crate) name: String,
     pub(crate) description: Option<String>,
 }
-
-
 
 pub trait Database {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError>;

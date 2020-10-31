@@ -1,11 +1,5 @@
-use rustorm_dao::{
-    value::Array,
-    Value,
-};
-use serde::{
-    Deserialize,
-    Serialize,
-};
+use rustorm_dao::{value::Array, Value};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum SqlType {
@@ -91,12 +85,10 @@ impl SqlType {
         match *self {
             SqlType::Text => "text".into(),
             SqlType::TsVector => "tsvector".into(),
-            SqlType::Array(ref ty) => {
-                match ty.as_ref() {
-                    SqlType::Text => "text[]".into(),
-                    _ => panic!("not yet dealt {:?}", self),
-                }
-            }
+            SqlType::Array(ref ty) => match ty.as_ref() {
+                SqlType::Text => "text[]".into(),
+                _ => panic!("not yet dealt {:?}", self),
+            },
             _ => panic!("not yet dealt {:?}", self),
         }
     }

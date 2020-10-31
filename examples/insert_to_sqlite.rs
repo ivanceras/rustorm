@@ -1,13 +1,5 @@
 use chrono::NaiveDateTime;
-use rustorm::{
-    DbError,
-    FromDao,
-    Pool,
-    ToColumnNames,
-    ToDao,
-    ToTableName,
-    Value,
-};
+use rustorm::{DbError, FromDao, Pool, ToColumnNames, ToDao, ToTableName, Value};
 
 fn main() {
     mod for_insert {

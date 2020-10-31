@@ -1,33 +1,12 @@
 #[cfg(feature = "db-auth")]
-use crate::db_auth::{
-    Role,
-    User,
-};
+use crate::db_auth::{Role, User};
 use crate::{
-    column,
-    common,
-    table::SchemaContent,
-    types::SqlType,
-    Column,
-    ColumnName,
-    DataError,
-    Database,
-    DatabaseName,
-    DbError,
-    FromDao,
-    Table,
-    TableName,
-    Value,
+    column, common, table::SchemaContent, types::SqlType, Column, ColumnName, DataError, Database,
+    DatabaseName, DbError, FromDao, Table, TableName, Value,
 };
 use r2d2::ManageConnection;
-use r2d2_mysql::{
-    self,
-    mysql,
-};
-use rustorm_dao::{
-    FromDao,
-    Rows,
-};
+use r2d2_mysql::{self, mysql};
+use rustorm_dao::{FromDao, Rows};
 use thiserror::Error;
 
 pub fn init_pool(
@@ -245,20 +224,32 @@ impl Database for MysqlDB {
         })
     }
 
-    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> { todo!() }
+    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
+        todo!()
+    }
 
-    fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> { todo!() }
+    fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> {
+        todo!()
+    }
 
-    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> { todo!() }
+    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> {
+        todo!()
+    }
 
     #[cfg(feature = "db-auth")]
-    fn get_users(&mut self) -> Result<Vec<User>, DbError> { todo!() }
+    fn get_users(&mut self) -> Result<Vec<User>, DbError> {
+        todo!()
+    }
 
     #[cfg(feature = "db-auth")]
-    fn get_user_detail(&mut self, _username: &str) -> Result<Vec<User>, DbError> { todo!() }
+    fn get_user_detail(&mut self, _username: &str) -> Result<Vec<User>, DbError> {
+        todo!()
+    }
 
     #[cfg(feature = "db-auth")]
-    fn get_roles(&mut self, _username: &str) -> Result<Vec<Role>, DbError> { todo!() }
+    fn get_roles(&mut self, _username: &str) -> Result<Vec<Role>, DbError> {
+        todo!()
+    }
 }
 
 #[derive(Debug)]
@@ -298,10 +289,7 @@ fn into_record(
     mut row: mysql::Row,
     column_types: &[mysql::consts::ColumnType],
 ) -> Result<Vec<Value>, MysqlError> {
-    use mysql::{
-        consts::ColumnType,
-        from_value_opt as fvo,
-    };
+    use mysql::{consts::ColumnType, from_value_opt as fvo};
 
     column_types
         .iter()
@@ -317,14 +305,12 @@ fn into_record(
             }
 
             match column_type {
-                ColumnType::MYSQL_TYPE_DECIMAL | ColumnType::MYSQL_TYPE_NEWDECIMAL => {
-                    fvo(cell)
-                        .and_then(|v: Vec<u8>| {
-                            bigdecimal::BigDecimal::parse_bytes(&v, 10)
-                                .ok_or(mysql::FromValueError(mysql::Value::Bytes(v)))
-                        })
-                        .map(Value::BigDecimal)
-                }
+                ColumnType::MYSQL_TYPE_DECIMAL | ColumnType::MYSQL_TYPE_NEWDECIMAL => fvo(cell)
+                    .and_then(|v: Vec<u8>| {
+                        bigdecimal::BigDecimal::parse_bytes(&v, 10)
+                            .ok_or(mysql::FromValueError(mysql::Value::Bytes(v)))
+                    })
+                    .map(Value::BigDecimal),
                 ColumnType::MYSQL_TYPE_TINY => fvo(cell).map(Value::Tinyint),
                 ColumnType::MYSQL_TYPE_SHORT | ColumnType::MYSQL_TYPE_YEAR => {
                     fvo(cell).map(Value::Smallint)
@@ -336,11 +322,9 @@ fn into_record(
                 ColumnType::MYSQL_TYPE_FLOAT => fvo(cell).map(Value::Float),
                 ColumnType::MYSQL_TYPE_DOUBLE => fvo(cell).map(Value::Double),
                 ColumnType::MYSQL_TYPE_NULL => fvo(cell).map(|_: mysql::Value| Value::Nil),
-                ColumnType::MYSQL_TYPE_TIMESTAMP => {
-                    fvo(cell).map(|v: chrono::NaiveDateTime| {
-                        Value::Timestamp(chrono::DateTime::from_utc(v, chrono::Utc))
-                    })
-                }
+                ColumnType::MYSQL_TYPE_TIMESTAMP => fvo(cell).map(|v: chrono::NaiveDateTime| {
+                    Value::Timestamp(chrono::DateTime::from_utc(v, chrono::Utc))
+                }),
                 ColumnType::MYSQL_TYPE_DATE | ColumnType::MYSQL_TYPE_NEWDATE => {
                     fvo(cell).map(Value::Date)
                 }
@@ -388,5 +372,7 @@ pub enum MysqlError {
 }
 
 impl From<mysql::Error> for MysqlError {
-    fn from(e: mysql::Error) -> Self { MysqlError::GenericError("From conversion".into(), e) }
+    fn from(e: mysql::Error) -> Self {
+        MysqlError::GenericError("From conversion".into(), e)
+    }
 }

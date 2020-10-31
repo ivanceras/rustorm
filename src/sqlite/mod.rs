@@ -1,43 +1,17 @@
 #[cfg(feature = "db-auth")]
-use crate::db_auth::{
-    Role,
-    User,
-};
+use crate::db_auth::{Role, User};
 use crate::{
-    column::{
-        Capacity,
-        Column,
-        ColumnConstraint,
-        ColumnSpecification,
-        Literal,
-    },
+    column::{Capacity, Column, ColumnConstraint, ColumnSpecification, Literal},
     common,
     error::PlatformError,
-    table::{
-        ForeignKey,
-        Key,
-        SchemaContent,
-        TableKey,
-    },
+    table::{ForeignKey, Key, SchemaContent, TableKey},
     types::SqlType,
-    util,
-    ColumnName,
-    Database,
-    DatabaseName,
-    DbError,
-    FromDao,
-    Rows,
-    Table,
-    TableName,
-    ToValue,
+    util, ColumnName, Database, DatabaseName, DbError, FromDao, Rows, Table, TableName, ToValue,
     Value,
 };
 
 use log::*;
-use r2d2::{
-    self,
-    ManageConnection,
-};
+use r2d2::{self, ManageConnection};
 use r2d2_sqlite;
 use rusqlite;
 use thiserror::Error;
@@ -73,12 +47,10 @@ fn to_sq_value(val: &Value) -> rusqlite::types::Value {
 
         Value::Float(v) => rusqlite::types::Value::Real(f64::from(v)),
         Value::Double(v) => rusqlite::types::Value::Real(v),
-        Value::BigDecimal(ref v) => {
-            match v.to_f64() {
-                Some(v) => rusqlite::types::Value::Real(v as f64),
-                None => panic!("unable to convert bigdecimal"),
-            }
-        }
+        Value::BigDecimal(ref v) => match v.to_f64() {
+            Some(v) => rusqlite::types::Value::Real(v as f64),
+            None => panic!("unable to convert bigdecimal"),
+        },
         Value::Blob(ref v) => rusqlite::types::Value::Blob(v.clone()),
         Value::ImageUri(ref v) => rusqlite::types::Value::Text(v.clone()),
         Value::Char(v) => rusqlite::types::Value::Text(format!("{}", v)),
@@ -138,11 +110,9 @@ impl Database for SqliteDB {
                 }
                 Ok(records)
             }
-            Err(e) => {
-                Err(DbError::PlatformError(PlatformError::SqliteError(
-                    SqliteError::SqlError(e, sql.to_string()),
-                )))
-            }
+            Err(e) => Err(DbError::PlatformError(PlatformError::SqliteError(
+                SqliteError::SqlError(e, sql.to_string()),
+            ))),
         }
     }
 
@@ -233,12 +203,10 @@ impl Database for SqliteDB {
                                     let v: Result<Uuid, _> = Uuid::parse_str(&default);
                                     match v {
                                         Ok(v) => Literal::Uuid(v),
-                                        Err(e) => {
-                                            panic!(
-                                                "error parsing to uuid: {} error: {}",
-                                                default, e
-                                            )
-                                        }
+                                        Err(e) => panic!(
+                                            "error parsing to uuid: {} error: {}",
+                                            default, e
+                                        ),
                                     }
                                 }
                             }
@@ -295,13 +263,11 @@ impl Database for SqliteDB {
                     "decimal" => SqlType::Double,
                     "timestamp" => SqlType::Timestamp,
                     "numeric" => SqlType::Numeric,
-                    "char" => {
-                        match capacity {
-                            None => SqlType::Char,
-                            Some(Capacity::Limit(1)) => SqlType::Char,
-                            Some(_) => SqlType::Varchar,
-                        }
-                    }
+                    "char" => match capacity {
+                        None => SqlType::Char,
+                        Some(Capacity::Limit(1)) => SqlType::Char,
+                        Some(_) => SqlType::Varchar,
+                    },
                     "blob" => SqlType::Blob,
                     "" => SqlType::Text,
                     _ => {
@@ -318,12 +284,10 @@ impl Database for SqliteDB {
         macro_rules! unwrap_ok_some {
             ($var:ident) => {
                 match $var {
-                    Ok($var) => {
-                        match $var {
-                            Some($var) => $var,
-                            None => panic!("expecting {} to have a value", stringify!($var)),
-                        }
-                    }
+                    Ok($var) => match $var {
+                        Some($var) => $var,
+                        None => panic!("expecting {} to have a value", stringify!($var)),
+                    },
                     Err(_e) => panic!("expecting {} to be not error", stringify!($var)),
                 }
             };
@@ -344,12 +308,10 @@ impl Database for SqliteDB {
             if pk {
                 primary_columns.push(ColumnName::from(&name));
             }
-            let default = dao.0.get("dflt_value").map(|v| {
-                match *v {
-                    Value::Text(ref v) => v.to_owned(),
-                    Value::Nil => "null".to_string(),
-                    _ => panic!("Expecting a text value, got: {:?}", v),
-                }
+            let default = dao.0.get("dflt_value").map(|v| match *v {
+                Value::Text(ref v) => v.to_owned(),
+                Value::Nil => "null".to_string(),
+                _ => panic!("Expecting a text value, got: {:?}", v),
             });
             let simple = ColumnSimple {
                 name,
@@ -389,10 +351,8 @@ impl Database for SqliteDB {
         let result: Vec<TableNameSimple> = self
             .execute_sql_with_return(sql, &[])?
             .iter()
-            .map(|row| {
-                TableNameSimple {
-                    tbl_name: row.get("tbl_name").expect("tbl_name"),
-                }
+            .map(|row| TableNameSimple {
+                tbl_name: row.get("tbl_name").expect("tbl_name"),
             })
             .collect();
         let mut tables = vec![];
@@ -439,10 +399,10 @@ impl Database for SqliteDB {
     }
 
     /// TODO: return the filename if possible
-    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> { Ok(None) }
+    fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> {
+        Ok(None)
+    }
 }
-
-
 
 fn get_table_names(db: &mut dyn Database, kind: &str) -> Result<Vec<TableName>, DbError> {
     #[derive(Debug, FromDao)]
@@ -453,10 +413,8 @@ fn get_table_names(db: &mut dyn Database, kind: &str) -> Result<Vec<TableName>, 
     let result: Vec<TableNameSimple> = db
         .execute_sql_with_return(sql, &[&kind.to_value()])?
         .iter()
-        .map(|row| {
-            TableNameSimple {
-                tbl_name: row.get("tbl_name").expect("tbl_name"),
-            }
+        .map(|row| TableNameSimple {
+            tbl_name: row.get("tbl_name").expect("tbl_name"),
         })
         .collect();
     let mut table_names = vec![];
@@ -480,13 +438,11 @@ fn get_foreign_keys(db: &mut dyn Database, table: &TableName) -> Result<Vec<Fore
     let result: Vec<ForeignSimple> = db
         .execute_sql_with_return(&sql, &[])?
         .iter()
-        .map(|row| {
-            ForeignSimple {
-                id: row.get("id").expect("id"),
-                table: row.get("table").expect("table"),
-                from: row.get("from").expect("from"),
-                to: row.get("to").expect("to"),
-            }
+        .map(|row| ForeignSimple {
+            id: row.get("id").expect("id"),
+            table: row.get("table").expect("table"),
+            from: row.get("from").expect("from"),
+            to: row.get("to").expect("to"),
         })
         .collect();
     let mut foreign_tables: Vec<(i64, TableName)> = result
@@ -525,25 +481,15 @@ pub enum SqliteError {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{
-        pool,
-        Pool,
-    };
+    use crate::{pool, Pool};
 
     use crate::{
         column::{
             Capacity::Limit,
-            ColumnConstraint::{
-                DefaultValue,
-                NotNull,
-            },
+            ColumnConstraint::{DefaultValue, NotNull},
             Literal::Null,
         },
-        types::SqlType::{
-            Int,
-            Text,
-            Timestamp,
-        },
+        types::SqlType::{Int, Text, Timestamp},
     };
 
     #[test]
@@ -583,7 +529,6 @@ mod test {
         assert!(result.is_ok());
     }
 
-
     #[test]
     fn test_get_table() {
         let db_url = "sqlite://sakila.db";
@@ -597,197 +542,200 @@ mod test {
         assert!(table.is_ok());
         let table = table.unwrap();
         info!("table: {:#?}", table);
-        assert_eq!(table, Table {
-            name: TableName::from("film"),
-            comment: None,
-            columns: vec![
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("film_id"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Int,
-                        capacity: None,
-                        constraints: vec![
-                            ColumnConstraint::NotNull,
-                            ColumnConstraint::DefaultValue(Literal::Null)
-                        ]
+        assert_eq!(
+            table,
+            Table {
+                name: TableName::from("film"),
+                comment: None,
+                columns: vec![
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("film_id"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Int,
+                            capacity: None,
+                            constraints: vec![
+                                ColumnConstraint::NotNull,
+                                ColumnConstraint::DefaultValue(Literal::Null)
+                            ]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("title"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Text,
-                        capacity: Some(Capacity::Limit(255)),
-                        constraints: vec![
-                            ColumnConstraint::NotNull,
-                            ColumnConstraint::DefaultValue(Literal::Null)
-                        ]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("title"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Text,
+                            capacity: Some(Capacity::Limit(255)),
+                            constraints: vec![
+                                ColumnConstraint::NotNull,
+                                ColumnConstraint::DefaultValue(Literal::Null)
+                            ]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("description"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Text,
-                        capacity: None,
-                        constraints: vec![ColumnConstraint::DefaultValue(Literal::Null)]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("description"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Text,
+                            capacity: None,
+                            constraints: vec![ColumnConstraint::DefaultValue(Literal::Null)]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("release_year"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Text,
-                        capacity: Some(Capacity::Limit(4)),
-                        constraints: vec![ColumnConstraint::DefaultValue(Literal::Null)]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("release_year"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Text,
+                            capacity: Some(Capacity::Limit(4)),
+                            constraints: vec![ColumnConstraint::DefaultValue(Literal::Null)]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("language_id"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Smallint,
-                        capacity: None,
-                        constraints: vec![
-                            ColumnConstraint::NotNull,
-                            ColumnConstraint::DefaultValue(Literal::Null)
-                        ]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("language_id"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Smallint,
+                            capacity: None,
+                            constraints: vec![
+                                ColumnConstraint::NotNull,
+                                ColumnConstraint::DefaultValue(Literal::Null)
+                            ]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("original_language_id"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Smallint,
-                        capacity: None,
-                        constraints: vec![ColumnConstraint::DefaultValue(Literal::Null)]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("original_language_id"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Smallint,
+                            capacity: None,
+                            constraints: vec![ColumnConstraint::DefaultValue(Literal::Null)]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("rental_duration"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Smallint,
-                        capacity: None,
-                        constraints: vec![
-                            ColumnConstraint::NotNull,
-                            ColumnConstraint::DefaultValue(Literal::Integer(3))
-                        ]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("rental_duration"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Smallint,
+                            capacity: None,
+                            constraints: vec![
+                                ColumnConstraint::NotNull,
+                                ColumnConstraint::DefaultValue(Literal::Integer(3))
+                            ]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("rental_rate"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Double,
-                        capacity: Some(Capacity::Range(4, 2)),
-                        constraints: vec![
-                            ColumnConstraint::NotNull,
-                            ColumnConstraint::DefaultValue(Literal::Double(4.99))
-                        ]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("rental_rate"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Double,
+                            capacity: Some(Capacity::Range(4, 2)),
+                            constraints: vec![
+                                ColumnConstraint::NotNull,
+                                ColumnConstraint::DefaultValue(Literal::Double(4.99))
+                            ]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("length"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Smallint,
-                        capacity: None,
-                        constraints: vec![ColumnConstraint::DefaultValue(Literal::Null)]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("length"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Smallint,
+                            capacity: None,
+                            constraints: vec![ColumnConstraint::DefaultValue(Literal::Null)]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("replacement_cost"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Double,
-                        capacity: Some(Capacity::Range(5, 2)),
-                        constraints: vec![
-                            ColumnConstraint::NotNull,
-                            ColumnConstraint::DefaultValue(Literal::Double(19.99))
-                        ]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("replacement_cost"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Double,
+                            capacity: Some(Capacity::Range(5, 2)),
+                            constraints: vec![
+                                ColumnConstraint::NotNull,
+                                ColumnConstraint::DefaultValue(Literal::Double(19.99))
+                            ]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("rating"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Text,
-                        capacity: Some(Capacity::Limit(10)),
-                        constraints: vec![ColumnConstraint::DefaultValue(Literal::String(
-                            "\'G\'".to_string()
-                        ))]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("rating"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Text,
+                            capacity: Some(Capacity::Limit(10)),
+                            constraints: vec![ColumnConstraint::DefaultValue(Literal::String(
+                                "\'G\'".to_string()
+                            ))]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("special_features"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Text,
-                        capacity: Some(Capacity::Limit(100)),
-                        constraints: vec![ColumnConstraint::DefaultValue(Literal::Null)]
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("special_features"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Text,
+                            capacity: Some(Capacity::Limit(100)),
+                            constraints: vec![ColumnConstraint::DefaultValue(Literal::Null)]
+                        },
+                        stat: None
                     },
-                    stat: None
-                },
-                Column {
-                    table: TableName::from("film"),
-                    name: ColumnName::from("last_update"),
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: SqlType::Timestamp,
-                        capacity: None,
-                        constraints: vec![
-                            ColumnConstraint::NotNull,
-                            ColumnConstraint::DefaultValue(Literal::Null)
-                        ]
-                    },
-                    stat: None
-                }
-            ],
-            is_view: false,
-            table_key: vec![
-                TableKey::PrimaryKey(Key {
-                    name: None,
-                    columns: vec![ColumnName::from("film_id")]
-                }),
-                TableKey::ForeignKey(ForeignKey {
-                    name: None,
-                    columns: vec![ColumnName::from("original_language_id"),],
-                    foreign_table: TableName::from("language"),
-                    referred_columns: vec![ColumnName::from("language_id"),]
-                }),
-                TableKey::ForeignKey(ForeignKey {
-                    name: None,
-                    columns: vec![ColumnName::from("language_id"),],
-                    foreign_table: TableName::from("language"),
-                    referred_columns: vec![ColumnName::from("language_id"),]
-                })
-            ]
-        });
+                    Column {
+                        table: TableName::from("film"),
+                        name: ColumnName::from("last_update"),
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: SqlType::Timestamp,
+                            capacity: None,
+                            constraints: vec![
+                                ColumnConstraint::NotNull,
+                                ColumnConstraint::DefaultValue(Literal::Null)
+                            ]
+                        },
+                        stat: None
+                    }
+                ],
+                is_view: false,
+                table_key: vec![
+                    TableKey::PrimaryKey(Key {
+                        name: None,
+                        columns: vec![ColumnName::from("film_id")]
+                    }),
+                    TableKey::ForeignKey(ForeignKey {
+                        name: None,
+                        columns: vec![ColumnName::from("original_language_id"),],
+                        foreign_table: TableName::from("language"),
+                        referred_columns: vec![ColumnName::from("language_id"),]
+                    }),
+                    TableKey::ForeignKey(ForeignKey {
+                        name: None,
+                        columns: vec![ColumnName::from("language_id"),],
+                        foreign_table: TableName::from("language"),
+                        referred_columns: vec![ColumnName::from("language_id"),]
+                    })
+                ]
+            }
+        );
     }
 
     #[test]
@@ -803,101 +751,104 @@ mod test {
         assert!(table.is_ok());
         let table = table.unwrap();
         info!("table: {:#?}", table);
-        assert_eq!(table, Table {
-            name: TableName {
-                name: "actor".into(),
-                schema: None,
-                alias: None
-            },
-            comment: None,
-            columns: vec![
-                Column {
-                    table: TableName {
-                        name: "actor".into(),
-                        schema: None,
-                        alias: None
+        assert_eq!(
+            table,
+            Table {
+                name: TableName {
+                    name: "actor".into(),
+                    schema: None,
+                    alias: None
+                },
+                comment: None,
+                columns: vec![
+                    Column {
+                        table: TableName {
+                            name: "actor".into(),
+                            schema: None,
+                            alias: None
+                        },
+                        name: ColumnName {
+                            name: "actor_id".into(),
+                            table: None,
+                            alias: None
+                        },
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: Int,
+                            capacity: None,
+                            constraints: vec![NotNull, DefaultValue(Null)]
+                        },
+                        stat: None
                     },
-                    name: ColumnName {
+                    Column {
+                        table: TableName {
+                            name: "actor".into(),
+                            schema: None,
+                            alias: None
+                        },
+                        name: ColumnName {
+                            name: "first_name".into(),
+                            table: None,
+                            alias: None
+                        },
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: Text,
+                            capacity: Some(Limit(45)),
+                            constraints: vec![NotNull, DefaultValue(Null)]
+                        },
+                        stat: None
+                    },
+                    Column {
+                        table: TableName {
+                            name: "actor".into(),
+                            schema: None,
+                            alias: None
+                        },
+                        name: ColumnName {
+                            name: "last_name".into(),
+                            table: None,
+                            alias: None
+                        },
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: Text,
+                            capacity: Some(Limit(45)),
+                            constraints: vec![NotNull, DefaultValue(Null)]
+                        },
+                        stat: None
+                    },
+                    Column {
+                        table: TableName {
+                            name: "actor".into(),
+                            schema: None,
+                            alias: None
+                        },
+                        name: ColumnName {
+                            name: "last_update".into(),
+                            table: None,
+                            alias: None
+                        },
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: Timestamp,
+                            capacity: None,
+                            constraints: vec![NotNull, DefaultValue(Literal::CurrentTimestamp)]
+                        },
+                        stat: None
+                    }
+                ],
+                is_view: false,
+                table_key: vec![TableKey::PrimaryKey(Key {
+                    name: None,
+                    columns: vec![ColumnName {
                         name: "actor_id".into(),
                         table: None,
                         alias: None
-                    },
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: Int,
-                        capacity: None,
-                        constraints: vec![NotNull, DefaultValue(Null)]
-                    },
-                    stat: None
-                },
-                Column {
-                    table: TableName {
-                        name: "actor".into(),
-                        schema: None,
-                        alias: None
-                    },
-                    name: ColumnName {
-                        name: "first_name".into(),
-                        table: None,
-                        alias: None
-                    },
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: Text,
-                        capacity: Some(Limit(45)),
-                        constraints: vec![NotNull, DefaultValue(Null)]
-                    },
-                    stat: None
-                },
-                Column {
-                    table: TableName {
-                        name: "actor".into(),
-                        schema: None,
-                        alias: None
-                    },
-                    name: ColumnName {
-                        name: "last_name".into(),
-                        table: None,
-                        alias: None
-                    },
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: Text,
-                        capacity: Some(Limit(45)),
-                        constraints: vec![NotNull, DefaultValue(Null)]
-                    },
-                    stat: None
-                },
-                Column {
-                    table: TableName {
-                        name: "actor".into(),
-                        schema: None,
-                        alias: None
-                    },
-                    name: ColumnName {
-                        name: "last_update".into(),
-                        table: None,
-                        alias: None
-                    },
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: Timestamp,
-                        capacity: None,
-                        constraints: vec![NotNull, DefaultValue(Literal::CurrentTimestamp)]
-                    },
-                    stat: None
-                }
-            ],
-            is_view: false,
-            table_key: vec![TableKey::PrimaryKey(Key {
-                name: None,
-                columns: vec![ColumnName {
-                    name: "actor_id".into(),
-                    table: None,
-                    alias: None
-                }]
-            })]
-        });
+                    }]
+                })]
+            }
+        );
     }
 
     #[test]
@@ -913,127 +864,130 @@ mod test {
         assert!(table.is_ok());
         let table = table.unwrap();
         info!("table: {:#?}", table);
-        assert_eq!(table, Table {
-            name: TableName {
-                name: "film_actor".into(),
-                schema: None,
-                alias: None
-            },
-            comment: None,
-            columns: vec![
-                Column {
-                    table: TableName {
-                        name: "film_actor".into(),
-                        schema: None,
-                        alias: None
-                    },
-                    name: ColumnName {
-                        name: "actor_id".into(),
-                        table: None,
-                        alias: None
-                    },
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: Int,
-                        capacity: None,
-                        constraints: vec![NotNull, DefaultValue(Null)]
-                    },
-                    stat: None
+        assert_eq!(
+            table,
+            Table {
+                name: TableName {
+                    name: "film_actor".into(),
+                    schema: None,
+                    alias: None
                 },
-                Column {
-                    table: TableName {
-                        name: "film_actor".into(),
-                        schema: None,
-                        alias: None
-                    },
-                    name: ColumnName {
-                        name: "film_id".into(),
-                        table: None,
-                        alias: None
-                    },
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: Int,
-                        capacity: None,
-                        constraints: vec![NotNull, DefaultValue(Null)]
-                    },
-                    stat: None
-                },
-                Column {
-                    table: TableName {
-                        name: "film_actor".into(),
-                        schema: None,
-                        alias: None
-                    },
-                    name: ColumnName {
-                        name: "last_update".into(),
-                        table: None,
-                        alias: None
-                    },
-                    comment: None,
-                    specification: ColumnSpecification {
-                        sql_type: Timestamp,
-                        capacity: None,
-                        constraints: vec![NotNull, DefaultValue(Null)]
-                    },
-                    stat: None
-                }
-            ],
-            is_view: false,
-            table_key: vec![
-                TableKey::PrimaryKey(Key {
-                    name: None,
-                    columns: vec![
-                        ColumnName {
+                comment: None,
+                columns: vec![
+                    Column {
+                        table: TableName {
+                            name: "film_actor".into(),
+                            schema: None,
+                            alias: None
+                        },
+                        name: ColumnName {
                             name: "actor_id".into(),
                             table: None,
                             alias: None
                         },
-                        ColumnName {
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: Int,
+                            capacity: None,
+                            constraints: vec![NotNull, DefaultValue(Null)]
+                        },
+                        stat: None
+                    },
+                    Column {
+                        table: TableName {
+                            name: "film_actor".into(),
+                            schema: None,
+                            alias: None
+                        },
+                        name: ColumnName {
                             name: "film_id".into(),
                             table: None,
                             alias: None
-                        }
-                    ]
-                }),
-                TableKey::ForeignKey(ForeignKey {
-                    name: None,
-                    columns: vec![ColumnName {
-                        name: "film_id".into(),
-                        table: None,
-                        alias: None
-                    }],
-                    foreign_table: TableName {
-                        name: "film".into(),
-                        schema: None,
-                        alias: None
+                        },
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: Int,
+                            capacity: None,
+                            constraints: vec![NotNull, DefaultValue(Null)]
+                        },
+                        stat: None
                     },
-                    referred_columns: vec![ColumnName {
-                        name: "film_id".into(),
-                        table: None,
-                        alias: None
-                    }]
-                }),
-                TableKey::ForeignKey(ForeignKey {
-                    name: None,
-                    columns: vec![ColumnName {
-                        name: "actor_id".into(),
-                        table: None,
-                        alias: None
-                    }],
-                    foreign_table: TableName {
-                        name: "actor".into(),
-                        schema: None,
-                        alias: None
-                    },
-                    referred_columns: vec![ColumnName {
-                        name: "actor_id".into(),
-                        table: None,
-                        alias: None
-                    }]
-                })
-            ]
-        });
+                    Column {
+                        table: TableName {
+                            name: "film_actor".into(),
+                            schema: None,
+                            alias: None
+                        },
+                        name: ColumnName {
+                            name: "last_update".into(),
+                            table: None,
+                            alias: None
+                        },
+                        comment: None,
+                        specification: ColumnSpecification {
+                            sql_type: Timestamp,
+                            capacity: None,
+                            constraints: vec![NotNull, DefaultValue(Null)]
+                        },
+                        stat: None
+                    }
+                ],
+                is_view: false,
+                table_key: vec![
+                    TableKey::PrimaryKey(Key {
+                        name: None,
+                        columns: vec![
+                            ColumnName {
+                                name: "actor_id".into(),
+                                table: None,
+                                alias: None
+                            },
+                            ColumnName {
+                                name: "film_id".into(),
+                                table: None,
+                                alias: None
+                            }
+                        ]
+                    }),
+                    TableKey::ForeignKey(ForeignKey {
+                        name: None,
+                        columns: vec![ColumnName {
+                            name: "film_id".into(),
+                            table: None,
+                            alias: None
+                        }],
+                        foreign_table: TableName {
+                            name: "film".into(),
+                            schema: None,
+                            alias: None
+                        },
+                        referred_columns: vec![ColumnName {
+                            name: "film_id".into(),
+                            table: None,
+                            alias: None
+                        }]
+                    }),
+                    TableKey::ForeignKey(ForeignKey {
+                        name: None,
+                        columns: vec![ColumnName {
+                            name: "actor_id".into(),
+                            table: None,
+                            alias: None
+                        }],
+                        foreign_table: TableName {
+                            name: "actor".into(),
+                            schema: None,
+                            alias: None
+                        },
+                        referred_columns: vec![ColumnName {
+                            name: "actor_id".into(),
+                            table: None,
+                            alias: None
+                        }]
+                    })
+                ]
+            }
+        );
     }
 
     #[test]
@@ -1047,20 +1001,23 @@ mod test {
         let film_table = TableName::from(film);
         let foreign_keys = get_foreign_keys(&mut *db, &film_table);
         assert!(foreign_keys.is_ok());
-        assert_eq!(foreign_keys.unwrap(), vec![
-            ForeignKey {
-                name: None,
-                columns: vec![ColumnName::from("film_id"),],
-                foreign_table: TableName::from("film"),
-                referred_columns: vec![ColumnName::from("film_id")]
-            },
-            ForeignKey {
-                name: None,
-                columns: vec![ColumnName::from("actor_id"),],
-                foreign_table: TableName::from("actor"),
-                referred_columns: vec![ColumnName::from("actor_id")]
-            }
-        ]);
+        assert_eq!(
+            foreign_keys.unwrap(),
+            vec![
+                ForeignKey {
+                    name: None,
+                    columns: vec![ColumnName::from("film_id"),],
+                    foreign_table: TableName::from("film"),
+                    referred_columns: vec![ColumnName::from("film_id")]
+                },
+                ForeignKey {
+                    name: None,
+                    columns: vec![ColumnName::from("actor_id"),],
+                    foreign_table: TableName::from("actor"),
+                    referred_columns: vec![ColumnName::from("actor_id")]
+                }
+            ]
+        );
     }
 
     #[test]
@@ -1074,19 +1031,22 @@ mod test {
         let film_table = TableName::from(film);
         let foreign_keys = get_foreign_keys(&mut *db, &film_table);
         assert!(foreign_keys.is_ok());
-        assert_eq!(foreign_keys.unwrap(), vec![
-            ForeignKey {
-                name: None,
-                columns: vec![ColumnName::from("original_language_id"),],
-                foreign_table: TableName::from("language"),
-                referred_columns: vec![ColumnName::from("language_id"),]
-            },
-            ForeignKey {
-                name: None,
-                columns: vec![ColumnName::from("language_id"),],
-                foreign_table: TableName::from("language"),
-                referred_columns: vec![ColumnName::from("language_id"),]
-            },
-        ]);
+        assert_eq!(
+            foreign_keys.unwrap(),
+            vec![
+                ForeignKey {
+                    name: None,
+                    columns: vec![ColumnName::from("original_language_id"),],
+                    foreign_table: TableName::from("language"),
+                    referred_columns: vec![ColumnName::from("language_id"),]
+                },
+                ForeignKey {
+                    name: None,
+                    columns: vec![ColumnName::from("language_id"),],
+                    foreign_table: TableName::from("language"),
+                    referred_columns: vec![ColumnName::from("language_id"),]
+                },
+            ]
+        );
     }
 }

@@ -1,28 +1,11 @@
 #[cfg(feature = "db-auth")]
-use crate::db_auth::{
-    Role,
-    User,
-};
+use crate::db_auth::{Role, User};
 use crate::{
-    table::SchemaContent,
-    DBPlatform,
-    DataError,
-    Database,
-    DatabaseName,
-    DbError,
-    Table,
-    ToValue,
+    table::SchemaContent, DBPlatform, DataError, Database, DatabaseName, DbError, Table, ToValue,
     Value,
 };
 
-use rustorm_dao::{
-    FromDao,
-    TableName,
-    ToColumnNames,
-    ToDao,
-    ToTableName,
-};
-
+use rustorm_dao::{FromDao, TableName, ToColumnNames, ToDao, ToTableName};
 
 pub struct EntityManager(pub DBPlatform);
 
@@ -39,23 +22,25 @@ impl EntityManager {
     }
 
     #[cfg(feature = "db-auth")]
-    pub fn get_users(&mut self) -> Result<Vec<User>, DbError> { self.0.get_users() }
+    pub fn get_users(&mut self) -> Result<Vec<User>, DbError> {
+        self.0.get_users()
+    }
 
     #[cfg(feature = "db-auth")]
     pub fn get_user_detail(&mut self, username: &str) -> Result<Option<User>, DbError> {
         match self.0.get_user_detail(username) {
-            Ok(mut result) => {
-                match result.len() {
-                    0 => Ok(None),
-                    1 => Ok(Some(result.remove(0))),
-                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
-                }
-            }
+            Ok(mut result) => match result.len() {
+                0 => Ok(None),
+                1 => Ok(Some(result.remove(0))),
+                _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+            },
             Err(e) => Err(e),
         }
     }
 
-    pub fn db(&mut self) -> &mut dyn Database { &mut *self.0 }
+    pub fn db(&mut self) -> &mut dyn Database {
+        &mut *self.0
+    }
 
     /// get all the records of this table
     pub fn get_all<T>(&mut self) -> Result<Vec<T>, DbError>
@@ -311,13 +296,11 @@ impl EntityManager {
     {
         let result: Result<Vec<R>, DbError> = self.execute_sql_with_return(sql, &params);
         match result {
-            Ok(mut result) => {
-                match result.len() {
-                    0 => Err(DbError::DataError(DataError::ZeroRecordReturned)),
-                    1 => Ok(result.remove(0)),
-                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
-                }
-            }
+            Ok(mut result) => match result.len() {
+                0 => Err(DbError::DataError(DataError::ZeroRecordReturned)),
+                1 => Ok(result.remove(0)),
+                _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+            },
             Err(e) => Err(e),
         }
     }
@@ -332,13 +315,11 @@ impl EntityManager {
     {
         let result: Result<Vec<R>, DbError> = self.execute_sql_with_return(sql, &params);
         match result {
-            Ok(mut result) => {
-                match result.len() {
-                    0 => Ok(None),
-                    1 => Ok(Some(result.remove(0))),
-                    _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
-                }
-            }
+            Ok(mut result) => match result.len() {
+                0 => Ok(None),
+                1 => Ok(Some(result.remove(0))),
+                _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+            },
             Err(e) => Err(e),
         }
     }

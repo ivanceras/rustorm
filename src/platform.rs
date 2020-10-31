@@ -1,14 +1,7 @@
-use crate::{
-    error::ParseError,
-    Database,
-};
+use crate::{error::ParseError, Database};
 use cfg_if::cfg_if;
-use std::{
-    convert::TryFrom,
-    ops::Deref,
-};
+use std::{convert::TryFrom, ops::Deref};
 use url::Url;
-
 
 cfg_if! {if #[cfg(feature = "with-postgres")]{
     use crate::pg::PostgresDB;
@@ -21,7 +14,6 @@ cfg_if! {if #[cfg(feature = "with-sqlite")]{
 cfg_if! {if #[cfg(feature = "with-mysql")]{
     use crate::my::MysqlDB;
 }}
-
 
 pub enum DBPlatform {
     #[cfg(feature = "with-postgres")]

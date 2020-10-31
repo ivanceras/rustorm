@@ -50,7 +50,9 @@ pub enum PlatformError {
 
 #[cfg(feature = "with-postgres")]
 impl From<PostgresError> for DbError {
-    fn from(e: PostgresError) -> Self { DbError::PlatformError(PlatformError::from(e)) }
+    fn from(e: PostgresError) -> Self {
+        DbError::PlatformError(PlatformError::from(e))
+    }
 }
 
 #[cfg(feature = "with-sqlite")]
@@ -62,12 +64,16 @@ impl From<rusqlite::Error> for DbError {
 
 #[cfg(feature = "with-sqlite")]
 impl From<SqliteError> for DbError {
-    fn from(e: SqliteError) -> Self { DbError::PlatformError(PlatformError::from(e)) }
+    fn from(e: SqliteError) -> Self {
+        DbError::PlatformError(PlatformError::from(e))
+    }
 }
 
 #[cfg(feature = "with-mysql")]
 impl From<MysqlError> for DbError {
-    fn from(e: MysqlError) -> Self { DbError::PlatformError(PlatformError::from(e)) }
+    fn from(e: MysqlError) -> Self {
+        DbError::PlatformError(PlatformError::from(e))
+    }
 }
 
 #[derive(Debug, Error)]

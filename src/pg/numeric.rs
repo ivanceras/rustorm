@@ -1,34 +1,16 @@
 ///
 /// Copied from diesel
 ///
-use byteorder::{
-    NetworkEndian,
-    ReadBytesExt,
-    WriteBytesExt,
-};
+use byteorder::{NetworkEndian, ReadBytesExt, WriteBytesExt};
 use std::error::Error;
 
-use postgres::types::{
-    self,
-    FromSql,
-    IsNull,
-    ToSql,
-    Type,
-};
+use postgres::types::{self, FromSql, IsNull, ToSql, Type};
 
 use bigdecimal::BigDecimal;
-use num_bigint::{
-    BigInt,
-    BigUint,
-    Sign,
-};
+use num_bigint::{BigInt, BigUint, Sign};
 
 use num_integer::Integer;
-use num_traits::{
-    Signed,
-    ToPrimitive,
-    Zero,
-};
+use num_traits::{Signed, ToPrimitive, Zero};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PgNumeric {
@@ -55,7 +37,9 @@ impl ::std::fmt::Display for InvalidNumericSign {
 }
 
 impl Error for InvalidNumericSign {
-    fn description(&self) -> &str { "sign for numeric field was not one of 0, 0x4000, 0xC000" }
+    fn description(&self) -> &str {
+        "sign for numeric field was not one of 0, 0x4000, 0xC000"
+    }
 }
 
 impl FromSql for PgNumeric {
@@ -71,20 +55,16 @@ impl FromSql for PgNumeric {
         }
 
         match sign {
-            0 => {
-                Ok(PgNumeric::Positive {
-                    weight,
-                    scale,
-                    digits,
-                })
-            }
-            0x4000 => {
-                Ok(PgNumeric::Negative {
-                    weight,
-                    scale,
-                    digits,
-                })
-            }
+            0 => Ok(PgNumeric::Positive {
+                weight,
+                scale,
+                digits,
+            }),
+            0x4000 => Ok(PgNumeric::Negative {
+                weight,
+                scale,
+                digits,
+            }),
             0xC000 => Ok(PgNumeric::NaN),
             invalid => Err(Box::new(InvalidNumericSign(invalid))),
         }
@@ -198,33 +178,29 @@ impl<'a> From<&'a BigDecimal> for PgNumeric {
         digits.truncate(relevant_digits);
 
         match decimal.sign() {
-            Sign::Plus => {
-                PgNumeric::Positive {
-                    digits,
-                    scale,
-                    weight,
-                }
-            }
-            Sign::Minus => {
-                PgNumeric::Negative {
-                    digits,
-                    scale,
-                    weight,
-                }
-            }
-            Sign::NoSign => {
-                PgNumeric::Positive {
-                    digits: vec![0],
-                    scale: 0,
-                    weight: 0,
-                }
-            }
+            Sign::Plus => PgNumeric::Positive {
+                digits,
+                scale,
+                weight,
+            },
+            Sign::Minus => PgNumeric::Negative {
+                digits,
+                scale,
+                weight,
+            },
+            Sign::NoSign => PgNumeric::Positive {
+                digits: vec![0],
+                scale: 0,
+                weight: 0,
+            },
         }
     }
 }
 
 impl From<BigDecimal> for PgNumeric {
-    fn from(bigdecimal: BigDecimal) -> Self { (&bigdecimal).into() }
+    fn from(bigdecimal: BigDecimal) -> Self {
+        (&bigdecimal).into()
+    }
 }
 
 impl From<PgNumeric> for BigDecimal {

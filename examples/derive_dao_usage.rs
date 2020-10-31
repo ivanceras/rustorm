@@ -1,8 +1,4 @@
-use rustorm::{
-    FromDao,
-    ToDao,
-    ToTableName,
-};
+use rustorm::{FromDao, ToDao, ToTableName};
 
 #[derive(Debug, FromDao, ToDao, ToTableName)]
 struct User {
@@ -14,10 +10,7 @@ fn main() {
     // imported here since we are using the trait methods
     // `to_dao` and `to_table_name` without
     // conflicting with the derive ToDao and ToTableName macro
-    use rustorm::dao::{
-        ToDao,
-        ToTableName,
-    };
+    use rustorm::dao::{ToDao, ToTableName};
 
     let user = User {
         id: 1,

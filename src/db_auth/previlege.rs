@@ -1,8 +1,4 @@
-use crate::{
-    db_auth::User,
-    ColumnName,
-    TableName,
-};
+use crate::{db_auth::User, ColumnName, TableName};
 
 /// User can have previlege to tables, to columns
 /// The table models can be filtered depending on how much

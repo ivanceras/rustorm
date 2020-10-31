@@ -1,11 +1,4 @@
-use rustorm::{
-    DbError,
-    FromDao,
-    Pool,
-    Rows,
-    ToColumnNames,
-    ToTableName,
-};
+use rustorm::{DbError, FromDao, Pool, Rows, ToColumnNames, ToTableName};
 
 /// Run using:
 /// ```

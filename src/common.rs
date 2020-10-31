@@ -1,8 +1,4 @@
-use crate::{
-    column::Capacity,
-    types::SqlType,
-    Value,
-};
+use crate::{column::Capacity, types::SqlType, Value};
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use log::*;
@@ -22,18 +18,16 @@ pub fn extract_datatype_with_capacity(data_type: &str) -> (String, Option<Capaci
                 let range1: Result<i32, _> = splinters[0].parse();
                 let range2: Result<i32, _> = splinters[1].parse();
                 match range1 {
-                    Ok(r1) => {
-                        match range2 {
-                            Ok(r2) => Some(Capacity::Range(r1, r2)),
-                            Err(e) => {
-                                info!(
-                                    "error: {} when parsing range2 for data_type: {:?}",
-                                    e, data_type
-                                );
-                                None
-                            }
+                    Ok(r1) => match range2 {
+                        Ok(r2) => Some(Capacity::Range(r1, r2)),
+                        Err(e) => {
+                            info!(
+                                "error: {} when parsing range2 for data_type: {:?}",
+                                e, data_type
+                            );
+                            None
                         }
-                    }
+                    },
                     Err(e) => {
                         info!(
                             "error: {} when parsing range1 for data_type: {:?}",
@@ -69,68 +63,52 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
         value.to_owned()
     } else {
         match *value {
-            Value::Smallint(v) => {
-                match *required_type {
-                    SqlType::Tinyint => Value::Tinyint(v as i8),
-                    SqlType::Int => Value::Int(i32::from(v)),
-                    SqlType::Bigint => Value::Bigint(i64::from(v)),
-                    _ => {
-                        panic!(
-                            "unsupported conversion from {:?} to {:?}",
-                            value, required_type
-                        )
-                    }
+            Value::Smallint(v) => match *required_type {
+                SqlType::Tinyint => Value::Tinyint(v as i8),
+                SqlType::Int => Value::Int(i32::from(v)),
+                SqlType::Bigint => Value::Bigint(i64::from(v)),
+                _ => panic!(
+                    "unsupported conversion from {:?} to {:?}",
+                    value, required_type
+                ),
+            },
+            Value::Int(v) => match *required_type {
+                SqlType::Tinyint => Value::Tinyint(v as i8),
+                SqlType::Smallint => Value::Smallint(v as i16),
+                SqlType::Bigint => Value::Bigint(i64::from(v)),
+                _ => panic!(
+                    "unsupported conversion from {:?} to {:?}",
+                    value, required_type
+                ),
+            },
+            Value::Bigint(v) => match *required_type {
+                SqlType::Tinyint => Value::Tinyint(v as i8),
+                SqlType::Smallint => Value::Smallint(v as i16),
+                SqlType::Int => Value::Int(v as i32),
+                SqlType::Numeric => {
+                    let bigdecimal = BigDecimal::from_str(&format!("{}", v));
+                    assert!(bigdecimal.is_ok());
+                    Value::BigDecimal(bigdecimal.unwrap())
                 }
-            }
-            Value::Int(v) => {
-                match *required_type {
-                    SqlType::Tinyint => Value::Tinyint(v as i8),
-                    SqlType::Smallint => Value::Smallint(v as i16),
-                    SqlType::Bigint => Value::Bigint(i64::from(v)),
-                    _ => {
-                        panic!(
-                            "unsupported conversion from {:?} to {:?}",
-                            value, required_type
-                        )
-                    }
+                SqlType::Varchar => Value::Text(format!("{}", v)),
+                _ => panic!(
+                    "unsupported conversion from {:?} to {:?}",
+                    value, required_type
+                ),
+            },
+            Value::BigDecimal(ref v) => match *required_type {
+                SqlType::Int => {
+                    let ival = v.to_i32();
+                    assert!(ival.is_some());
+                    let ival = ival.unwrap();
+                    Value::Int(ival)
                 }
-            }
-            Value::Bigint(v) => {
-                match *required_type {
-                    SqlType::Tinyint => Value::Tinyint(v as i8),
-                    SqlType::Smallint => Value::Smallint(v as i16),
-                    SqlType::Int => Value::Int(v as i32),
-                    SqlType::Numeric => {
-                        let bigdecimal = BigDecimal::from_str(&format!("{}", v));
-                        assert!(bigdecimal.is_ok());
-                        Value::BigDecimal(bigdecimal.unwrap())
-                    }
-                    SqlType::Varchar => Value::Text(format!("{}", v)),
-                    _ => {
-                        panic!(
-                            "unsupported conversion from {:?} to {:?}",
-                            value, required_type
-                        )
-                    }
-                }
-            }
-            Value::BigDecimal(ref v) => {
-                match *required_type {
-                    SqlType::Int => {
-                        let ival = v.to_i32();
-                        assert!(ival.is_some());
-                        let ival = ival.unwrap();
-                        Value::Int(ival)
-                    }
-                    SqlType::Varchar => Value::Text(format!("{}", v)),
-                    _ => {
-                        panic!(
-                            "unsupported conversion from {:?} to {:?}",
-                            value, required_type
-                        )
-                    }
-                }
-            }
+                SqlType::Varchar => Value::Text(format!("{}", v)),
+                _ => panic!(
+                    "unsupported conversion from {:?} to {:?}",
+                    value, required_type
+                ),
+            },
             Value::Text(ref v) => {
                 match *required_type {
                     SqlType::Timestamp => {
@@ -166,35 +144,27 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
                     // ts vector is casted into text and then we just
                     // return them as text as well
                     SqlType::TsVector => Value::Text(v.to_string()),
-                    _ => {
-                        panic!(
-                            "unsupported conversion from {:?} to {:?}",
-                            value, required_type
-                        )
-                    }
+                    _ => panic!(
+                        "unsupported conversion from {:?} to {:?}",
+                        value, required_type
+                    ),
                 }
             }
             Value::ImageUri(_) => {
                 info!("passing ImageUri as is");
                 value.clone()
             }
-            Value::Char(v) => {
-                match *required_type {
-                    SqlType::Varchar => Value::Text(format!("{}", v)),
-                    _ => {
-                        panic!(
-                            "unsupported conversion from {:?} to {:?}",
-                            value, required_type
-                        )
-                    }
-                }
-            }
-            _ => {
-                panic!(
+            Value::Char(v) => match *required_type {
+                SqlType::Varchar => Value::Text(format!("{}", v)),
+                _ => panic!(
                     "unsupported conversion from {:?} to {:?}",
                     value, required_type
-                )
-            }
+                ),
+            },
+            _ => panic!(
+                "unsupported conversion from {:?} to {:?}",
+                value, required_type
+            ),
         }
     }
 }

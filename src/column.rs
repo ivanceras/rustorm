@@ -1,9 +1,4 @@
-use crate::{
-    types::SqlType,
-    ColumnName,
-    FromDao,
-    TableName,
-};
+use crate::{types::SqlType, ColumnName, FromDao, TableName};
 use uuid::Uuid;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -26,55 +21,49 @@ impl Column {
 
     /// check if any of the column constraint default is generated from uuid
     pub fn default_is_generated_uuid(&self) -> bool {
-        self.specification.constraints.iter().any(|c| {
-            match *c {
-                ColumnConstraint::DefaultValue(ref literal) => {
-                    match *literal {
-                        Literal::UuidGenerateV4 => true,
-                        _ => false,
-                    }
-                }
+        self.specification.constraints.iter().any(|c| match *c {
+            ColumnConstraint::DefaultValue(ref literal) => match *literal {
+                Literal::UuidGenerateV4 => true,
                 _ => false,
-            }
+            },
+            _ => false,
         })
     }
 
     pub fn is_not_null(&self) -> bool {
-        self.specification.constraints.iter().any(|c| {
-            match *c {
-                ColumnConstraint::NotNull => true,
-                _ => false,
-            }
+        self.specification.constraints.iter().any(|c| match *c {
+            ColumnConstraint::NotNull => true,
+            _ => false,
         })
     }
 
-    pub fn get_sql_type(&self) -> SqlType { self.specification.sql_type.clone() }
+    pub fn get_sql_type(&self) -> SqlType {
+        self.specification.sql_type.clone()
+    }
 
-    pub fn cast_as(&self) -> Option<SqlType> { self.get_sql_type().cast_as() }
+    pub fn cast_as(&self) -> Option<SqlType> {
+        self.get_sql_type().cast_as()
+    }
 
     pub fn has_generated_default(&self) -> bool {
-        self.specification.constraints.iter().any(|c| {
-            match *c {
-                ColumnConstraint::DefaultValue(ref literal) => {
-                    match *literal {
-                        Literal::Bool(_) => true,
-                        Literal::Null => false,
-                        Literal::Integer(_) => true,
-                        Literal::Double(_) => true,
-                        Literal::UuidGenerateV4 => true,
-                        Literal::Uuid(_) => true,
-                        Literal::String(_) => false,
-                        Literal::Blob(_) => false,
-                        Literal::CurrentTime => true,
-                        Literal::CurrentDate => true,
-                        Literal::CurrentTimestamp => true,
-                        Literal::ArrayInt(_) => false,
-                        Literal::ArrayFloat(_) => false,
-                        Literal::ArrayString(_) => false,
-                    }
-                }
-                _ => false,
-            }
+        self.specification.constraints.iter().any(|c| match *c {
+            ColumnConstraint::DefaultValue(ref literal) => match *literal {
+                Literal::Bool(_) => true,
+                Literal::Null => false,
+                Literal::Integer(_) => true,
+                Literal::Double(_) => true,
+                Literal::UuidGenerateV4 => true,
+                Literal::Uuid(_) => true,
+                Literal::String(_) => false,
+                Literal::Blob(_) => false,
+                Literal::CurrentTime => true,
+                Literal::CurrentDate => true,
+                Literal::CurrentTimestamp => true,
+                Literal::ArrayInt(_) => false,
+                Literal::ArrayFloat(_) => false,
+                Literal::ArrayString(_) => false,
+            },
+            _ => false,
         })
     }
 }
@@ -144,13 +133,19 @@ pub struct ColumnStat {
 }
 
 impl From<i64> for Literal {
-    fn from(i: i64) -> Self { Literal::Integer(i) }
+    fn from(i: i64) -> Self {
+        Literal::Integer(i)
+    }
 }
 
 impl From<String> for Literal {
-    fn from(s: String) -> Self { Literal::String(s) }
+    fn from(s: String) -> Self {
+        Literal::String(s)
+    }
 }
 
 impl<'a> From<&'a str> for Literal {
-    fn from(s: &'a str) -> Self { Literal::String(String::from(s)) }
+    fn from(s: &'a str) -> Self {
+        Literal::String(String::from(s))
+    }
 }
