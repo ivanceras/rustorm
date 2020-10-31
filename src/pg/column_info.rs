@@ -377,11 +377,47 @@ fn get_column_specification(
         }
     }
 
+    // ISSUE: this doesn't work in pg 12 anymore, becase pg_attrdef.adsrc is dropped
+    /*
     let sql = r#"SELECT DISTINCT
                pg_attribute.attnotnull AS not_null,
                pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type,
      CASE WHEN pg_attribute.atthasdef THEN pg_attrdef.adsrc
            END AS default ,
+               pg_type.typtype = 'e'::character AS is_enum,
+               pg_type.typcategory = 'A'::character AS is_array_enum,
+               ARRAY(SELECT enumlabel FROM pg_enum
+                        WHERE pg_enum.enumtypid = pg_attribute.atttypid)
+               AS enum_choices,
+               ARRAY(SELECT enumlabel FROM pg_enum
+                        WHERE pg_enum.enumtypid = pg_type.typelem)
+               AS array_enum_choices
+          FROM pg_attribute
+     LEFT JOIN pg_class
+            ON pg_class.oid = pg_attribute.attrelid
+     LEFT JOIN pg_type
+            ON pg_type.oid = pg_attribute.atttypid
+     LEFT JOIN pg_attrdef
+            ON pg_attrdef.adrelid = pg_class.oid
+           AND pg_attrdef.adnum = pg_attribute.attnum
+     LEFT JOIN pg_namespace
+            ON pg_namespace.oid = pg_class.relnamespace
+     LEFT JOIN pg_constraint
+            ON pg_constraint.conrelid = pg_class.oid
+           AND pg_attribute.attnum = ANY (pg_constraint.conkey)
+         WHERE
+               pg_attribute.attname = $1
+           AND pg_class.relname = $2
+           AND pg_namespace.nspname = $3
+           AND pg_attribute.attisdropped = false
+    "#;
+    */
+
+    // This one works
+    let sql = r#"SELECT DISTINCT
+               pg_attribute.attnotnull AS not_null,
+               pg_catalog.format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type,
+               pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid) AS default ,
                pg_type.typtype = 'e'::character AS is_enum,
                pg_type.typcategory = 'A'::character AS is_array_enum,
                ARRAY(SELECT enumlabel FROM pg_enum
