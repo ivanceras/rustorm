@@ -49,6 +49,8 @@ impl Pool {
     }
 
     /// ensure that a connection pool for this db_url exist
+    ///
+    /// Note: if that db_url already has an equivalent connection pool, this doesn't do anything
     pub fn ensure(&mut self, db_url: &str) -> Result<(), DbError> {
         info!("ensure db_url: {}", db_url);
         let platform: Result<Platform, _> = TryFrom::try_from(db_url);
@@ -162,6 +164,8 @@ impl Pool {
         }
     }
 
+    /// returns a dao manager which provides api which data is already converted into
+    /// Dao, Rows and Value
     pub fn dm(&mut self, db_url: &str) -> Result<DaoManager, DbError> {
         let db = self.db(db_url)?;
         Ok(DaoManager(db))
@@ -259,6 +263,7 @@ impl Pool {
         }
     }
 
+    /// return an entity manager which provides a higher level api
     pub fn em(&mut self, db_url: &str) -> Result<EntityManager, DbError> {
         let db = self.db(db_url)?;
         Ok(EntityManager(db))
