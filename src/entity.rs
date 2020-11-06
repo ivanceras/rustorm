@@ -79,6 +79,11 @@ impl EntityManager {
         self.0.get_all_tables()
     }
 
+    /// get all the tablenames
+    pub fn get_tablenames(&mut self) -> Result<Vec<TableName>, DbError> {
+        self.0.get_tablenames()
+    }
+
     /// Get the total count of records
     pub fn get_total_records(&mut self, table_name: &TableName) -> Result<usize, DbError> {
         #[derive(crate::FromDao)]

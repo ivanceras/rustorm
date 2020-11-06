@@ -342,7 +342,7 @@ impl Database for SqliteDB {
         Ok(table)
     }
 
-    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
+    fn get_tablenames(&mut self) -> Result<Vec<TableName>, DbError> {
         #[derive(Debug, FromDao)]
         struct TableNameSimple {
             tbl_name: String,
@@ -355,10 +355,18 @@ impl Database for SqliteDB {
                 tbl_name: row.get("tbl_name").expect("tbl_name"),
             })
             .collect();
-        let mut tables = vec![];
-        for r in result {
-            let table_name = TableName::from(&r.tbl_name);
-            let table = self.get_table(&table_name)?;
+        let tablenames = result
+            .iter()
+            .map(|r| TableName::from(&r.tbl_name))
+            .collect();
+        Ok(tablenames)
+    }
+
+    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
+        let tablenames = self.get_tablenames()?;
+        let mut tables = Vec::with_capacity(tablenames.len());
+        for tablename in tablenames {
+            let table = self.get_table(&tablename)?;
             tables.push(table);
         }
         Ok(tables)

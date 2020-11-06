@@ -18,6 +18,8 @@ pub trait Database {
 
     fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError>;
 
+    fn get_tablenames(&mut self) -> Result<Vec<TableName>, DbError>;
+
     fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError>;
 
     fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError>;

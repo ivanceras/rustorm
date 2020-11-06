@@ -224,6 +224,10 @@ impl Database for MysqlDB {
         })
     }
 
+    fn get_tablenames(&mut self) -> Result<Vec<TableName>, DbError> {
+        todo!()
+    }
+
     fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
         todo!()
     }

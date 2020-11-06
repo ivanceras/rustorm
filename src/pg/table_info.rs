@@ -8,8 +8,7 @@ use crate::{
 use log::*;
 use rustorm_dao::value::ToValue;
 
-/// get all database tables and views except from special schema
-pub fn get_all_tables(db: &mut dyn Database) -> Result<Vec<Table>, DbError> {
+pub fn get_tablenames(db: &mut dyn Database) -> Result<Vec<TableName>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableNameSimple {
         name: String,
@@ -51,24 +50,22 @@ pub fn get_all_tables(db: &mut dyn Database) -> Result<Vec<Table>, DbError> {
     });
     match tablenames_simple {
         Ok(simples) => {
-            let mut tables = Vec::with_capacity(simples.len());
-            for simple in simples {
-                let tablename = simple.to_tablename();
-                info!("  {}", tablename.complete_name());
-                let table: Result<Table, DbError> = get_table(db, &tablename);
-                match table {
-                    Ok(table) => {
-                        tables.push(table);
-                    }
-                    Err(e) => {
-                        return Err(e);
-                    }
-                }
-            }
-            Ok(tables)
+            let table_names = simples.iter().map(|simple| simple.to_tablename()).collect();
+            Ok(table_names)
         }
         Err(e) => Err(e),
     }
+}
+
+/// get all database tables and views except from special schema
+pub fn get_all_tables(db: &mut dyn Database) -> Result<Vec<Table>, DbError> {
+    let tablenames = get_tablenames(db)?;
+    let mut tables = Vec::with_capacity(tablenames.len());
+    for tablename in tablenames {
+        let table = get_table(db, &tablename)?;
+        tables.push(table);
+    }
+    Ok(tables)
 }
 
 enum TableKind {

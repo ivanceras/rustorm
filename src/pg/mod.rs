@@ -110,6 +110,10 @@ impl Database for PostgresDB {
         table_info::get_all_tables(&mut *self)
     }
 
+    fn get_tablenames(&mut self) -> Result<Vec<TableName>, DbError> {
+        table_info::get_tablenames(&mut *self)
+    }
+
     fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> {
         table_info::get_organized_tables(&mut *self)
     }
