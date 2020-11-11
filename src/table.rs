@@ -212,6 +212,16 @@ mod test {
     use log::*;
 
     #[test]
+    fn film_table_info() {
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let mut em = pool.em(db_url).expect("must be ok");
+        let table = em.get_table(&TableName::from("public.film"));
+        println!("table: {:#?}", table);
+        panic!();
+    }
+
+    #[test]
     fn referred_columns() {
         let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
         let mut pool = Pool::new();

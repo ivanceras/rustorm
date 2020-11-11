@@ -70,6 +70,10 @@ impl fmt::Display for Value {
             Value::DateTime(v) => write!(f, "{}", v.format("%Y-%m-%d %H:%M:%S").to_string()),
             Value::Timestamp(v) => write!(f, "{}", v.to_rfc3339()),
             Value::Array(array) => array.fmt(f),
+            Value::Blob(v) => {
+                let encoded = base64::encode_config(&v, base64::MIME);
+                write!(f, "{}", encoded)
+            }
             _ => panic!("not yet implemented: {:?}", self),
         }
     }

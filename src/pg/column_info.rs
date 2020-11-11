@@ -220,7 +220,17 @@ fn get_column_specification(
                         | SqlType::Tinytext
                         | SqlType::Mediumtext
                         | SqlType::Text => Literal::String(default.to_owned()),
-                        SqlType::Enum(_name, _choices) => Literal::String(default.to_owned()),
+                        SqlType::Enum(_name, _choices) => {
+                            // example: 'G'::mpaa_rating
+                            if default.contains("::") {
+                                println!("default contents double colon");
+                                let splinters: Vec<&str> = default.split("::").collect();
+                                Literal::String(splinters[0].to_string())
+                            } else {
+                                println!("as is");
+                                Literal::String(default.to_owned())
+                            }
+                        }
 
                         SqlType::Array(ref at) => {
                             match at.as_ref() {
@@ -587,8 +597,31 @@ mod test {
                 ),
                 capacity: None,
                 constraints: vec![ColumnConstraint::DefaultValue(Literal::String(
-                    "'G'::mpaa_rating".into(),
+                    "'G'".into(),
                 ))],
+            }
+        );
+    }
+
+    #[test]
+    fn column_specification_for_film_release_year() {
+        let db_url = "postgres://postgres:p0stgr3s@localhost:5432/sakila";
+        let mut pool = Pool::new();
+        let db = pool.db(db_url);
+        assert!(db.is_ok());
+        let mut db = db.unwrap();
+        let table = TableName::from("film");
+        let column = ColumnName::from("release_year");
+        let specification = get_column_specification(&mut *db, &table, &column.name);
+        info!("specification: {:#?}", specification);
+        assert!(specification.is_ok());
+        let specification = specification.unwrap();
+        assert_eq!(
+            specification,
+            ColumnSpecification {
+                sql_type: SqlType::Smallint,
+                capacity: None,
+                constraints: vec![],
             }
         );
     }

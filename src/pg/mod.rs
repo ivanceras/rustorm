@@ -2,7 +2,6 @@ use self::{interval::PgInterval, numeric::PgNumeric};
 #[cfg(feature = "db-auth")]
 use crate::db_auth::{Role, User};
 use crate::{error::PlatformError, table::SchemaContent, DbError, Table, TableName, Value, *};
-use base64;
 use bigdecimal::BigDecimal;
 use geo::Point;
 use log::*;
@@ -16,7 +15,6 @@ use r2d2_postgres::{self, TlsMode};
 use rustorm_dao::{value::Array, Interval, Rows};
 use serde_json;
 use std::{error::Error, fmt, string::FromUtf8Error};
-use tree_magic;
 
 mod column_info;
 #[allow(unused)]
@@ -391,19 +389,7 @@ impl FromSql for OwnedPgValue {
                     types::DATE => match_type!(Date),
                     types::TIMESTAMPTZ | types::TIMESTAMP => match_type!(Timestamp),
                     types::TIME | types::TIMETZ => match_type!(Time),
-                    types::BYTEA => {
-                        let mime_type = tree_magic::from_u8(raw);
-                        info!("mime_type: {}", mime_type);
-                        let bytes: Vec<u8> = FromSql::from_sql(ty, raw).unwrap();
-                        //assert_eq!(raw, &*bytes);
-                        let base64 = base64::encode_config(&bytes, base64::MIME);
-                        match &*mime_type {
-                            "image/jpeg" | "image/png" => Ok(OwnedPgValue(Value::ImageUri(
-                                format!("data:{};base64,{}", mime_type, base64),
-                            ))),
-                            _ => match_type!(Blob),
-                        }
-                    }
+                    types::BYTEA => match_type!(Blob),
                     types::NUMERIC => {
                         let numeric: PgNumeric = FromSql::from_sql(ty, raw)?;
                         let bigdecimal = BigDecimal::from(numeric);

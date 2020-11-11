@@ -34,8 +34,6 @@ num-bigint = "0.2"
 num-traits = "0.2"
 num-integer = "0.1"
 meval = "0.1.0"
-tree_magic = "0.2"
-base64 = "0.9"
 geo = "0.4"
 time = "0.1.14"
 rustorm_dao = { path = "crates/dao", version = "0.5.0" }

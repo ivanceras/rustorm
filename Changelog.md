@@ -1,3 +1,6 @@
+# Unreleased
+- Remove smarty algorithmn to cast blob image to data_uri, return as blob
+
 # 0.17.0
 - Update rusqlite to 0.21
 - Update r2d2_sqlite to 0.14

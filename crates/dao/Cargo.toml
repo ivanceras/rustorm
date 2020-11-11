@@ -19,3 +19,4 @@ bigdecimal = {version = "0.0.14", features = ["serde"]}
 geo = "0.4"
 time = "0.1.14"
 thiserror = "1.0.3"
+base64 = "0.9"
