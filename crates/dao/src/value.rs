@@ -111,6 +111,10 @@ impl fmt::Display for Array {
                 let json_arr = serde_json::to_string(texts).expect("must serialize");
                 write!(f, "{}", json_arr)
             }
+            Array::Float(floats) => {
+                let json_arr = serde_json::to_string(floats).expect("must serialize");
+                write!(f, "{}", json_arr)
+            }
             _ => panic!("not yet implemented: {:?}", self),
         }
     }
