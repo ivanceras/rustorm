@@ -160,6 +160,7 @@ pub mod types;
 
 pub mod util;
 
+pub use chrono;
 pub use column::Column;
 pub use dao_manager::DaoManager;
 pub use database::{Database, DatabaseName};
@@ -168,8 +169,7 @@ pub use error::{DataError, DbError};
 pub use platform::DBPlatform;
 pub use pool::Pool;
 pub use table::Table;
-pub use uuid;
-pub use uuid::Uuid;
+pub use uuid::{self, Uuid};
 
 // we export the traits that has a derived proc macro
 // this are used in the apps

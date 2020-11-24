@@ -1,4 +1,7 @@
-use serde_derive::{Deserialize, Serialize};
+use serde_derive::{
+    Deserialize,
+    Serialize,
+};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Interval {

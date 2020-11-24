@@ -1,6 +1,12 @@
 use crate::common;
-use serde_derive::{Deserialize, Serialize};
-use std::hash::{Hash, Hasher};
+use serde_derive::{
+    Deserialize,
+    Serialize,
+};
+use std::hash::{
+    Hash,
+    Hasher,
+};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TableName {
@@ -33,13 +39,9 @@ impl TableName {
         }
     }
 
-    pub fn name(&self) -> String {
-        self.name.to_owned()
-    }
+    pub fn name(&self) -> String { self.name.to_owned() }
 
-    pub fn safe_name(&self) -> String {
-        common::keywords_safe(&self.name)
-    }
+    pub fn safe_name(&self) -> String { common::keywords_safe(&self.name) }
 
     /// return the long name of the table using schema.table_name
     pub fn complete_name(&self) -> String {
@@ -58,7 +60,6 @@ impl TableName {
 }
 
 impl Hash for TableName {
-
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.schema.hash(state);
         self.name.hash(state);

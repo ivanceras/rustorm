@@ -1,6 +1,11 @@
-use crate::Dao;
-use crate::Value;
-use serde_derive::{Deserialize, Serialize};
+use crate::{
+    Dao,
+    Value,
+};
+use serde_derive::{
+    Deserialize,
+    Serialize,
+};
 use std::slice;
 
 /// use this to store data retrieved from the database
@@ -14,9 +19,8 @@ pub struct Rows {
 }
 
 impl Rows {
-    pub fn empty() -> Self {
-        Rows::new(vec![])
-    }
+    pub fn empty() -> Self { Rows::new(vec![]) }
+
     pub fn new(columns: Vec<String>) -> Self {
         Rows {
             columns,
@@ -25,9 +29,7 @@ impl Rows {
         }
     }
 
-    pub fn push(&mut self, row: Vec<Value>) {
-        self.data.push(row)
-    }
+    pub fn push(&mut self, row: Vec<Value>) { self.data.push(row) }
 
     /// Returns an iterator over the `Row`s.
     pub fn iter(&self) -> Iter {
@@ -66,9 +68,7 @@ impl<'a> Iterator for Iter<'a> {
         }
     }
 
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.iter.size_hint()
-    }
+    fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
 }
 
 impl<'a> ExactSizeIterator for Iter<'a> {}
@@ -92,10 +92,10 @@ mod test {
     #[test]
     fn iteration_count2() {
         let columns = vec!["id".to_string(), "username".to_string()];
-        let data: Vec<Vec<Value>> = vec![
-            vec![1.into(), "ivanceras".into()],
-            vec![2.into(), "lee".into()],
-        ];
+        let data: Vec<Vec<Value>> = vec![vec![1.into(), "ivanceras".into()], vec![
+            2.into(),
+            "lee".into(),
+        ]];
         let rows = Rows {
             columns,
             data,
@@ -122,10 +122,10 @@ mod test {
     #[test]
     fn dao2() {
         let columns = vec!["id".to_string(), "username".to_string()];
-        let data: Vec<Vec<Value>> = vec![
-            vec![1.into(), "ivanceras".into()],
-            vec![2.into(), "lee".into()],
-        ];
+        let data: Vec<Vec<Value>> = vec![vec![1.into(), "ivanceras".into()], vec![
+            2.into(),
+            "lee".into(),
+        ]];
         let rows = Rows {
             columns,
             data,
