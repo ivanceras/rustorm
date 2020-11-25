@@ -218,7 +218,6 @@ mod test {
         let mut em = pool.em(db_url).expect("must be ok");
         let table = em.get_table(&TableName::from("public.film"));
         println!("table: {:#?}", table);
-        panic!();
     }
 
     #[test]

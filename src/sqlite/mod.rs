@@ -157,7 +157,7 @@ impl Database for SqliteDB {
                     let constraint = if ic_default == "null" {
                         ColumnConstraint::DefaultValue(Literal::Null)
                     } else if ic_default.starts_with("nextval") {
-                        ColumnConstraint::AutoIncrement
+                        ColumnConstraint::AutoIncrement(None)
                     } else {
                         let literal = match sql_type {
                             SqlType::Bool => {

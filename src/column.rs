@@ -13,10 +13,10 @@ pub struct Column {
 impl Column {
     /// check all the column constraint if any has AutoIncrement
     pub fn is_autoincrement(&self) -> bool {
-        self.specification
-            .constraints
-            .iter()
-            .any(|c| *c == ColumnConstraint::AutoIncrement)
+        self.specification.constraints.iter().any(|c| match *c {
+            ColumnConstraint::AutoIncrement(_) => true,
+            _ => false,
+        })
     }
 
     /// check if any of the column constraint default is generated from uuid
@@ -103,7 +103,8 @@ impl Capacity {
 pub enum ColumnConstraint {
     NotNull,
     DefaultValue(Literal),
-    AutoIncrement,
+    /// the string contains the sequence name of this serial column
+    AutoIncrement(Option<String>),
 }
 
 #[derive(Debug, PartialEq, Clone)]

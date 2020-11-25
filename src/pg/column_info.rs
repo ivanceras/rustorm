@@ -148,7 +148,9 @@ fn get_column_specification(
                 let constraint = if ic_default == "null" {
                     ColumnConstraint::DefaultValue(Literal::Null)
                 } else if ic_default.starts_with("nextval") {
-                    ColumnConstraint::AutoIncrement
+                    let trimmed_seq = ic_default.trim_start_matches("nextval('");
+                    let trimmed_seq = trimmed_seq.trim_end_matches("'::regclass)");
+                    ColumnConstraint::AutoIncrement(Some(trimmed_seq.to_string()))
                 } else {
                     let literal = match sql_type {
                         SqlType::Bool => {
@@ -644,7 +646,10 @@ mod test {
             ColumnSpecification {
                 sql_type: SqlType::Int,
                 capacity: None,
-                constraints: vec![ColumnConstraint::NotNull, ColumnConstraint::AutoIncrement],
+                constraints: vec![
+                    ColumnConstraint::NotNull,
+                    ColumnConstraint::AutoIncrement(Some("actor_actor_id_seq".to_string()))
+                ],
             }
         );
     }
