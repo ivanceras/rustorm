@@ -16,6 +16,7 @@ impl Column {
         self.autoincrement_sequence_name().is_some()
     }
 
+    /// get the sequnce name of this autoincrement column
     pub fn autoincrement_sequence_name(&self) -> Option<&String> {
         self.specification
             .constraints

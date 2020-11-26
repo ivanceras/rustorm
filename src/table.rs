@@ -57,6 +57,10 @@ impl Table {
             .collect()
     }
 
+    pub fn is_primary_column(&self, column: &Column) -> bool {
+        self.get_primary_columns().contains(&column)
+    }
+
     pub fn get_primary_column_types(&self) -> Vec<&SqlType> {
         self.get_primary_columns()
             .iter()
@@ -129,7 +133,7 @@ impl Table {
         foreign_columns
     }
 
-    ///
+    /// get the column names of this table
     pub fn get_foreign_column_names(&self) -> Vec<&ColumnName> {
         let mut foreign_columns = vec![];
         let foreign_keys = self.get_foreign_keys();
@@ -156,6 +160,7 @@ impl Table {
         None
     }
 
+    /// find the column which matches this `column_name`
     pub fn get_column(&self, column_name: &ColumnName) -> Option<&Column> {
         self.columns.iter().find(|c| c.name == *column_name)
     }
