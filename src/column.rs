@@ -13,10 +13,17 @@ pub struct Column {
 impl Column {
     /// check all the column constraint if any has AutoIncrement
     pub fn is_autoincrement(&self) -> bool {
-        self.specification.constraints.iter().any(|c| match *c {
-            ColumnConstraint::AutoIncrement(_) => true,
-            _ => false,
-        })
+        self.autoincrement_sequence_name().is_some()
+    }
+
+    pub fn autoincrement_sequence_name(&self) -> Option<&String> {
+        self.specification
+            .constraints
+            .iter()
+            .find_map(|c| match &c {
+                ColumnConstraint::AutoIncrement(sequence_name) => sequence_name.as_ref(),
+                _ => None,
+            })
     }
 
     /// check if any of the column constraint default is generated from uuid

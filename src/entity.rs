@@ -73,6 +73,23 @@ impl EntityManager {
         self.0.get_table(table_name)
     }
 
+    /// set the autoincrement value of the primary column(if present) of this table.
+    /// If the primary column of this table is not an autoincrement, returns Ok(None).
+    pub fn set_autoincrement_value(
+        &mut self,
+        table_name: &TableName,
+        sequence_value: i64,
+    ) -> Result<Option<i64>, DbError> {
+        self.0.set_autoincrement_value(table_name, sequence_value)
+    }
+
+    pub fn get_autoincrement_last_value(
+        &mut self,
+        table_name: &TableName,
+    ) -> Result<Option<i64>, DbError> {
+        self.0.get_autoincrement_last_value(table_name)
+    }
+
     /// get all the user table and views from the database
     pub fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
         info!("EXPENSIVE DB OPERATION: get_all_tables");

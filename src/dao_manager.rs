@@ -1,5 +1,7 @@
 use crate::{DBPlatform, Dao, DataError, DbError, Rows, Value};
 
+/// an interface executing sql statement and getting the results as generic DAO values
+/// without any further conversion.
 pub struct DaoManager(pub DBPlatform);
 
 impl DaoManager {

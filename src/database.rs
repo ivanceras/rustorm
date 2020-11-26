@@ -16,6 +16,17 @@ pub trait Database {
 
     fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError>;
 
+    fn set_autoincrement_value(
+        &mut self,
+        table_name: &TableName,
+        sequence_value: i64,
+    ) -> Result<Option<i64>, DbError>;
+
+    fn get_autoincrement_last_value(
+        &mut self,
+        table_name: &TableName,
+    ) -> Result<Option<i64>, DbError>;
+
     fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError>;
 
     fn get_tablenames(&mut self) -> Result<Vec<TableName>, DbError>;
