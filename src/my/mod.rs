@@ -254,6 +254,21 @@ impl Database for MysqlDB {
     fn get_roles(&mut self, _username: &str) -> Result<Vec<Role>, DbError> {
         todo!()
     }
+
+    fn set_autoincrement_value(
+        &mut self,
+        _table_name: &TableName,
+        _sequence_value: i64,
+    ) -> Result<Option<i64>, DbError> {
+        todo!()
+    }
+
+    fn get_autoincrement_last_value(
+        &mut self,
+        _table_name: &TableName,
+    ) -> Result<Option<i64>, DbError> {
+        todo!()
+    }
 }
 
 #[derive(Debug)]

@@ -74,7 +74,9 @@ fn to_sq_values(params: &[&Value]) -> Vec<rusqlite::types::Value> {
 impl Database for SqliteDB {
     fn execute_sql_with_return(&mut self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
         info!("executing sql: {}", sql);
+        println!("executing sql: {}", sql);
         info!("params: {:?}", params);
+        println!("params: {:?}", params);
         let stmt = self.0.prepare(&sql);
 
         let column_names = if let Ok(ref stmt) = stmt {
@@ -423,9 +425,7 @@ impl Database for SqliteDB {
             &[&table_name.complete_name().into(), &sequence_value.into()],
         )?;
 
-        let new_value = self.get_autoincrement_last_value(table_name)?;
-        println!("new value: {:?}", new_value);
-        Ok(new_value)
+        Ok(None)
     }
 
     fn get_autoincrement_last_value(
@@ -550,7 +550,12 @@ mod test {
             .set_autoincrement_value(&actor_table, last_value + 1)
             .unwrap_or_else(|e| panic!("{:?}", e));
         println!("result: {:?}", result);
-        assert_eq!(result, Some(last_value + 1));
+
+        let last_value = em
+            .get_autoincrement_last_value(&actor_table)
+            .unwrap()
+            .unwrap();
+        println!("last value: {}", last_value);
     }
 
     #[test]
