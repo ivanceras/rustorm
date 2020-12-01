@@ -1,5 +1,7 @@
 use cfg_if::cfg_if;
 use r2d2;
+use serde::Serialize;
+use serde::Serializer;
 use thiserror::Error;
 use url;
 
@@ -28,6 +30,28 @@ pub enum ConnectError {
     R2d2Error(#[from] r2d2::Error),
 }
 
+impl Serialize for ConnectError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            ConnectError::NoSuchPoolConnection => {
+                serializer.serialize_newtype_struct("NoSuchPoolConnection", &())
+            }
+            ConnectError::ParseError(e) => {
+                serializer.serialize_newtype_struct("ParseError", &e.to_string())
+            }
+            ConnectError::UnsupportedDb(e) => {
+                serializer.serialize_newtype_struct("UnsupportedDb", e)
+            }
+            ConnectError::R2d2Error(e) => {
+                serializer.serialize_newtype_struct("R2d2Error", &e.to_string())
+            }
+        }
+    }
+}
+
 #[derive(Debug, Error)]
 pub enum ParseError {
     #[error("Database url parse error: {0}")]
@@ -48,6 +72,30 @@ pub enum PlatformError {
     MysqlError(#[from] MysqlError),
 }
 
+impl Serialize for PlatformError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            #[cfg(feature = "with-postgres")]
+            PlatformError::PostgresError(e) => {
+                serializer.serialize_newtype_variant("PlatformError", 0, "PostgresError", e)
+            }
+            #[cfg(feature = "with-sqlite")]
+            PlatformError::SqliteError(e) => {
+                serializer.serialize_newtype_variant("PlatformError", 1, "SqliteError", e)
+            }
+            #[cfg(feature = "with-mysql")]
+            PlatformError::MysqlError(e) => {
+                serializer.serialize_newtype_variant("PlatformError", 2, "MysqlError", e)
+            }
+        }
+    }
+}
+
+//Note: this is needed coz there is 2 level of variant before we can convert postgres error to
+//platform error
 #[cfg(feature = "with-postgres")]
 impl From<PostgresError> for DbError {
     fn from(e: PostgresError) -> Self {
@@ -76,23 +124,23 @@ impl From<MysqlError> for DbError {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Serialize)]
 pub enum DbError {
     #[error("Sql injection attempt error: {0}")]
     SqlInjectionAttempt(String),
     #[error("{0}")]
-    DataError(DataError),
+    DataError(#[from] DataError),
     #[error("{0}")]
-    PlatformError(PlatformError),
+    PlatformError(#[from] PlatformError),
     #[error("{0}")]
-    ConvertError(ConvertError),
+    ConvertError(#[from] ConvertError),
     #[error("{0}")]
-    ConnectError(ConnectError), //agnostic connection error
+    ConnectError(#[from] ConnectError), //agnostic connection error
     #[error("Unsupported operation: {0}")]
     UnsupportedOperation(String),
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Serialize)]
 pub enum ConvertError {
     #[error("Unknown data type")]
     UnknownDataType,
@@ -100,7 +148,7 @@ pub enum ConvertError {
     UnsupportedDataType(String),
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Serialize)]
 pub enum DataError {
     #[error("Zero record returned")]
     ZeroRecordReturned,

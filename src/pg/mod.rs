@@ -13,8 +13,11 @@ use postgres_shared::types::{Kind, Kind::Enum};
 use r2d2::{self, ManageConnection};
 use r2d2_postgres::{self, TlsMode};
 use rustorm_dao::{value::Array, Interval, Rows};
+use serde::Serialize;
+use serde::Serializer;
 use serde_json;
 use std::{error::Error, fmt, string::FromUtf8Error};
+use thiserror::Error;
 
 mod column_info;
 #[allow(unused)]
@@ -26,78 +29,64 @@ pub fn init_pool(
     db_url: &str,
 ) -> Result<r2d2::Pool<r2d2_postgres::PostgresConnectionManager>, PostgresError> {
     test_connection(db_url)?;
-    let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)?;
-    //let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, get_tls())?;
+    let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)
+        .map_err(|e| PostgresError::SqlError(e, "Connection Manager Error".into()))?;
     let pool = r2d2::Pool::new(manager)?;
     Ok(pool)
 }
 
 pub fn test_connection(db_url: &str) -> Result<(), PostgresError> {
-    let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)?;
-    //let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, get_tls())?;
-    let mut conn = manager.connect()?;
-    manager.is_valid(&mut conn)?;
+    let manager = r2d2_postgres::PostgresConnectionManager::new(db_url, TlsMode::None)
+        .map_err(|e| PostgresError::SqlError(e, "Connection Manager Error".into()))?;
+    let mut conn = manager
+        .connect()
+        .map_err(|e| PostgresError::SqlError(e, "Connect Error".into()))?;
+    manager
+        .is_valid(&mut conn)
+        .map_err(|e| PostgresError::SqlError(e, "Invalid Connection".into()))?;
     Ok(())
 }
 
 pub struct PostgresDB(pub r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>);
 
-impl Database for PostgresDB {
-    fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
-        let stmt = self.0.prepare(&sql);
-        match stmt {
-            Ok(stmt) => {
-                let pg_values = to_pg_values(param);
-                let sql_types = to_sql_types(&pg_values);
-                let rows = stmt.query(&sql_types);
-                match rows {
-                    Ok(rows) => {
-                        let columns = rows.columns();
-                        let column_names: Vec<String> =
-                            columns.iter().map(|c| c.name().to_string()).collect();
-                        let mut records = Rows::new(column_names);
-                        for r in rows.iter() {
-                            let mut record: Vec<Value> = vec![];
-                            for (i, column) in columns.iter().enumerate() {
-                                let value: Option<Result<OwnedPgValue, postgres::Error>> =
-                                    r.get_opt(i);
-                                match value {
-                                    Some(value) => {
-                                        match value {
-                                            Ok(value) => record.push(value.0),
-                                            Err(e) => {
-                                                //info!("Row {:?}", r);
-                                                info!("column {:?} index: {}", column, i);
-                                                let msg = format!(
-                                                    "Error converting column {:?} at index {}",
-                                                    column, i
-                                                );
-                                                return Err(DbError::PlatformError(
-                                                    PlatformError::PostgresError(
-                                                        PostgresError::GenericError(msg, e),
-                                                    ),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                    None => {
-                                        record.push(Value::Nil); // Note: this is important to not mess the spacing of records
-                                    }
-                                }
-                            }
-                            records.push(record);
-                        }
-                        Ok(records)
+impl PostgresDB {
+    fn pg_execute_sql_with_return(
+        &mut self,
+        sql: &str,
+        param: &[&Value],
+    ) -> Result<Rows, postgres::Error> {
+        let stmt = self.0.prepare(&sql)?;
+        let pg_values = to_pg_values(param);
+        let sql_types = to_sql_types(&pg_values);
+        let rows = stmt.query(&sql_types)?;
+        let columns = rows.columns();
+        let column_names: Vec<String> = columns.iter().map(|c| c.name().to_string()).collect();
+        let mut records = Rows::new(column_names);
+        for r in rows.iter() {
+            let mut record: Vec<Value> = vec![];
+            for (i, _column) in columns.iter().enumerate() {
+                let value: Option<Result<OwnedPgValue, postgres::Error>> = r.get_opt(i);
+                match value {
+                    Some(value) => {
+                        let value = value?;
+                        record.push(value.0)
                     }
-                    Err(e) => Err(DbError::PlatformError(PlatformError::PostgresError(
-                        PostgresError::SqlError(e, sql.to_string()),
-                    ))),
+                    None => {
+                        record.push(Value::Nil); // Note: this is important to not mess the spacing of records
+                    }
                 }
             }
-            Err(e) => Err(DbError::PlatformError(PlatformError::PostgresError(
-                PostgresError::SqlError(e, sql.to_string()),
-            ))),
+            records.push(record);
         }
+        Ok(records)
+    }
+}
+
+impl Database for PostgresDB {
+    fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
+        self.pg_execute_sql_with_return(sql, param).map_err(|e| {
+            PlatformError::PostgresError(PostgresError::SqlError(e, sql.to_string())).into()
+        })
     }
 
     fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
@@ -490,33 +479,52 @@ impl FromSql for OwnedPgValue {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum PostgresError {
-    GenericError(String, postgres::Error),
     SqlError(postgres::Error, String),
-    ConvertStringToCharError(String),
-    FromUtf8Error(FromUtf8Error),
-    ConvertNumericToBigDecimalError,
-    PoolInitializationError(r2d2::Error),
+    FromUtf8Error(#[from] FromUtf8Error),
+    PoolInitializationError(#[from] r2d2::Error),
 }
-
-impl From<postgres::Error> for PostgresError {
-    fn from(e: postgres::Error) -> Self {
-        PostgresError::GenericError("From conversion".into(), e)
-    }
-}
-
-impl From<r2d2::Error> for PostgresError {
-    fn from(e: r2d2::Error) -> Self {
-        PostgresError::PoolInitializationError(e)
-    }
-}
-
-impl Error for PostgresError {}
 
 impl fmt::Display for PostgresError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:#?}", self)
+    }
+}
+
+impl Serialize for PostgresError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            PostgresError::SqlError(e, sql) => {
+                use serde::ser::SerializeStruct;
+
+                let db_error = e.as_db().expect("must be a db error");
+                let mut pg_error = serializer.serialize_struct("SqlError", 16)?;
+                pg_error.serialize_field("sql", &sql)?;
+                pg_error.serialize_field("severity", &db_error.severity)?;
+                pg_error.serialize_field("code", &db_error.code.code())?;
+                pg_error.serialize_field("message", &db_error.message)?;
+                pg_error.serialize_field("detail", &db_error.detail)?;
+                pg_error.serialize_field("hint", &db_error.hint)?;
+                pg_error.serialize_field("where", &db_error.where_)?;
+                pg_error.serialize_field("schema", &db_error.schema)?;
+                pg_error.serialize_field("column", &db_error.column)?;
+                pg_error.serialize_field("datatype", &db_error.datatype)?;
+                pg_error.serialize_field("constraint", &db_error.constraint)?;
+                pg_error.serialize_field("line", &db_error.line)?;
+                pg_error.serialize_field("routine", &db_error.routine)?;
+                pg_error.end()
+            }
+            PostgresError::FromUtf8Error(e) => {
+                serializer.serialize_newtype_struct("FromUtf8Error", &e.to_string())
+            }
+            PostgresError::PoolInitializationError(e) => {
+                serializer.serialize_newtype_struct("PoolInitializationError", &e.to_string())
+            }
+        }
     }
 }
 

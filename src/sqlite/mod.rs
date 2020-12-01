@@ -9,6 +9,8 @@ use crate::{
     util, ColumnName, Database, DatabaseName, DbError, FromDao, Rows, Table, TableName, ToValue,
     Value,
 };
+use serde::Serialize;
+use serde::Serializer;
 
 use log::*;
 use r2d2::{self, ManageConnection};
@@ -113,7 +115,7 @@ impl Database for SqliteDB {
                 Ok(records)
             }
             Err(e) => Err(DbError::PlatformError(PlatformError::SqliteError(
-                SqliteError::SqlError(e, sql.to_string()),
+                SqliteError::SqlError(e),
             ))),
         }
     }
@@ -513,12 +515,26 @@ fn get_foreign_keys(db: &mut dyn Database, table: &TableName) -> Result<Vec<Fore
 
 #[derive(Debug, Error)]
 pub enum SqliteError {
-    #[error("{0}")]
-    GenericError(#[from] rusqlite::Error),
-    #[error("Error executing {1}: {0}")]
-    SqlError(rusqlite::Error, String),
+    #[error("Error executing {0}")]
+    SqlError(#[from] rusqlite::Error),
     #[error("Pool initialization error: {0}")]
     PoolInitializationError(#[from] r2d2::Error),
+}
+
+impl Serialize for SqliteError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            SqliteError::SqlError(e) => {
+                serializer.serialize_newtype_struct("SqliteError", &e.to_string())
+            }
+            SqliteError::PoolInitializationError(e) => {
+                serializer.serialize_newtype_struct("PoolInitializationError", &e.to_string())
+            }
+        }
+    }
 }
 
 #[cfg(test)]
