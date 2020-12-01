@@ -410,6 +410,41 @@ impl Database for SqliteDB {
     fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> {
         Ok(None)
     }
+
+    fn set_autoincrement_value(
+        &mut self,
+        table_name: &TableName,
+        sequence_value: i64,
+    ) -> Result<Option<i64>, DbError> {
+        println!("setting new sequnce value: {}", sequence_value);
+        let sql = "UPDATE sqlite_sequence SET seq = $2 WHERE name = $1";
+        self.execute_sql_with_return(
+            sql,
+            &[&table_name.complete_name().into(), &sequence_value.into()],
+        )?;
+
+        let new_value = self.get_autoincrement_last_value(table_name)?;
+        println!("new value: {:?}", new_value);
+        Ok(new_value)
+    }
+
+    fn get_autoincrement_last_value(
+        &mut self,
+        table_name: &TableName,
+    ) -> Result<Option<i64>, DbError> {
+        let sql = "SELECT seq FROM sqlite_sequence where name = $1";
+        let result: Vec<Option<i64>> = self
+            .execute_sql_with_return(sql, &[&table_name.complete_name().into()])?
+            .iter()
+            .filter_map(|row| row.get("seq").ok())
+            .collect();
+
+        if let Some(first) = result.get(0) {
+            Ok(*first)
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 fn get_table_names(db: &mut dyn Database, kind: &str) -> Result<Vec<TableName>, DbError> {
@@ -499,6 +534,24 @@ mod test {
         },
         types::SqlType::{Int, Text, Timestamp},
     };
+
+    #[test]
+    fn test_advancing_autoincrement_primary_column() {
+        let db_url = "sqlite://sakila.db";
+        let mut pool = Pool::new();
+        let mut em = pool.em(db_url).unwrap();
+        let actor_table = TableName::from("actor");
+        let last_value = em
+            .get_autoincrement_last_value(&actor_table)
+            .unwrap()
+            .unwrap();
+        println!("last value: {}", last_value);
+        let result = em
+            .set_autoincrement_value(&actor_table, last_value + 1)
+            .unwrap_or_else(|e| panic!("{:?}", e));
+        println!("result: {:?}", result);
+        assert_eq!(result, Some(last_value + 1));
+    }
 
     #[test]
     fn test_get_all_tables() {

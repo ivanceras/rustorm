@@ -1,5 +1,14 @@
 # Unreleased
 - Remove smarty algorithmn to cast blob image to data_uri, return as blob
+- Add a function to check if a column is a primary to the table
+- Implement setting and getting the autoincrement primary key of table for postgresql
+- The ColumnConstraint AutoIncrement now contains the name of its corresponding sequence
+- Add conversion of arrays to json
+- simplify the default value in enum columns
+- Implement displaying of text array
+- Expose get_tablenames in EntityManager
+- reexport uuid
+- revise the SQL statement for getting the column default as it was dropped in postgresql 12
 
 # 0.17.0
 - Update rusqlite to 0.21
