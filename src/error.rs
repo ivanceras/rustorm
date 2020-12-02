@@ -37,16 +37,19 @@ impl Serialize for ConnectError {
     {
         match self {
             ConnectError::NoSuchPoolConnection => {
-                serializer.serialize_newtype_struct("NoSuchPoolConnection", &())
+                serializer.serialize_newtype_variant("ConnectError", 0, "NoSuchPoolConnection", &())
             }
-            ConnectError::ParseError(e) => {
-                serializer.serialize_newtype_struct("ParseError", &e.to_string())
-            }
+            ConnectError::ParseError(e) => serializer.serialize_newtype_variant(
+                "ConnectError",
+                1,
+                "ParseError",
+                &e.to_string(),
+            ),
             ConnectError::UnsupportedDb(e) => {
-                serializer.serialize_newtype_struct("UnsupportedDb", e)
+                serializer.serialize_newtype_variant("ConnectError", 2, "UnsupportedDb", e)
             }
             ConnectError::R2d2Error(e) => {
-                serializer.serialize_newtype_struct("R2d2Error", &e.to_string())
+                serializer.serialize_newtype_variant("ConnectError", 3, "R2d2Error", &e.to_string())
             }
         }
     }

@@ -518,12 +518,18 @@ impl Serialize for PostgresError {
                 pg_error.serialize_field("routine", &db_error.routine)?;
                 pg_error.end()
             }
-            PostgresError::FromUtf8Error(e) => {
-                serializer.serialize_newtype_struct("FromUtf8Error", &e.to_string())
-            }
-            PostgresError::PoolInitializationError(e) => {
-                serializer.serialize_newtype_struct("PoolInitializationError", &e.to_string())
-            }
+            PostgresError::FromUtf8Error(e) => serializer.serialize_newtype_variant(
+                "PostgresError",
+                1,
+                "FromUtf8Error",
+                &e.to_string(),
+            ),
+            PostgresError::PoolInitializationError(e) => serializer.serialize_newtype_variant(
+                "PostgresError",
+                2,
+                "PoolInitializationError",
+                &e.to_string(),
+            ),
         }
     }
 }
