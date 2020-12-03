@@ -10,8 +10,6 @@ use crate::{
     util, ColumnName, Database, DatabaseName, DbError, FromDao, Rows, Table, TableName, ToValue,
     Value,
 };
-use serde::Serialize;
-use serde::Serializer;
 
 use log::*;
 use r2d2::{self, ManageConnection};
@@ -521,22 +519,6 @@ pub enum SqliteError {
     SqlError(#[from] rusqlite::Error),
     #[error("Pool initialization error: {0}")]
     PoolInitializationError(#[from] r2d2::Error),
-}
-
-impl Serialize for SqliteError {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match self {
-            SqliteError::SqlError(e) => {
-                serializer.serialize_newtype_struct("SqliteError", &e.to_string())
-            }
-            SqliteError::PoolInitializationError(e) => {
-                serializer.serialize_newtype_struct("PoolInitializationError", &e.to_string())
-            }
-        }
-    }
 }
 
 #[cfg(test)]

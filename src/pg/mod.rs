@@ -14,8 +14,6 @@ use postgres_shared::types::{Kind, Kind::Enum};
 use r2d2::{self, ManageConnection};
 use r2d2_postgres::{self, TlsMode};
 use rustorm_dao::{value::Array, Interval, Rows};
-use serde::Serialize;
-use serde::Serializer;
 use serde_json;
 use std::{error::Error, fmt, string::FromUtf8Error};
 use thiserror::Error;
@@ -494,48 +492,6 @@ pub enum PostgresError {
 impl fmt::Display for PostgresError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:#?}", self)
-    }
-}
-
-impl Serialize for PostgresError {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match self {
-            PostgresError::SqlError(e, sql) => {
-                use serde::ser::SerializeStruct;
-
-                let db_error = e.as_db().expect("must be a db error");
-                let mut pg_error = serializer.serialize_struct("SqlError", 16)?;
-                pg_error.serialize_field("sql", &sql)?;
-                pg_error.serialize_field("severity", &db_error.severity)?;
-                pg_error.serialize_field("code", &db_error.code.code())?;
-                pg_error.serialize_field("message", &db_error.message)?;
-                pg_error.serialize_field("detail", &db_error.detail)?;
-                pg_error.serialize_field("hint", &db_error.hint)?;
-                pg_error.serialize_field("where", &db_error.where_)?;
-                pg_error.serialize_field("schema", &db_error.schema)?;
-                pg_error.serialize_field("column", &db_error.column)?;
-                pg_error.serialize_field("datatype", &db_error.datatype)?;
-                pg_error.serialize_field("constraint", &db_error.constraint)?;
-                pg_error.serialize_field("line", &db_error.line)?;
-                pg_error.serialize_field("routine", &db_error.routine)?;
-                pg_error.end()
-            }
-            PostgresError::FromUtf8Error(e) => serializer.serialize_newtype_variant(
-                "PostgresError",
-                1,
-                "FromUtf8Error",
-                &e.to_string(),
-            ),
-            PostgresError::PoolInitializationError(e) => serializer.serialize_newtype_variant(
-                "PostgresError",
-                2,
-                "PoolInitializationError",
-                &e.to_string(),
-            ),
-        }
     }
 }
 

@@ -7,7 +7,6 @@ use crate::{
 use r2d2::ManageConnection;
 use r2d2_mysql::{self, mysql};
 use rustorm_dao::{FromDao, Rows};
-use serde::{Serialize, Serializer};
 use thiserror::Error;
 
 pub fn init_pool(
@@ -392,34 +391,5 @@ pub enum MysqlError {
 impl From<mysql::Error> for MysqlError {
     fn from(e: mysql::Error) -> Self {
         MysqlError::SqlError(e, "Generic Error".into())
-    }
-}
-
-impl Serialize for MysqlError {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        use serde::ser::SerializeTupleVariant;
-        match self {
-            MysqlError::UrlError(e) => {
-                serializer.serialize_newtype_struct("UrlError", &e.to_string())
-            }
-            MysqlError::SqlError(e, sql) => {
-                let mut tv = serializer.serialize_tuple_variant("MysqlError", 1, "SqlError", 2)?;
-                tv.serialize_field(&e.to_string())?;
-                tv.serialize_field(sql)?;
-                tv.end()
-            }
-            MysqlError::Utf8Error(e) => {
-                serializer.serialize_newtype_struct("Utf8Error", &e.to_string())
-            }
-            MysqlError::ConvertError(e) => {
-                serializer.serialize_newtype_struct("ConverError", &e.to_string())
-            }
-            MysqlError::PoolInitializationError(e) => {
-                serializer.serialize_newtype_struct("PoolInitializationError", &e.to_string())
-            }
-        }
     }
 }
