@@ -3,6 +3,7 @@ use crate::db_auth::{Role, User};
 use crate::{
     column::{Capacity, Column, ColumnConstraint, ColumnSpecification, Literal},
     common,
+    error::DataOpError,
     error::PlatformError,
     table::{ForeignKey, Key, SchemaContent, TableKey},
     types::SqlType,
@@ -114,9 +115,10 @@ impl Database for SqliteDB {
                 }
                 Ok(records)
             }
-            Err(e) => Err(DbError::PlatformError(PlatformError::SqliteError(
+            Err(e) => Err(Into::<DataOpError>::into(PlatformError::SqliteError(
                 SqliteError::SqlError(e),
-            ))),
+            ))
+            .into()),
         }
     }
 

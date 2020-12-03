@@ -1,6 +1,7 @@
 use self::{interval::PgInterval, numeric::PgNumeric};
 #[cfg(feature = "db-auth")]
 use crate::db_auth::{Role, User};
+use crate::error::DataOpError;
 use crate::{error::PlatformError, table::SchemaContent, DbError, Table, TableName, Value, *};
 use bigdecimal::BigDecimal;
 use geo::Point;
@@ -85,7 +86,11 @@ impl PostgresDB {
 impl Database for PostgresDB {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
         self.pg_execute_sql_with_return(sql, param).map_err(|e| {
-            PlatformError::PostgresError(PostgresError::SqlError(e, sql.to_string())).into()
+            Into::<DataOpError>::into(PlatformError::PostgresError(PostgresError::SqlError(
+                e,
+                sql.to_string(),
+            )))
+            .into()
         })
     }
 

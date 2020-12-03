@@ -1,5 +1,6 @@
 use cfg_if::cfg_if;
 use r2d2;
+use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
 use thiserror::Error;
@@ -75,6 +76,76 @@ pub enum PlatformError {
     MysqlError(#[from] MysqlError),
 }
 
+impl Into<DataOpError> for PlatformError {
+    /// attempt to convert platform specific error to DataOpeation error
+    fn into(self) -> DataOpError {
+        match self {
+            #[cfg(feature = "with-postgres")]
+            PlatformError::PostgresError(postgres_err) => match postgres_err {
+                PostgresError::SqlError(ref pg_err, ref sql) => {
+                    if let Some(db_err) = pg_err.as_db() {
+                        use crate::TableName;
+                        let postgres::error::DbError {
+                            severity,
+                            code,
+                            message,
+                            detail,
+                            schema,
+                            table,
+                            column,
+                            datatype,
+                            constraint,
+                            ..
+                        } = db_err;
+
+                        DataOpError::ConstraintError {
+                            severity: severity.clone(),
+                            code: code.code().to_string(),
+                            message: message.clone(),
+                            detail: detail.clone(),
+                            cause_table: if let Some(table) = table {
+                                Some(
+                                    TableName {
+                                        name: table.to_string(),
+                                        schema: schema.clone(),
+                                        alias: None,
+                                    }
+                                    .complete_name(),
+                                )
+                            } else {
+                                None
+                            },
+                            constraint: constraint.clone(),
+                            column: column.clone(),
+                            datatype: datatype.clone(),
+                            sql: sql.to_string(),
+                        }
+                    } else {
+                        DataOpError::GenericError {
+                            message: postgres_err.to_string(),
+                            sql: None,
+                        }
+                    }
+                }
+                _ => DataOpError::GenericError {
+                    message: postgres_err.to_string(),
+                    sql: None,
+                },
+            },
+            #[cfg(feature = "with-sqlite")]
+            PlatformError::SqliteError(e) => DataOpError::GenericError {
+                message: e.to_string(),
+                sql: None,
+            },
+            #[cfg(feature = "with-mysql")]
+            PlatformError::MysqlError(e) => DataOpError::GenericError {
+                message: e.to_string(),
+                sql: None,
+            },
+        }
+    }
+}
+
 impl Serialize for PlatformError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -102,28 +173,28 @@ impl Serialize for PlatformError {
 #[cfg(feature = "with-postgres")]
 impl From<PostgresError> for DbError {
     fn from(e: PostgresError) -> Self {
-        DbError::PlatformError(PlatformError::from(e))
+        DbError::DataOpError(PlatformError::from(e).into())
     }
 }
 
 #[cfg(feature = "with-sqlite")]
 impl From<rusqlite::Error> for DbError {
     fn from(e: rusqlite::Error) -> Self {
-        DbError::PlatformError(PlatformError::SqliteError(SqliteError::from(e)))
+        DbError::DataOpError(PlatformError::SqliteError(SqliteError::from(e)).into())
     }
 }
 
 #[cfg(feature = "with-sqlite")]
 impl From<SqliteError> for DbError {
     fn from(e: SqliteError) -> Self {
-        DbError::PlatformError(PlatformError::from(e))
+        DbError::DataOpError(PlatformError::SqliteError(e.into()).into())
     }
 }
 
 #[cfg(feature = "with-mysql")]
 impl From<MysqlError> for DbError {
     fn from(e: MysqlError) -> Self {
-        DbError::PlatformError(PlatformError::from(e))
+        DbError::DataOpError(PlatformError::MysqlError(e.into()).into())
     }
 }
 
@@ -134,13 +205,35 @@ pub enum DbError {
     #[error("{0}")]
     DataError(#[from] DataError),
     #[error("{0}")]
-    PlatformError(#[from] PlatformError),
+    DataOpError(#[from] DataOpError),
     #[error("{0}")]
     ConvertError(#[from] ConvertError),
     #[error("{0}")]
     ConnectError(#[from] ConnectError), //agnostic connection error
     #[error("Unsupported operation: {0}")]
     UnsupportedOperation(String),
+}
+
+#[derive(Debug, Error, Serialize, Deserialize)]
+pub enum DataOpError {
+    /// The Data Delete Operation failed due record is still referenced from another table
+    #[error("{constraint:?}, {cause_table:?}")]
+    ConstraintError {
+        severity: String,
+        code: String,
+        message: String,
+        detail: Option<String>,
+        cause_table: Option<String>,
+        constraint: Option<String>,
+        column: Option<String>,
+        datatype: Option<String>,
+        sql: String,
+    },
+    #[error("{message}")]
+    GenericError {
+        message: String,
+        sql: Option<String>,
+    },
 }
 
 #[derive(Debug, Error, Serialize)]
