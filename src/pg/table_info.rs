@@ -2,8 +2,8 @@
 //! This is not using information_schema since there is a performance issue with it.
 use crate::{
     pg::column_info,
-    table::{self, ForeignKey, Key, SchemaContent, Table, TableKey},
-    Column, ColumnName, Database, DbError, FromDao, TableName, Value,
+    table::{self, ForeignKey, Key, SchemaContent, TableDef, TableKey},
+    ColumnDef, ColumnName, Database, DbError, FromDao, TableName, Value,
 };
 use log::*;
 use rustorm_dao::value::ToValue;
@@ -58,7 +58,7 @@ pub fn get_tablenames(db: &mut dyn Database) -> Result<Vec<TableName>, DbError> 
 }
 
 /// get all database tables and views except from special schema
-pub fn get_all_tables(db: &mut dyn Database) -> Result<Vec<Table>, DbError> {
+pub fn get_all_tables(db: &mut dyn Database) -> Result<Vec<TableDef>, DbError> {
     let tablenames = get_tablenames(db)?;
     let mut tables = Vec::with_capacity(tablenames.len());
     for tablename in tablenames {
@@ -69,13 +69,13 @@ pub fn get_all_tables(db: &mut dyn Database) -> Result<Vec<Table>, DbError> {
 }
 
 enum TableKind {
-    Table,
+    TableDef,
     View,
 }
 impl TableKind {
     fn to_sql_char(&self) -> char {
         match *self {
-            TableKind::Table => 'r',
+            TableKind::TableDef => 'r',
             TableKind::View => 'v',
         }
     }
@@ -168,7 +168,7 @@ pub fn get_organized_tables(db: &mut dyn Database) -> Result<Vec<SchemaContent>,
         Ok(schemas) => {
             let mut contents = Vec::with_capacity(schemas.len());
             for schema in schemas {
-                let tables = get_schema_tables(db, &schema, &TableKind::Table)?;
+                let tables = get_schema_tables(db, &schema, &TableKind::TableDef)?;
                 let views = get_schema_tables(db, &schema, &TableKind::View)?;
                 info!("views: {:#?}", views);
                 contents.push(SchemaContent {
@@ -184,7 +184,7 @@ pub fn get_organized_tables(db: &mut dyn Database) -> Result<Vec<SchemaContent>,
 }
 
 /// get the table definition, its columns and table_keys
-pub fn get_table(db: &mut dyn Database, table_name: &TableName) -> Result<Table, DbError> {
+pub fn get_table(db: &mut dyn Database, table_name: &TableName) -> Result<TableDef, DbError> {
     #[derive(Debug, FromDao)]
     struct TableSimple {
         name: String,
@@ -194,8 +194,8 @@ pub fn get_table(db: &mut dyn Database, table_name: &TableName) -> Result<Table,
     }
 
     impl TableSimple {
-        fn to_table(&self, columns: Vec<Column>, table_key: Vec<TableKey>) -> Table {
-            Table {
+        fn to_table(&self, columns: Vec<ColumnDef>, table_key: Vec<TableKey>) -> TableDef {
+            TableDef {
                 name: TableName {
                     name: self.name.to_string(),
                     schema: Some(self.schema.to_string()),
@@ -246,9 +246,9 @@ pub fn get_table(db: &mut dyn Database, table_name: &TableName) -> Result<Table,
         })?;
     assert_eq!(table_simples.len(), 1);
     let table_simple = table_simples.remove(0);
-    let columns: Vec<Column> = column_info::get_columns(db, table_name)?;
+    let columns: Vec<ColumnDef> = column_info::get_columns(db, table_name)?;
     let keys: Vec<TableKey> = get_table_key(db, table_name)?;
-    let table: Table = table_simple.to_table(columns, keys);
+    let table: TableDef = table_simple.to_table(columns, keys);
     Ok(table)
 }
 

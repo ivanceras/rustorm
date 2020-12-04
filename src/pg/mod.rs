@@ -2,7 +2,7 @@ use self::{interval::PgInterval, numeric::PgNumeric};
 #[cfg(feature = "db-auth")]
 use crate::db_auth::{Role, User};
 use crate::error::DataOpError;
-use crate::{error::PlatformError, table::SchemaContent, DbError, Table, TableName, Value, *};
+use crate::{error::PlatformError, table::SchemaContent, DbError, TableDef, TableName, Value, *};
 use bigdecimal::BigDecimal;
 use geo::Point;
 use log::*;
@@ -92,7 +92,7 @@ impl Database for PostgresDB {
         })
     }
 
-    fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
+    fn get_table(&mut self, table_name: &TableName) -> Result<TableDef, DbError> {
         table_info::get_table(&mut *self, table_name)
     }
 
@@ -143,7 +143,7 @@ impl Database for PostgresDB {
         }
     }
 
-    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
+    fn get_all_tables(&mut self) -> Result<Vec<TableDef>, DbError> {
         table_info::get_all_tables(&mut *self)
     }
 

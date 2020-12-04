@@ -2,7 +2,7 @@ use crate::{types::SqlType, ColumnName, FromDao, TableName};
 use uuid::Uuid;
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Column {
+pub struct ColumnDef {
     pub table: TableName,
     pub name: ColumnName,
     pub comment: Option<String>,
@@ -10,7 +10,7 @@ pub struct Column {
     pub stat: Option<ColumnStat>,
 }
 
-impl Column {
+impl ColumnDef {
     /// check all the column constraint if any has AutoIncrement
     pub fn is_autoincrement(&self) -> bool {
         self.autoincrement_sequence_name().is_some()

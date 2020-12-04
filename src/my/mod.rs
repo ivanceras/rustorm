@@ -1,8 +1,8 @@
 #[cfg(feature = "db-auth")]
 use crate::db_auth::{Role, User};
 use crate::{
-    column, common, table::SchemaContent, types::SqlType, Column, ColumnName, DataError, Database,
-    DatabaseName, DbError, FromDao, Table, TableName, Value,
+    column, common, table::SchemaContent, types::SqlType, ColumnDef, ColumnName, DataError,
+    Database, DatabaseName, DbError, FromDao, TableDef, TableName, Value,
 };
 use r2d2::ManageConnection;
 use r2d2_mysql::{self, mysql};
@@ -81,7 +81,7 @@ impl Database for MysqlDB {
         }
     }
 
-    fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
+    fn get_table(&mut self, table_name: &TableName) -> Result<TableDef, DbError> {
         #[derive(Debug, FromDao)]
         struct TableSpec {
             schema: String,
@@ -130,7 +130,7 @@ impl Database for MysqlDB {
             type_: String,
         }
 
-        let columns: Vec<Column> = self
+        let columns: Vec<ColumnDef> = self
             .execute_sql_with_return(
                 r#"
                 SELECT TABLE_SCHEMA AS `schema`,
@@ -195,7 +195,7 @@ impl Database for MysqlDB {
                         (sql_type, capacity)
                     };
 
-                Column {
+                ColumnDef {
                     table: TableName::from(&format!("{}.{}", spec.schema, spec.table_name)),
                     name: ColumnName::from(&spec.name),
                     comment: Some(spec.comment),
@@ -210,7 +210,7 @@ impl Database for MysqlDB {
             })
             .collect();
 
-        Ok(Table {
+        Ok(TableDef {
             name: TableName {
                 name: table_spec.name,
                 schema: Some(table_spec.schema),
@@ -228,7 +228,7 @@ impl Database for MysqlDB {
         todo!()
     }
 
-    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
+    fn get_all_tables(&mut self) -> Result<Vec<TableDef>, DbError> {
         todo!()
     }
 

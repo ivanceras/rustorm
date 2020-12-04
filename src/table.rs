@@ -1,14 +1,14 @@
-use crate::{types::SqlType, Column, ColumnName, TableName};
+use crate::{types::SqlType, ColumnDef, ColumnName, TableName};
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Table {
+pub struct TableDef {
     pub name: TableName,
 
     /// comment of this table
     pub comment: Option<String>,
 
     /// columns of this table
-    pub columns: Vec<Column>,
+    pub columns: Vec<ColumnDef>,
 
     /// views can also be generated
     pub is_view: bool,
@@ -16,7 +16,7 @@ pub struct Table {
     pub table_key: Vec<TableKey>,
 }
 
-impl Table {
+impl TableDef {
     pub fn complete_name(&self) -> String {
         self.name.complete_name()
     }
@@ -42,7 +42,7 @@ impl Table {
         primary
     }
 
-    pub fn get_non_primary_columns(&self) -> Vec<&Column> {
+    pub fn get_non_primary_columns(&self) -> Vec<&ColumnDef> {
         let primary = self.get_primary_columns();
         self.columns
             .iter()
@@ -50,14 +50,14 @@ impl Table {
             .collect()
     }
 
-    pub fn get_primary_columns(&self) -> Vec<&Column> {
+    pub fn get_primary_columns(&self) -> Vec<&ColumnDef> {
         self.get_primary_column_names()
             .iter()
             .filter_map(|column_name| self.get_column(column_name))
             .collect()
     }
 
-    pub fn is_primary_column(&self, column: &Column) -> bool {
+    pub fn is_primary_column(&self, column: &ColumnDef) -> bool {
         self.get_primary_columns().contains(&column)
     }
 
@@ -108,7 +108,7 @@ impl Table {
         vec![]
     }
 
-    fn get_foreign_columns_to_table(&self, table_name: &TableName) -> Vec<&Column> {
+    fn get_foreign_columns_to_table(&self, table_name: &TableName) -> Vec<&ColumnDef> {
         self.get_foreign_column_names_to_table(table_name)
             .iter()
             .filter_map(|column_name| self.get_column(column_name))
@@ -161,7 +161,7 @@ impl Table {
     }
 
     /// find the column which matches this `column_name`
-    pub fn get_column(&self, column_name: &ColumnName) -> Option<&Column> {
+    pub fn get_column(&self, column_name: &ColumnName) -> Option<&ColumnDef> {
         self.columns.iter().find(|c| c.name == *column_name)
     }
 }

@@ -1,6 +1,6 @@
 #[cfg(feature = "db-auth")]
 use crate::db_auth::{Role, User};
-use crate::{table::SchemaContent, DbError, Rows, Table, TableName, Value};
+use crate::{table::SchemaContent, DbError, Rows, TableDef, TableName, Value};
 use rustorm_codegen::FromDao;
 use serde::Serialize;
 
@@ -14,7 +14,7 @@ pub struct DatabaseName {
 pub trait Database {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError>;
 
-    fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError>;
+    fn get_table(&mut self, table_name: &TableName) -> Result<TableDef, DbError>;
 
     fn set_autoincrement_value(
         &mut self,
@@ -27,7 +27,7 @@ pub trait Database {
         table_name: &TableName,
     ) -> Result<Option<i64>, DbError>;
 
-    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError>;
+    fn get_all_tables(&mut self) -> Result<Vec<TableDef>, DbError>;
 
     fn get_tablenames(&mut self) -> Result<Vec<TableName>, DbError>;
 

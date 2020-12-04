@@ -1,13 +1,13 @@
 #[cfg(feature = "db-auth")]
 use crate::db_auth::{Role, User};
 use crate::{
-    column::{Capacity, Column, ColumnConstraint, ColumnSpecification, Literal},
+    column::{Capacity, ColumnConstraint, ColumnDef, ColumnSpecification, Literal},
     common,
     error::DataOpError,
     error::PlatformError,
     table::{ForeignKey, Key, SchemaContent, TableKey},
     types::SqlType,
-    util, ColumnName, Database, DatabaseName, DbError, FromDao, Rows, Table, TableName, ToValue,
+    util, ColumnName, Database, DatabaseName, DbError, FromDao, Rows, TableDef, TableName, ToValue,
     Value,
 };
 
@@ -121,7 +121,7 @@ impl Database for SqliteDB {
     }
 
     #[allow(unused_variables)]
-    fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
+    fn get_table(&mut self, table_name: &TableName) -> Result<TableDef, DbError> {
         #[derive(Debug)]
         struct ColumnSimple {
             name: String,
@@ -131,8 +131,8 @@ impl Database for SqliteDB {
             pk: bool,
         }
         impl ColumnSimple {
-            fn to_column(&self, table_name: &TableName) -> Column {
-                Column {
+            fn to_column(&self, table_name: &TableName) -> ColumnDef {
+                ColumnDef {
                     table: table_name.clone(),
                     name: ColumnName::from(&self.name),
                     comment: None,
@@ -336,7 +336,7 @@ impl Database for SqliteDB {
             foreign_keys.into_iter().map(TableKey::ForeignKey).collect();
         let mut table_keys = vec![TableKey::PrimaryKey(primary_key)];
         table_keys.extend(table_key_foreign);
-        let table = Table {
+        let table = TableDef {
             name: table_name.clone(),
             comment: None, // TODO: need to extract comment from the create_sql
             columns,
@@ -366,7 +366,7 @@ impl Database for SqliteDB {
         Ok(tablenames)
     }
 
-    fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
+    fn get_all_tables(&mut self) -> Result<Vec<TableDef>, DbError> {
         let tablenames = self.get_tablenames()?;
         let mut tables = Vec::with_capacity(tablenames.len());
         for tablename in tablenames {
@@ -610,11 +610,11 @@ mod test {
         info!("table: {:#?}", table);
         assert_eq!(
             table,
-            Table {
+            TableDef {
                 name: TableName::from("film"),
                 comment: None,
                 columns: vec![
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("film_id"),
                         comment: None,
@@ -628,7 +628,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("title"),
                         comment: None,
@@ -642,7 +642,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("description"),
                         comment: None,
@@ -653,7 +653,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("release_year"),
                         comment: None,
@@ -664,7 +664,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("language_id"),
                         comment: None,
@@ -678,7 +678,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("original_language_id"),
                         comment: None,
@@ -689,7 +689,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("rental_duration"),
                         comment: None,
@@ -703,7 +703,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("rental_rate"),
                         comment: None,
@@ -717,7 +717,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("length"),
                         comment: None,
@@ -728,7 +728,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("replacement_cost"),
                         comment: None,
@@ -742,7 +742,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("rating"),
                         comment: None,
@@ -755,7 +755,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("special_features"),
                         comment: None,
@@ -766,7 +766,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName::from("film"),
                         name: ColumnName::from("last_update"),
                         comment: None,
@@ -819,7 +819,7 @@ mod test {
         info!("table: {:#?}", table);
         assert_eq!(
             table,
-            Table {
+            TableDef {
                 name: TableName {
                     name: "actor".into(),
                     schema: None,
@@ -827,7 +827,7 @@ mod test {
                 },
                 comment: None,
                 columns: vec![
-                    Column {
+                    ColumnDef {
                         table: TableName {
                             name: "actor".into(),
                             schema: None,
@@ -846,7 +846,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName {
                             name: "actor".into(),
                             schema: None,
@@ -865,7 +865,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName {
                             name: "actor".into(),
                             schema: None,
@@ -884,7 +884,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName {
                             name: "actor".into(),
                             schema: None,
@@ -932,7 +932,7 @@ mod test {
         info!("table: {:#?}", table);
         assert_eq!(
             table,
-            Table {
+            TableDef {
                 name: TableName {
                     name: "film_actor".into(),
                     schema: None,
@@ -940,7 +940,7 @@ mod test {
                 },
                 comment: None,
                 columns: vec![
-                    Column {
+                    ColumnDef {
                         table: TableName {
                             name: "film_actor".into(),
                             schema: None,
@@ -959,7 +959,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName {
                             name: "film_actor".into(),
                             schema: None,
@@ -978,7 +978,7 @@ mod test {
                         },
                         stat: None
                     },
-                    Column {
+                    ColumnDef {
                         table: TableName {
                             name: "film_actor".into(),
                             schema: None,

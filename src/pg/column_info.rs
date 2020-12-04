@@ -2,14 +2,17 @@ use crate::{
     column::{Capacity, ColumnConstraint, ColumnSpecification, ColumnStat, Literal},
     common,
     types::SqlType,
-    util, Column, ColumnName, Database, DbError, TableName, ToValue,
+    util, ColumnDef, ColumnName, Database, DbError, TableName, ToValue,
 };
 use log::*;
 use rustorm_dao;
 use uuid::Uuid;
 
 /// get all the columns of the table
-pub fn get_columns(db: &mut dyn Database, table_name: &TableName) -> Result<Vec<Column>, DbError> {
+pub fn get_columns(
+    db: &mut dyn Database,
+    table_name: &TableName,
+) -> Result<Vec<ColumnDef>, DbError> {
     /// column name and comment
     #[derive(Debug, crate::codegen::FromDao)]
     struct ColumnSimple {
@@ -24,8 +27,8 @@ pub fn get_columns(db: &mut dyn Database, table_name: &TableName) -> Result<Vec<
             table_name: &TableName,
             specification: ColumnSpecification,
             stat: Option<ColumnStat>,
-        ) -> Column {
-            Column {
+        ) -> ColumnDef {
+            ColumnDef {
                 table: table_name.clone(),
                 name: ColumnName::from(&self.name),
                 comment: self.comment.to_owned(),

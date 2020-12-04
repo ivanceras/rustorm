@@ -1,8 +1,8 @@
 #[cfg(feature = "db-auth")]
 use crate::db_auth::{Role, User};
 use crate::{
-    table::SchemaContent, DBPlatform, DataError, Database, DatabaseName, DbError, Table, ToValue,
-    Value,
+    table::SchemaContent, DBPlatform, DataError, Database, DatabaseName, DbError, TableDef,
+    ToValue, Value,
 };
 
 use rustorm_dao::{FromDao, TableName, ToColumnNames, ToDao, ToTableName};
@@ -69,7 +69,7 @@ impl EntityManager {
     }
 
     /// get the table from database based on this column name
-    pub fn get_table(&mut self, table_name: &TableName) -> Result<Table, DbError> {
+    pub fn get_table(&mut self, table_name: &TableName) -> Result<TableDef, DbError> {
         self.0.get_table(table_name)
     }
 
@@ -91,7 +91,7 @@ impl EntityManager {
     }
 
     /// get all the user table and views from the database
-    pub fn get_all_tables(&mut self) -> Result<Vec<Table>, DbError> {
+    pub fn get_all_tables(&mut self) -> Result<Vec<TableDef>, DbError> {
         info!("EXPENSIVE DB OPERATION: get_all_tables");
         self.0.get_all_tables()
     }
