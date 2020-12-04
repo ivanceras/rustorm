@@ -1,4 +1,10 @@
 # Unreleased
+
+# 0.19.0
+ - Rename `Table` to `TableDef` and `Column` to `ColumnDef`, this is a more appropriate name since it is a TableDefinition and ColumnDefinition respectively
+ - Convert `PlatformError` to `DataOpError` to avoid exposing the platform specific error
+
+# 0.18.0
 - Remove smarty algorithmn to cast blob image to data_uri, return as blob
 - Add a function to check if a column is a primary to the table
 - Implement setting and getting the autoincrement primary key of table for postgresql
