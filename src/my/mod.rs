@@ -81,7 +81,7 @@ impl Database for MysqlDB {
         }
     }
 
-    fn get_table(&mut self, table_name: &TableName) -> Result<TableDef, DbError> {
+    fn get_table(&mut self, table_name: &TableName) -> Result<Option<TableDef>, DbError> {
         #[derive(Debug, FromDao)]
         struct TableSpec {
             schema: String,
@@ -210,7 +210,7 @@ impl Database for MysqlDB {
             })
             .collect();
 
-        Ok(TableDef {
+        Ok(Some(TableDef {
             name: TableName {
                 name: table_spec.name,
                 schema: Some(table_spec.schema),
@@ -221,7 +221,7 @@ impl Database for MysqlDB {
             is_view: table_spec.is_view == 1,
             // TODO: implementation
             table_key: vec![],
-        })
+        }))
     }
 
     fn get_tablenames(&mut self) -> Result<Vec<TableName>, DbError> {

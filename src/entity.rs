@@ -69,7 +69,7 @@ impl EntityManager {
     }
 
     /// get the table from database based on this column name
-    pub fn get_table(&mut self, table_name: &TableName) -> Result<TableDef, DbError> {
+    pub fn get_table(&mut self, table_name: &TableName) -> Result<Option<TableDef>, DbError> {
         self.0.get_table(table_name)
     }
 

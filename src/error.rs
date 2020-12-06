@@ -200,4 +200,6 @@ pub enum DataError {
     ZeroRecordReturned,
     #[error("More than one record returned")]
     MoreThan1RecordReturned,
+    #[error("Table {0} not found")]
+    TableNameNotFound(String),
 }

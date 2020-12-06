@@ -3,7 +3,7 @@
 use crate::{
     pg::column_info,
     table::{self, ForeignKey, Key, SchemaContent, TableDef, TableKey},
-    ColumnDef, ColumnName, Database, DbError, FromDao, TableName, Value,
+    ColumnDef, ColumnName, DataError, Database, DbError, FromDao, TableName, Value,
 };
 use log::*;
 use rustorm_dao::value::ToValue;
@@ -60,12 +60,10 @@ pub fn get_tablenames(db: &mut dyn Database) -> Result<Vec<TableName>, DbError> 
 /// get all database tables and views except from special schema
 pub fn get_all_tables(db: &mut dyn Database) -> Result<Vec<TableDef>, DbError> {
     let tablenames = get_tablenames(db)?;
-    let mut tables = Vec::with_capacity(tablenames.len());
-    for tablename in tablenames {
-        let table = get_table(db, &tablename)?;
-        tables.push(table);
-    }
-    Ok(tables)
+    Ok(tablenames
+        .iter()
+        .filter_map(|tablename| get_table(db, tablename).ok().flatten())
+        .collect())
 }
 
 enum TableKind {
@@ -184,7 +182,10 @@ pub fn get_organized_tables(db: &mut dyn Database) -> Result<Vec<SchemaContent>,
 }
 
 /// get the table definition, its columns and table_keys
-pub fn get_table(db: &mut dyn Database, table_name: &TableName) -> Result<TableDef, DbError> {
+pub fn get_table(
+    db: &mut dyn Database,
+    table_name: &TableName,
+) -> Result<Option<TableDef>, DbError> {
     #[derive(Debug, FromDao)]
     struct TableSimple {
         name: String,
@@ -244,12 +245,18 @@ pub fn get_table(db: &mut dyn Database, table_name: &TableName) -> Result<TableD
                 })
                 .collect()
         })?;
-    assert_eq!(table_simples.len(), 1);
-    let table_simple = table_simples.remove(0);
-    let columns: Vec<ColumnDef> = column_info::get_columns(db, table_name)?;
-    let keys: Vec<TableKey> = get_table_key(db, table_name)?;
-    let table: TableDef = table_simple.to_table(columns, keys);
-    Ok(table)
+
+    match table_simples.len() {
+        0 => Ok(None),
+        1 => {
+            let table_simple = table_simples.remove(0);
+            let columns: Vec<ColumnDef> = column_info::get_columns(db, table_name)?;
+            let keys: Vec<TableKey> = get_table_key(db, table_name)?;
+            let table: TableDef = table_simple.to_table(columns, keys);
+            Ok(Some(table))
+        }
+        _ => Err(DbError::DataError(DataError::MoreThan1RecordReturned)),
+    }
 }
 
 /// column name only
@@ -544,11 +551,14 @@ mod test {
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = TableName::from("actor");
-        let table = get_table(&mut *db, &table);
+        let table = get_table(&mut *db, &table)
+            .expect("must be ok")
+            .expect("must have value");
+
         info!("table: {:#?}", table);
-        assert!(table.is_ok());
+
         assert_eq!(
-            table.unwrap().table_key,
+            table.table_key,
             vec![TableKey::PrimaryKey(Key {
                 name: Some("actor_pkey".to_string()),
                 columns: vec![ColumnName {
@@ -568,11 +578,12 @@ mod test {
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = TableName::from("store");
-        let table = get_table(&mut *db, &table);
-        info!("table: {:#?}", table);
-        assert!(table.is_ok());
+        let table = get_table(&mut *db, &table)
+            .expect("must be ok")
+            .expect("must have a value");
+
         assert_eq!(
-            table.unwrap().table_key,
+            table.table_key,
             vec![
                 TableKey::PrimaryKey(Key {
                     name: Some("store_pkey".into()),
@@ -630,11 +641,13 @@ mod test {
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = TableName::from("film_actor");
-        let table = get_table(&mut *db, &table);
+        let table = get_table(&mut *db, &table)
+            .expect("must be ok")
+            .expect("must have a value");
         info!("table: {:#?}", table);
-        assert!(table.is_ok());
+
         assert_eq!(
-            table.unwrap().table_key,
+            table.table_key,
             vec![
                 TableKey::PrimaryKey(Key {
                     name: Some("film_actor_pkey".into()),
@@ -699,11 +712,12 @@ mod test {
         assert!(db.is_ok());
         let mut db = db.unwrap();
         let table = TableName::from("film_actor_awards");
-        let table = get_table(&mut *db, &table);
+        let table = get_table(&mut *db, &table)
+            .expect("must be ok")
+            .expect("must have a value");
         info!("table: {:#?}", table);
-        assert!(table.is_ok());
         assert_eq!(
-            table.unwrap().table_key,
+            table.table_key,
             vec![
                 TableKey::PrimaryKey(Key {
                     name: Some("film_actor_awards_pkey".into()),

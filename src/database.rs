@@ -14,7 +14,7 @@ pub struct DatabaseName {
 pub trait Database {
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError>;
 
-    fn get_table(&mut self, table_name: &TableName) -> Result<TableDef, DbError>;
+    fn get_table(&mut self, table_name: &TableName) -> Result<Option<TableDef>, DbError>;
 
     fn set_autoincrement_value(
         &mut self,

@@ -92,7 +92,7 @@ impl Database for PostgresDB {
         })
     }
 
-    fn get_table(&mut self, table_name: &TableName) -> Result<TableDef, DbError> {
+    fn get_table(&mut self, table_name: &TableName) -> Result<Option<TableDef>, DbError> {
         table_info::get_table(&mut *self, table_name)
     }
 
@@ -101,22 +101,27 @@ impl Database for PostgresDB {
         table_name: &TableName,
         sequence_value: i64,
     ) -> Result<Option<i64>, DbError> {
-        let table = self.get_table(table_name)?;
-        let pk = table.get_primary_columns();
-        assert_eq!(
-            pk.len(),
-            1,
-            "auto increment only supports 1 primary column table"
-        );
-        let pk_column = pk.get(0).expect("must have a primary column");
-        if let Some(pk_sequnce_name) = pk_column.autoincrement_sequence_name() {
-            let sql = format!("SELECT setval('{}',$1) AS value", pk_sequnce_name);
-            let rows = self.execute_sql_with_return(&sql, &[&sequence_value.to_value()])?;
-            let row = rows.iter().next().expect("must have 1 row");
-            let value = row.get("value").expect("value");
-            Ok(Some(value))
+        if let Some(table) = self.get_table(table_name)? {
+            let pk = table.get_primary_columns();
+            assert_eq!(
+                pk.len(),
+                1,
+                "auto increment only supports 1 primary column table"
+            );
+            let pk_column = pk.get(0).expect("must have a primary column");
+            if let Some(pk_sequnce_name) = pk_column.autoincrement_sequence_name() {
+                let sql = format!("SELECT setval('{}',$1) AS value", pk_sequnce_name);
+                let rows = self.execute_sql_with_return(&sql, &[&sequence_value.to_value()])?;
+                let row = rows.iter().next().expect("must have 1 row");
+                let value = row.get("value").expect("value");
+                Ok(Some(value))
+            } else {
+                Ok(None)
+            }
         } else {
-            Ok(None)
+            Err(DbError::DataError(DataError::TableNameNotFound(
+                table_name.complete_name(),
+            )))
         }
     }
 
@@ -124,22 +129,27 @@ impl Database for PostgresDB {
         &mut self,
         table_name: &TableName,
     ) -> Result<Option<i64>, DbError> {
-        let table = self.get_table(table_name)?;
-        let pk = table.get_primary_columns();
-        assert_eq!(
-            pk.len(),
-            1,
-            "auto increment only supports 1 primary column table"
-        );
-        let pk_column = pk.get(0).expect("must have a primary column");
-        if let Some(pk_sequnce_name) = pk_column.autoincrement_sequence_name() {
-            let sql = format!("SELECT last_value FROM {}", pk_sequnce_name);
-            let rows = self.execute_sql_with_return(&sql, &[])?;
-            let row = rows.iter().next().expect("must have 1 row");
-            let last_value = row.get("last_value").expect("must have a last_value");
-            Ok(Some(last_value))
+        if let Some(table) = self.get_table(table_name)? {
+            let pk = table.get_primary_columns();
+            assert_eq!(
+                pk.len(),
+                1,
+                "auto increment only supports 1 primary column table"
+            );
+            let pk_column = pk.get(0).expect("must have a primary column");
+            if let Some(pk_sequnce_name) = pk_column.autoincrement_sequence_name() {
+                let sql = format!("SELECT last_value FROM {}", pk_sequnce_name);
+                let rows = self.execute_sql_with_return(&sql, &[])?;
+                let row = rows.iter().next().expect("must have 1 row");
+                let last_value = row.get("last_value").expect("must have a last_value");
+                Ok(Some(last_value))
+            } else {
+                Ok(None)
+            }
         } else {
-            Ok(None)
+            Err(DbError::DataError(DataError::TableNameNotFound(
+                table_name.complete_name(),
+            )))
         }
     }
 

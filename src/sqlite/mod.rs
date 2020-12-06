@@ -121,7 +121,7 @@ impl Database for SqliteDB {
     }
 
     #[allow(unused_variables)]
-    fn get_table(&mut self, table_name: &TableName) -> Result<TableDef, DbError> {
+    fn get_table(&mut self, table_name: &TableName) -> Result<Option<TableDef>, DbError> {
         #[derive(Debug)]
         struct ColumnSimple {
             name: String,
@@ -343,7 +343,7 @@ impl Database for SqliteDB {
             is_view: false,
             table_key: table_keys,
         };
-        Ok(table)
+        Ok(Some(table))
     }
 
     fn get_tablenames(&mut self) -> Result<Vec<TableName>, DbError> {
@@ -368,12 +368,10 @@ impl Database for SqliteDB {
 
     fn get_all_tables(&mut self) -> Result<Vec<TableDef>, DbError> {
         let tablenames = self.get_tablenames()?;
-        let mut tables = Vec::with_capacity(tablenames.len());
-        for tablename in tablenames {
-            let table = self.get_table(&tablename)?;
-            tables.push(table);
-        }
-        Ok(tables)
+        Ok(tablenames
+            .iter()
+            .filter_map(|tablename| self.get_table(tablename).ok().flatten())
+            .collect())
     }
 
     fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> {
@@ -604,9 +602,11 @@ mod test {
         let mut db = db.unwrap();
         let film = "film";
         let film_table = TableName::from(film);
-        let table = db.get_table(&film_table);
-        assert!(table.is_ok());
-        let table = table.unwrap();
+        let table = db
+            .get_table(&film_table)
+            .expect("must be ok")
+            .expect("must have a table");
+
         info!("table: {:#?}", table);
         assert_eq!(
             table,
@@ -813,9 +813,10 @@ mod test {
         let mut db = db.unwrap();
         let table = "actor";
         let table_name = TableName::from(table);
-        let table = db.get_table(&table_name);
-        assert!(table.is_ok());
-        let table = table.unwrap();
+        let table = db
+            .get_table(&table_name)
+            .expect("must be ok")
+            .expect("must have a table");
         info!("table: {:#?}", table);
         assert_eq!(
             table,
@@ -926,9 +927,10 @@ mod test {
         let mut db = db.unwrap();
         let table = "film_actor";
         let table_name = TableName::from(table);
-        let table = db.get_table(&table_name);
-        assert!(table.is_ok());
-        let table = table.unwrap();
+        let table = db
+            .get_table(&table_name)
+            .expect("must be ok")
+            .expect("must have a table");
         info!("table: {:#?}", table);
         assert_eq!(
             table,
