@@ -10,6 +10,18 @@ use rustorm_dao::{FromDao, TableName, ToColumnNames, ToDao, ToTableName};
 pub struct EntityManager(pub DBPlatform);
 
 impl EntityManager {
+    pub fn begin_transaction(&mut self) -> Result<(), DbError> {
+        self.0.begin_transaction()
+    }
+
+    pub fn commit_transaction(&mut self) -> Result<(), DbError> {
+        self.0.commit_transaction()
+    }
+
+    pub fn rollback_transaction(&mut self) -> Result<(), DbError> {
+        self.0.rollback_transaction()
+    }
+
     pub fn set_session_user(&mut self, username: &str) -> Result<(), DbError> {
         let sql = format!("SET SESSION ROLE '{}'", username);
         self.0.execute_sql_with_return(&sql, &[])?;

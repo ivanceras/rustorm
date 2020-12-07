@@ -32,6 +32,21 @@ pub fn test_connection(db_url: &str) -> Result<(), MysqlError> {
 pub struct MysqlDB(pub r2d2::PooledConnection<r2d2_mysql::MysqlConnectionManager>);
 
 impl Database for MysqlDB {
+    fn begin_transaction(&mut self) -> Result<(), DbError> {
+        self.execute_sql_with_return("START TRANSACTION", &[])?;
+        Ok(())
+    }
+
+    fn commit_transaction(&mut self) -> Result<(), DbError> {
+        self.execute_sql_with_return("COMMIT TRANSACTION", &[])?;
+        Ok(())
+    }
+
+    fn rollback_transaction(&mut self) -> Result<(), DbError> {
+        self.execute_sql_with_return("ROLLBACK TRANSACTION", &[])?;
+        Ok(())
+    }
+
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
         fn collect(mut rows: mysql::QueryResult) -> Result<Rows, DbError> {
             let column_types: Vec<_> = rows.columns_ref().iter().map(|c| c.column_type()).collect();

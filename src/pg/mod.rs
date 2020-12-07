@@ -82,6 +82,21 @@ impl PostgresDB {
 }
 
 impl Database for PostgresDB {
+    fn begin_transaction(&mut self) -> Result<(), DbError> {
+        self.execute_sql_with_return("BEGIN TRANSACTION", &[])?;
+        Ok(())
+    }
+
+    fn commit_transaction(&mut self) -> Result<(), DbError> {
+        self.execute_sql_with_return("COMMIT TRANSACTION", &[])?;
+        Ok(())
+    }
+
+    fn rollback_transaction(&mut self) -> Result<(), DbError> {
+        self.execute_sql_with_return("ROLLBACK TRANSACTION", &[])?;
+        Ok(())
+    }
+
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError> {
         self.pg_execute_sql_with_return(sql, param).map_err(|e| {
             Into::<DataOpError>::into(PlatformError::PostgresError(PostgresError::SqlError(

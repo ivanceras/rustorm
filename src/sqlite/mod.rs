@@ -73,6 +73,21 @@ fn to_sq_values(params: &[&Value]) -> Vec<rusqlite::types::Value> {
 }
 
 impl Database for SqliteDB {
+    fn begin_transaction(&mut self) -> Result<(), DbError> {
+        self.execute_sql_with_return("BEGIN TRANSACTION", &[])?;
+        Ok(())
+    }
+
+    fn commit_transaction(&mut self) -> Result<(), DbError> {
+        self.execute_sql_with_return("COMMIT TRANSACTION", &[])?;
+        Ok(())
+    }
+
+    fn rollback_transaction(&mut self) -> Result<(), DbError> {
+        self.execute_sql_with_return("ROLLBACK TRANSACTION", &[])?;
+        Ok(())
+    }
+
     fn execute_sql_with_return(&mut self, sql: &str, params: &[&Value]) -> Result<Rows, DbError> {
         info!("executing sql: {}", sql);
         println!("executing sql: {}", sql);

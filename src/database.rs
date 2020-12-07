@@ -12,6 +12,12 @@ pub struct DatabaseName {
 }
 
 pub trait Database {
+    fn begin_transaction(&mut self) -> Result<(), DbError>;
+
+    fn commit_transaction(&mut self) -> Result<(), DbError>;
+
+    fn rollback_transaction(&mut self) -> Result<(), DbError>;
+
     fn execute_sql_with_return(&mut self, sql: &str, param: &[&Value]) -> Result<Rows, DbError>;
 
     fn get_table(&mut self, table_name: &TableName) -> Result<Option<TableDef>, DbError>;

@@ -5,6 +5,18 @@ use crate::{DBPlatform, Dao, DataError, DbError, Rows, Value};
 pub struct DaoManager(pub DBPlatform);
 
 impl DaoManager {
+    pub fn begin_transaction(&mut self) -> Result<(), DbError> {
+        self.0.begin_transaction()
+    }
+
+    pub fn commit_transaction(&mut self) -> Result<(), DbError> {
+        self.0.commit_transaction()
+    }
+
+    pub fn rollback_transaction(&mut self) -> Result<(), DbError> {
+        self.0.rollback_transaction()
+    }
+
     pub fn execute_sql_with_return(
         &mut self,
         sql: &str,
