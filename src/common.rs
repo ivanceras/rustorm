@@ -150,10 +150,6 @@ pub fn cast_type(value: &Value, required_type: &SqlType) -> Value {
                     ),
                 }
             }
-            Value::ImageUri(_) => {
-                info!("passing ImageUri as is");
-                value.clone()
-            }
             Value::Char(v) => match *required_type {
                 SqlType::Varchar => Value::Text(format!("{}", v)),
                 _ => panic!(

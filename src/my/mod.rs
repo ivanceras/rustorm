@@ -300,9 +300,6 @@ impl mysql::prelude::ToValue for MyValue<'_> {
             Value::Float(ref v) => v.into(),
             Value::Double(ref v) => v.into(),
             Value::Blob(ref v) => v.into(),
-            Value::ImageUri(ref _v) => {
-                panic!("ImageUri is only used for reading data from DB, not inserting into DB")
-            }
             Value::Char(ref v) => v.to_string().into(),
             Value::Text(ref v) => v.into(),
             Value::Uuid(ref v) => v.as_bytes().into(),

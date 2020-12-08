@@ -138,7 +138,6 @@ impl HasType for Value {
             Value::Double(_) => Some(SqlType::Double),
             Value::BigDecimal(_) => Some(SqlType::Numeric),
             Value::Blob(_) => Some(SqlType::Blob),
-            Value::ImageUri(_) => Some(SqlType::Text),
             Value::Char(_) => Some(SqlType::Char),
             Value::Text(_) => Some(SqlType::Text),
             Value::Json(_) => Some(SqlType::Json),

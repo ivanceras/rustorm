@@ -53,7 +53,6 @@ fn to_sq_value(val: &Value) -> rusqlite::types::Value {
             None => panic!("unable to convert bigdecimal"),
         },
         Value::Blob(ref v) => rusqlite::types::Value::Blob(v.clone()),
-        Value::ImageUri(ref v) => rusqlite::types::Value::Text(v.clone()),
         Value::Char(v) => rusqlite::types::Value::Text(format!("{}", v)),
         Value::Json(ref v) => rusqlite::types::Value::Text(v.clone()),
         Value::Uuid(ref v) => rusqlite::types::Value::Text(v.to_string()),

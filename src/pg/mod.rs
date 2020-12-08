@@ -354,9 +354,6 @@ impl<'a> ToSql for PgValue<'a> {
             Value::Float(ref v) => v.to_sql(ty, out),
             Value::Double(ref v) => v.to_sql(ty, out),
             Value::Blob(ref v) => v.to_sql(ty, out),
-            Value::ImageUri(ref _v) => {
-                panic!("ImageUri is only used for reading data from DB, not inserting into DB")
-            }
             Value::Char(ref v) => v.to_string().to_sql(ty, out),
             Value::Text(ref v) => v.to_sql(ty, out),
             Value::Uuid(ref v) => v.to_sql(ty, out),
