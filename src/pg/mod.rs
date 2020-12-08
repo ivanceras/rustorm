@@ -194,7 +194,6 @@ impl Database for PostgresDB {
                rolbypassrls AS can_bypass_rls,
                CASE WHEN rolconnlimit < 0 THEN NULL
                     ELSE rolconnlimit END AS conn_limit,
-               '*************' AS password,
                CASE WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
                    ELSE rolvaliduntil
                    END AS valid_until
@@ -206,7 +205,6 @@ impl Database for PostgresDB {
                 .map(|row| User {
                     sysid: row.get("sysid").expect("sysid"),
                     username: row.get("username").expect("username"),
-                    password: row.get("password").expect("password"),
                     is_superuser: row.get("is_superuser").expect("is_superuser"),
                     is_inherit: row.get("is_inherit").expect("is_inherit"),
                     can_create_db: row.get("can_create_db").expect("can_create_db"),
@@ -234,7 +232,6 @@ impl Database for PostgresDB {
                rolbypassrls AS can_bypass_rls,
                CASE WHEN rolconnlimit < 0 THEN NULL
                     ELSE rolconnlimit END AS conn_limit,
-               '*************' AS password,
                CASE WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
                    ELSE rolvaliduntil
                    END AS valid_until
@@ -249,7 +246,6 @@ impl Database for PostgresDB {
                 .map(|row| User {
                     sysid: row.get("sysid").expect("sysid"),
                     username: row.get("username").expect("username"),
-                    password: row.get("password").expect("password"),
                     is_superuser: row.get("is_superuser").expect("is_superuser"),
                     is_inherit: row.get("is_inherit").expect("is_inherit"),
                     can_create_db: row.get("can_create_db").expect("can_create_db"),

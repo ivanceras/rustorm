@@ -10,7 +10,6 @@ mod previlege;
 pub struct User {
     pub sysid: i32,
     pub username: String,
-    pub password: String,
     pub is_superuser: bool,
     pub is_inherit: bool,
     pub can_create_db: bool,

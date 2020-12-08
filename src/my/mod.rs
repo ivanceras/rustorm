@@ -2,7 +2,7 @@
 use crate::db_auth::{Role, User};
 use crate::{
     column, common, table::SchemaContent, types::SqlType, ColumnDef, ColumnName, DataError,
-    Database, DatabaseName, DbError, FromDao, TableDef, TableName, Value,
+    Database, DatabaseName, DbError, FromDao, TableDef, TableName, ToValue, Value,
 };
 use r2d2::ManageConnection;
 use r2d2_mysql::{self, mysql};
@@ -152,7 +152,7 @@ impl Database for MysqlDB {
                        TABLE_NAME AS table_name,
                        COLUMN_NAME AS name,
                        COLUMN_COMMENT AS comment,
-                       CAST(COLUMN_TYPE as CHAR(64)) AS type_
+                       CAST(COLUMN_TYPE as CHAR(255)) AS type_
                   FROM INFORMATION_SCHEMA.COLUMNS
                  WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?"#,
                 &[&table_spec.schema.clone().into(), &table_name],
@@ -166,6 +166,7 @@ impl Database for MysqlDB {
                         let end = spec.type_.find(')');
                         if let (Some(start), Some(end)) = (start, end) {
                             let dtype = &spec.type_[0..start];
+                            println!("dtype: {:?}", dtype);
                             let range = &spec.type_[start + 1..end];
                             let choices = range
                                 .split(',')
@@ -178,18 +179,18 @@ impl Database for MysqlDB {
                                 _ => panic!("not yet handled: {}", dtype),
                             }
                         } else {
-                            panic!("not yet handled: {}", spec.type_)
+                            panic!("not yet handled spec_type: {:?}", spec.type_)
                         }
                     } else {
                         let (dtype, capacity) = common::extract_datatype_with_capacity(&spec.type_);
                         let sql_type = match &*dtype {
-                            "tinyint" => SqlType::Tinyint,
-                            "smallint" | "year" => SqlType::Smallint,
-                            "mediumint" => SqlType::Int,
-                            "int" => SqlType::Int,
-                            "bigint" => SqlType::Bigint,
-                            "float" => SqlType::Float,
-                            "double" => SqlType::Double,
+                            "tinyint" | "tinyint unsigned" => SqlType::Tinyint,
+                            "smallint" | "smallint unsigned" | "year" => SqlType::Smallint,
+                            "mediumint" | "mediumint unsigned" => SqlType::Int,
+                            "int" | "int unsigned" => SqlType::Int,
+                            "bigint" | "bigin unsigned" => SqlType::Bigint,
+                            "float" | "float unsigned" => SqlType::Float,
+                            "double" | "double unsigned" => SqlType::Double,
                             "decimal" => SqlType::Numeric,
                             "tinyblob" => SqlType::Tinyblob,
                             "mediumblob" => SqlType::Mediumblob,
@@ -240,24 +241,96 @@ impl Database for MysqlDB {
     }
 
     fn get_tablenames(&mut self) -> Result<Vec<TableName>, DbError> {
-        todo!()
+        #[derive(Debug, FromDao)]
+        struct TableNameSimple {
+            table_name: String,
+        }
+        let sql =
+            "SELECT TABLE_NAME as table_name FROM information_schema.tables WHERE TABLE_SCHEMA = database()";
+
+        let rows: Rows = self.execute_sql_with_return(sql, &[])?;
+        println!("rows: {:#?}", rows);
+
+        let result: Vec<TableNameSimple> = self
+            .execute_sql_with_return(sql, &[])?
+            .iter()
+            .map(|row| TableNameSimple {
+                table_name: row.get("table_name").expect("must have a table name"),
+            })
+            .collect();
+        let tablenames = result
+            .iter()
+            .map(|r| TableName::from(&r.table_name))
+            .collect();
+        Ok(tablenames)
     }
 
     fn get_all_tables(&mut self) -> Result<Vec<TableDef>, DbError> {
-        todo!()
+        let tablenames = self.get_tablenames()?;
+        Ok(tablenames
+            .iter()
+            .filter_map(|tablename| self.get_table(tablename).ok().flatten())
+            .collect())
     }
 
     fn get_grouped_tables(&mut self) -> Result<Vec<SchemaContent>, DbError> {
-        todo!()
+        let table_names = get_table_names(&mut *self, &"BASE TABLE".to_string())?;
+        let view_names = get_table_names(&mut *self, &"VIEW".to_string())?;
+        let schema_content = SchemaContent {
+            schema: "".to_string(),
+            tablenames: table_names,
+            views: view_names,
+        };
+        Ok(vec![schema_content])
     }
 
     fn get_database_name(&mut self) -> Result<Option<DatabaseName>, DbError> {
-        todo!()
+        let sql = "SELECT database() AS name";
+        let mut database_names: Vec<Option<DatabaseName>> =
+            self.execute_sql_with_return(&sql, &[]).map(|rows| {
+                rows.iter()
+                    .map(|row| {
+                        row.get_opt("name")
+                            .expect("must not error")
+                            .map(|name| DatabaseName {
+                                name,
+                                description: None,
+                            })
+                    })
+                    .collect()
+            })?;
+
+        if database_names.len() > 0 {
+            Ok(database_names.remove(0))
+        } else {
+            Ok(None)
+        }
     }
 
     #[cfg(feature = "db-auth")]
     fn get_users(&mut self) -> Result<Vec<User>, DbError> {
-        todo!()
+        let sql = "SELECT USER as usernameFROM information_schema.user_attributes";
+        let rows: Result<Rows, DbError> = self.execute_sql_with_return(&sql, &[]);
+
+        rows.map(|rows| {
+            rows.iter()
+                .map(|row| User {
+                    //FIXME; this should be option
+                    sysid: 0,
+                    username: row.get("username").expect("username"),
+                    //TODO: join to the user_privileges tables
+                    is_superuser: false,
+                    is_inherit: false,
+                    can_create_db: false,
+                    can_create_role: false,
+                    can_login: false,
+                    can_do_replication: false,
+                    can_bypass_rls: false,
+                    valid_until: None,
+                    conn_limit: None,
+                })
+                .collect()
+        })
     }
 
     #[cfg(feature = "db-auth")]
@@ -284,6 +357,27 @@ impl Database for MysqlDB {
     ) -> Result<Option<i64>, DbError> {
         todo!()
     }
+}
+
+fn get_table_names(db: &mut dyn Database, kind: &str) -> Result<Vec<TableName>, DbError> {
+    #[derive(Debug, FromDao)]
+    struct TableNameSimple {
+        table_name: String,
+    }
+    let sql = "SELECT TABLE_NAME as table_name FROM information_schema.tables WHERE table_type= ?";
+    let result: Vec<TableNameSimple> = db
+        .execute_sql_with_return(sql, &[&kind.to_value()])?
+        .iter()
+        .map(|row| TableNameSimple {
+            table_name: row.get("table_name").expect("must have a table name"),
+        })
+        .collect();
+    let mut table_names = vec![];
+    for r in result {
+        let table_name = TableName::from(&r.table_name);
+        table_names.push(table_name);
+    }
+    Ok(table_names)
 }
 
 #[derive(Debug)]

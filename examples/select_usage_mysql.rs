@@ -7,7 +7,7 @@ struct Actor {
 }
 
 fn main() {
-    let db_url = "mysql://root:r00tpwdh3r3@localhost/sakila";
+    let db_url = "mysql://root:r00t@localhost/sakila";
     let mut pool = Pool::new();
     let mut em = pool
         .em(db_url)
