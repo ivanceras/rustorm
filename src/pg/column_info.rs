@@ -104,6 +104,17 @@ pub fn get_columns(
     }
 }
 
+/// remove the type cast of the value and return only the default
+/// example: 'b':character varying -> 'b'
+fn remove_value_cast(value: &str) -> String {
+    if value.contains("::") {
+        let splinters: Vec<&str> = value.split("::").collect();
+        splinters[0].to_string()
+    } else {
+        value.to_string()
+    }
+}
+
 /// get the contrainst of each of this column
 fn get_column_specification(
     db: &mut dyn Database,
@@ -171,10 +182,8 @@ fn get_column_specification(
                         }
                         SqlType::Float | SqlType::Double | SqlType::Real | SqlType::Numeric => {
                             // some defaults have cast type example: (0)::numeric
-                            let splinters = util::maybe_trim_parenthesis(&default)
-                                .split("::")
-                                .collect::<Vec<&str>>();
-                            let default_value = util::maybe_trim_parenthesis(splinters[0]);
+                            let value = remove_value_cast(default);
+                            let default_value = util::maybe_trim_parenthesis(&value);
                             if default_value.to_lowercase() == "null" {
                                 Literal::Null
                             } else {
@@ -224,17 +233,10 @@ fn get_column_specification(
                         | SqlType::Char
                         | SqlType::Tinytext
                         | SqlType::Mediumtext
-                        | SqlType::Text => Literal::String(default.to_owned()),
+                        | SqlType::Text => Literal::String(remove_value_cast(default)),
                         SqlType::Enum(_name, _choices) => {
                             // example: 'G'::mpaa_rating
-                            if default.contains("::") {
-                                println!("default contents double colon");
-                                let splinters: Vec<&str> = default.split("::").collect();
-                                Literal::String(splinters[0].to_string())
-                            } else {
-                                println!("as is");
-                                Literal::String(default.to_owned())
-                            }
+                            Literal::String(remove_value_cast(default))
                         }
 
                         SqlType::Array(ref at) => {
@@ -244,8 +246,7 @@ fn get_column_specification(
                                 | SqlType::Smallint
                                 | SqlType::Bigint => {
                                     // default = '{2,1,2}'::integer[]
-                                    let splinters: Vec<&str> = default.split("::").collect();
-                                    let int_values = splinters[0];
+                                    let int_values = remove_value_cast(default);
                                     let trimmed_values = int_values
                                         .trim_matches('\'')
                                         .trim_start_matches('{')
@@ -267,8 +268,7 @@ fn get_column_specification(
                                 | SqlType::Double
                                 | SqlType::Numeric => {
                                     // default = '{2,1,2}'::integer[]
-                                    let splinters: Vec<&str> = default.split("::").collect();
-                                    let values = splinters[0];
+                                    let values = remove_value_cast(default);
                                     let trimmed_values = values
                                         .trim_matches('\'')
                                         .trim_start_matches('{')
@@ -296,8 +296,7 @@ fn get_column_specification(
                                 | SqlType::Tinytext
                                 | SqlType::Mediumtext => {
                                     // default = '{Mon,Wed,Fri}'::character varying[],
-                                    let splinters: Vec<&str> = default.split("::").collect();
-                                    let string_values = splinters[0];
+                                    let string_values = remove_value_cast(default);
                                     let trimmed_values = string_values
                                         .trim_matches('\'')
                                         .trim_start_matches('{')
