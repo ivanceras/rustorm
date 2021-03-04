@@ -331,7 +331,7 @@ fn parse_naive_date_time(v: &str) -> NaiveDateTime {
     if let Ok(ts) = ts {
         ts
     } else {
-        let ts = NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S.%f");
+        let ts = NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S%.3f");
         if let Ok(ts) = ts {
             ts
         } else {
