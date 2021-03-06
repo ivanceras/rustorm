@@ -57,6 +57,7 @@ fn to_sq_value(val: &Value) -> rusqlite::types::Value {
         Value::Json(ref v) => rusqlite::types::Value::Text(v.clone()),
         Value::Uuid(ref v) => rusqlite::types::Value::Text(v.to_string()),
         Value::Date(ref v) => rusqlite::types::Value::Text(v.to_string()),
+        Value::DateTime(ref v) => rusqlite::types::Value::Text(v.to_string()),
         Value::Nil => rusqlite::types::Value::Null,
         _ => panic!("not yet handled: {:?}", val),
     }
